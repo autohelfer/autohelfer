@@ -1,0 +1,16 @@
+# Windows / OneDrive
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Node (falls spaeter genutzt)
+node_modules/
