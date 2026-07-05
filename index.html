@@ -17329,6 +17329,185 @@ function saveGarage(data) {
 
 let GARAGE = loadGarage();
 
+// ============================================================
+// FIRMENDATEN — kanonische Stammdaten (Basis QR-Rechnung + Mahnwesen)
+// Flache, API-ready Struktur (spaetere Supabase-Migration). Key: 'firma'.
+// ============================================================
+const FIRMA_DEFAULTS = {
+  name:               'Garage Fuoco',       // Firmenname ohne Rechtsform
+  rechtsform:         'GmbH',               // Rechtsform-Zusatz
+  strasse:            'Frohburgerstrasse',  // Strasse (ohne Nr. — QR-Rechnung braucht getrennt)
+  nr:                 '11',                 // Hausnummer
+  plz:                '4132',
+  ort:                'Muttenz',
+  uid:                'CHE-112.803.934 MWST',
+  iban:               '',                   // Normal-IBAN
+  qr_iban:            '',                   // QR-IBAN (IID 30000-31999)
+  bank:               '',
+  telefon:            '061 461 46 33',
+  email:              'info@garage-fuoco.ch',
+  website:            'www.garage-fuoco.ch',
+  mwst_satz:          8.1,                  // Prozent
+  zahlungsfrist_tage: 30,
+  // Mahnwesen dreistufig: je Stufe Frist (Tage) + Gebuehr (CHF)
+  mahnung1_frist_tage: 14, mahnung1_gebuehr: 0,
+  mahnung2_frist_tage: 14, mahnung2_gebuehr: 20,
+  mahnung3_frist_tage: 14, mahnung3_gebuehr: 40,
+};
+
+function loadFirma() {
+  try {
+    const saved = localStorage.getItem('firma');
+    return saved ? Object.assign({}, FIRMA_DEFAULTS, JSON.parse(saved)) : { ...FIRMA_DEFAULTS };
+  } catch(e) { return { ...FIRMA_DEFAULTS }; }
+}
+
+function saveFirma(data) {
+  try { localStorage.setItem('firma', JSON.stringify(data)); } catch(e) {}
+}
+
+let FIRMA = loadFirma();
+
+// --- Validierung ---------------------------------------------------------
+
+// UID/MwSt-Nummer: Format CHE-123.456.789 (optional " MWST"/" HR")
+function firmaCheckUid(raw) {
+  const v = String(raw || '').trim();
+  if (!v) return { empty: true, valid: false };
+  const ok = /^CHE-\d{3}\.\d{3}\.\d{3}(\s+(MWST|HR))?$/i.test(v);
+  return { empty: false, valid: ok };
+}
+
+// IBAN: CH/LI, 21 Zeichen, Modulo-97-Pruefziffer. Erkennt QR-IBAN via IID.
+function firmaCheckIban(raw) {
+  const v = String(raw || '').replace(/\s+/g, '').toUpperCase();
+  if (!v) return { empty: true, valid: false };
+  if (!/^(CH|LI)[0-9A-Z]{19}$/.test(v)) {
+    return { empty: false, valid: false, reason: 'Muss mit CH oder LI beginnen (21 Zeichen)' };
+  }
+  if (v.length !== 21) {
+    return { empty: false, valid: false, reason: 'Laenge muss 21 Zeichen sein (aktuell ' + v.length + ')' };
+  }
+  // Modulo-97: erste 4 Zeichen ans Ende, Buchstaben -> Zahlen (A=10 ... Z=35)
+  const rearr = v.slice(4) + v.slice(0, 4);
+  let rem = 0;
+  for (const ch of rearr) {
+    const part = (ch >= 'A' && ch <= 'Z') ? String(ch.charCodeAt(0) - 55) : ch;
+    for (const d of part) rem = (rem * 10 + (d.charCodeAt(0) - 48)) % 97;
+  }
+  if (rem !== 1) return { empty: false, valid: false, reason: 'Pruefziffer ungueltig' };
+  // QR-IBAN: IID (Position 5-9) im Bereich 30000-31999
+  const iid = parseInt(v.slice(4, 9), 10);
+  const isQr = iid >= 30000 && iid <= 31999;
+  return { empty: false, valid: true, isQr, iid };
+}
+
+// Setzt Feld-Rahmen + Meldungszeile fuer ein Firmendaten-Feld
+function firmaSetMsg(inputId, msgId, state, text) {
+  const inp = el(inputId), m = el(msgId);
+  const colorMap = { ok: 'var(--green)', err: 'var(--danger)', neutral: 'var(--text-muted)' };
+  const col = colorMap[state] || colorMap.neutral;
+  if (m) {
+    m.textContent = text || '';
+    m.style.color = col;
+    m.style.display = text ? 'block' : 'none';
+  }
+  if (inp) inp.style.borderColor = (state === 'err') ? 'var(--danger)' : (state === 'ok' ? 'var(--green)' : '');
+}
+
+function firmaShowUid() {
+  const inp = el('fd-uid'); if (!inp) return true;
+  const r = firmaCheckUid(inp.value);
+  if (r.empty) { firmaSetMsg('fd-uid', 'fd-uid-msg', 'neutral', ''); return true; }
+  if (r.valid) { firmaSetMsg('fd-uid', 'fd-uid-msg', 'ok', '✓ Format gueltig'); return true; }
+  firmaSetMsg('fd-uid', 'fd-uid-msg', 'err', '✗ Format: CHE-123.456.789 MWST');
+  return false;
+}
+
+function firmaShowIban() {
+  const inp = el('fd-iban'); if (!inp) return true;
+  const r = firmaCheckIban(inp.value);
+  if (r.empty) { firmaSetMsg('fd-iban', 'fd-iban-msg', 'neutral', ''); return true; }
+  if (!r.valid) { firmaSetMsg('fd-iban', 'fd-iban-msg', 'err', '✗ ' + r.reason); return false; }
+  if (r.isQr) { firmaSetMsg('fd-iban', 'fd-iban-msg', 'ok', '✓ Gueltige IBAN — Hinweis: dies ist eine QR-IBAN, gehoert ins Feld QR-IBAN'); return true; }
+  firmaSetMsg('fd-iban', 'fd-iban-msg', 'ok', '✓ Gueltige IBAN');
+  return true;
+}
+
+function firmaShowQriban() {
+  const inp = el('fd-qriban'); if (!inp) return true;
+  const r = firmaCheckIban(inp.value);
+  if (r.empty) { firmaSetMsg('fd-qriban', 'fd-qriban-msg', 'neutral', ''); return true; }
+  if (!r.valid) { firmaSetMsg('fd-qriban', 'fd-qriban-msg', 'err', '✗ ' + r.reason); return false; }
+  if (!r.isQr) { firmaSetMsg('fd-qriban', 'fd-qriban-msg', 'err', '✗ Gueltige IBAN, aber KEINE QR-IBAN (IID ' + r.iid + ', noetig 30000–31999)'); return false; }
+  firmaSetMsg('fd-qriban', 'fd-qriban-msg', 'ok', '✓ Gueltige QR-IBAN (IID ' + r.iid + ')');
+  return true;
+}
+
+function firmaSave() {
+  const btn = el('btn-firma-save');
+  const name = (el('fd-name')?.value || '').trim();
+
+  // Validierung (Meldungen live aktualisieren)
+  let ok = true;
+  if (!name) { firmaSetMsg('fd-name', 'fd-name-msg', 'err', '✗ Firmenname ist erforderlich'); ok = false; }
+  else firmaSetMsg('fd-name', 'fd-name-msg', 'neutral', '');
+  if (!firmaShowUid())    ok = false;
+  if (!firmaShowIban())   ok = false;
+  if (!firmaShowQriban()) ok = false;
+
+  if (!ok) {
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = 'Bitte Fehler korrigieren';
+      btn.style.background = 'var(--danger)';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2200);
+    }
+    return;
+  }
+
+  const numOr = (id, def) => { const n = parseFloat(el(id)?.value); return isNaN(n) ? def : n; };
+  const intOr = (id, def) => { const n = parseInt(el(id)?.value, 10); return isNaN(n) ? def : n; };
+
+  FIRMA = Object.assign(FIRMA, {
+    name:               name,
+    rechtsform:         (el('fd-rechtsform')?.value || '').trim(),
+    strasse:            (el('fd-strasse')?.value || '').trim(),
+    nr:                 (el('fd-nr')?.value || '').trim(),
+    plz:                (el('fd-plz')?.value || '').trim(),
+    ort:                (el('fd-ort')?.value || '').trim(),
+    uid:                (el('fd-uid')?.value || '').trim(),
+    iban:               (el('fd-iban')?.value || '').trim(),
+    qr_iban:            (el('fd-qriban')?.value || '').trim(),
+    bank:               (el('fd-bank')?.value || '').trim(),
+    telefon:            (el('fd-telefon')?.value || '').trim(),
+    email:              (el('fd-email')?.value || '').trim(),
+    website:            (el('fd-website')?.value || '').trim(),
+    mwst_satz:          numOr('fd-mwst', 8.1),
+    zahlungsfrist_tage: intOr('fd-frist', 30),
+    mahnung1_frist_tage: intOr('fd-m1-frist', 14), mahnung1_gebuehr: numOr('fd-m1-geb', 0),
+    mahnung2_frist_tage: intOr('fd-m2-frist', 14), mahnung2_gebuehr: numOr('fd-m2-geb', 20),
+    mahnung3_frist_tage: intOr('fd-m3-frist', 14), mahnung3_gebuehr: numOr('fd-m3-geb', 40),
+  });
+  saveFirma(FIRMA);
+
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Gespeichert';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2000);
+  }
+}
+
+function firmaWire() {
+  el('fd-uid')?.addEventListener('input', firmaShowUid);
+  el('fd-iban')?.addEventListener('input', firmaShowIban);
+  el('fd-qriban')?.addEventListener('input', firmaShowQriban);
+  el('btn-firma-save')?.addEventListener('click', firmaSave);
+  // Initiale Anzeige
+  firmaShowUid(); firmaShowIban(); firmaShowQriban();
+}
+
 function pdfStatusBadge(status) {
   const map = {
     ausstehend: ['pdf-status-ausstehend', 'Ausstehend'],
@@ -23435,9 +23614,116 @@ function renderEinstellungen() {
   const wrap = el('einstellungen-content');
   if (!wrap) return;
   const g = GARAGE;
+  const f = FIRMA;
 
   wrap.innerHTML = `
     <div style="max-width:600px">
+      <!-- Firmendaten — Basis QR-Rechnung + Mahnwesen -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-weight:700;font-size:15px">Firmendaten</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Basis fuer QR-Rechnung und Mahnwesen</div>
+          </div>
+          <button class="btn btn-primary" id="btn-firma-save" style="font-size:12px;white-space:nowrap">Speichern</button>
+        </div>
+        <div style="padding:20px">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Firmenname *</label>
+              <input class="form-input" id="fd-name" value="${esc(f.name)}" placeholder="Garage Fuoco" />
+              <div id="fd-name-msg" style="font-size:10px;margin-top:4px;display:none"></div>
+            </div>
+            <div class="form-group">
+              <label>Rechtsform-Zusatz</label>
+              <input class="form-input" id="fd-rechtsform" value="${esc(f.rechtsform)}" placeholder="GmbH" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:2">
+              <label>Strasse</label>
+              <input class="form-input" id="fd-strasse" value="${esc(f.strasse)}" placeholder="Frohburgerstrasse" />
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Nr.</label>
+              <input class="form-input" id="fd-nr" value="${esc(f.nr)}" placeholder="11" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:1">
+              <label>PLZ</label>
+              <input class="form-input" id="fd-plz" value="${esc(f.plz)}" placeholder="4132" maxlength="6" />
+            </div>
+            <div class="form-group" style="flex:2">
+              <label>Ort</label>
+              <input class="form-input" id="fd-ort" value="${esc(f.ort)}" placeholder="Muttenz" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>UID / MwSt-Nummer</label>
+            <input class="form-input" id="fd-uid" value="${esc(f.uid)}" placeholder="CHE-123.456.789 MWST" />
+            <div id="fd-uid-msg" style="font-size:10px;margin-top:4px;display:none"></div>
+          </div>
+          <div class="form-group">
+            <label>IBAN</label>
+            <input class="form-input" id="fd-iban" value="${esc(f.iban)}" placeholder="CH.. 21 Zeichen" style="font-family:'IBM Plex Mono',monospace;letter-spacing:1px" />
+            <div id="fd-iban-msg" style="font-size:10px;margin-top:4px;display:none"></div>
+          </div>
+          <div class="form-group">
+            <label>QR-IBAN</label>
+            <input class="form-input" id="fd-qriban" value="${esc(f.qr_iban)}" placeholder="CH.. QR-IBAN (IID 30000–31999)" style="font-family:'IBM Plex Mono',monospace;letter-spacing:1px" />
+            <div id="fd-qriban-msg" style="font-size:10px;margin-top:4px;display:none"></div>
+          </div>
+          <div class="form-group">
+            <label>Bankname</label>
+            <input class="form-input" id="fd-bank" value="${esc(f.bank)}" placeholder="z.B. PostFinance AG" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Telefon</label>
+              <input class="form-input" id="fd-telefon" value="${esc(f.telefon)}" placeholder="061 461 46 33" />
+            </div>
+            <div class="form-group">
+              <label>E-Mail</label>
+              <input class="form-input" id="fd-email" type="email" value="${esc(f.email)}" placeholder="info@garage-fuoco.ch" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:2">
+              <label>Website</label>
+              <input class="form-input" id="fd-website" value="${esc(f.website)}" placeholder="www.garage-fuoco.ch" />
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>MwSt-Satz (%)</label>
+              <input class="form-input" id="fd-mwst" type="number" min="0" step="0.1" value="${esc(f.mwst_satz)}" placeholder="8.1" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Zahlungsfrist (Tage)</label>
+            <input class="form-input" id="fd-frist" type="number" min="1" max="365" value="${esc(f.zahlungsfrist_tage)}" placeholder="30" />
+          </div>
+
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin:20px 0 10px">Mahnwesen</div>
+          <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:8px 12px;align-items:center">
+            <div style="font-size:11px;color:var(--text-muted)"></div>
+            <div style="font-size:10px;color:var(--text-muted);font-weight:600">Frist (Tage)</div>
+            <div style="font-size:10px;color:var(--text-muted);font-weight:600">Gebuehr (CHF)</div>
+
+            <div style="font-size:12px;font-weight:600">1. Mahnung</div>
+            <input class="form-input" id="fd-m1-frist" type="number" min="0" value="${esc(f.mahnung1_frist_tage)}" />
+            <input class="form-input" id="fd-m1-geb"   type="number" min="0" step="0.05" value="${esc(f.mahnung1_gebuehr)}" />
+
+            <div style="font-size:12px;font-weight:600">2. Mahnung</div>
+            <input class="form-input" id="fd-m2-frist" type="number" min="0" value="${esc(f.mahnung2_frist_tage)}" />
+            <input class="form-input" id="fd-m2-geb"   type="number" min="0" step="0.05" value="${esc(f.mahnung2_gebuehr)}" />
+
+            <div style="font-size:12px;font-weight:600">3. Mahnung</div>
+            <input class="form-input" id="fd-m3-frist" type="number" min="0" value="${esc(f.mahnung3_frist_tage)}" />
+            <input class="form-input" id="fd-m3-geb"   type="number" min="0" step="0.05" value="${esc(f.mahnung3_gebuehr)}" />
+          </div>
+        </div>
+      </div>
+
       <!-- Garage-Daten -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;overflow:hidden">
         <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
@@ -23609,6 +23895,9 @@ function renderEinstellungen() {
   const walleeLinkInp  = document.getElementById('g-wallee-link');
   if (walleeSpaceInp) walleeSpaceInp.value = g.wallee_space_id || '';
   if (walleeLinkInp)  walleeLinkInp.value  = g.wallee_payment_link || '';
+
+  // Firmendaten-Abschnitt verdrahten (Live-Validierung + Speichern)
+  firmaWire();
 
   // Speichern
   el('btn-garage-save')?.addEventListener('click', () => {
