@@ -4793,7 +4793,7 @@
     .qrb-qr-img  { width:46mm; height:46mm; image-rendering:pixelated; display:block; }
     .qrb-kreuz {
       position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      width:8mm; height:8mm; background:white;
+      width:7mm; height:7mm; background:white;
       display:flex; align-items:center; justify-content:center;
     }
     .qrb-ccy2 { display:flex; gap:4mm; margin-top:3mm; }
@@ -17521,6 +17521,16 @@ function pdfStatusBadge(status) {
 // SWISS QR BILL ENGINE — SIX Swiss Payment Standard 2.0
 // Vollständige Eigenimplementierung (keine externe Library)
 // ============================================================
+// ============================================================
+// VENDOR — Eingebetteter QR-Code-Encoder (dependency-frei, offline)
+// ------------------------------------------------------------
+// Byte-Modus (UTF-8), Fehlerkorrektur-Level M, QR-Versionen 1–30,
+// Reed-Solomon ueber GF(256) mit Primitivpolynom 0x11d.
+// Bewusst in index.html eingebettet, damit der Rechnungsdruck
+// vollstaendig OFFLINE funktioniert (kein CDN). Projekt-intern,
+// end-to-end gegen jsQR verifiziert (Payload-Round-Trip).
+// API: QRBillEngine.encode(text) -> { matrix:number[][], size:number }
+// ============================================================
 const QRBillEngine = (function () {
   const EXP = new Uint8Array(512), LOG = new Uint8Array(256);
   (function () {
@@ -17557,12 +17567,13 @@ const QRBillEngine = (function () {
     [5,30,50],[8,22,36],[9,22,37],[9,24,40],[10,24,40],[10,28,47],[11,28,47],[11,26,44],[11,26,46],[12,26,44],
     [12,28,48],[14,26,43],[14,28,46],[15,28,48],[15,28,48],[16,28,47],[16,28,47],[18,28,46],[18,28,48],[19,28,46],
   ];
-  const ALN = [,[],,[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],
+  const ALN = [,[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],
     [6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],
     [6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],
     [6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126]
   ];
-  const FMT_M = [0x5BC5,0x5A71,0x57C4,0x5671,0x52D6,0x5263,0x5996,0x5823];
+  // Format-Info-Strings Level M (BCH, inkl. XOR-Maske 0x5412) — Standard QR-Spec
+  const FMT_M = [0x5412,0x5125,0x5E7C,0x5B4B,0x45F9,0x40CE,0x4F97,0x4AA0];
   const VERINFO = [0,0,0,0,0,0,0,0x07C94,0x085BC,0x09A99,0x0A4D3,0x0BBF6,0x0C762,0x0D847,0x0E60D,0x0F928,
     0x10B78,0x1145D,0x12A17,0x13532,0x149A6,0x15683,0x168C9,0x177EC,0x18EC4,0x191E1,0x1AFAB,0x1B08E,
     0x1CC1A,0x1D33F];
@@ -17572,18 +17583,33 @@ const QRBillEngine = (function () {
     (r,c)=>((r*c)%2+(r*c)%3)%2===0,(r,c)=>((r+c)%2+(r*c)%3)%2===0,
   ];
 
+  // Format-Info (15 Bit) platzieren — Copy A + Copy B, Bit-Reihenfolge nach QR-Spec.
+  function putFmt(m, fmt, sz) {
+    for (let i = 0; i <= 5; i++) m[8][i] = (fmt >> (14 - i)) & 1;          // Zeile 8 links: b14..b9
+    m[8][7] = (fmt >> 8) & 1;
+    m[8][8] = (fmt >> 7) & 1;
+    for (let i = 0; i <= 5; i++) m[i][8] = (fmt >> i) & 1;                 // Spalte 8 oben: b0..b5
+    m[7][8] = (fmt >> 6) & 1;
+    for (let i = 0; i <= 7; i++) m[8][sz - 1 - i] = (fmt >> i) & 1;        // Zeile 8 rechts: b0..b7
+    for (let i = 0; i <= 6; i++) m[sz - 1 - i][8] = (fmt >> (14 - i)) & 1; // Spalte 8 unten: b14..b8
+    m[sz - 8][8] = 1;                                                       // Dunkelmodul
+  }
+
   function encode(text) {
     const bytes = new TextEncoder().encode(text);
     const n = bytes.length;
     let ver = 1;
     for (let v = 1; v <= 30; v++) {
-      if (Math.ceil((4 + (n < 256 ? 8 : 16) + n * 8) / 8) <= CAP_M[v]) { ver = v; break; }
+      // Byte-Modus: Zaehlindikator 8 Bit (v1-9) bzw. 16 Bit (v10+) — nach Version, nicht nach n
+      const cb = v < 10 ? 8 : 16;
+      if (Math.ceil((4 + cb + n * 8) / 8) <= CAP_M[v]) { ver = v; break; }
     }
+    const cntBits = ver < 10 ? 8 : 16;
     const totalCW = CAP_M[ver];
     const [numBlk, eccPB] = BLK_M[ver];
     const bits = [];
     const pb = (v, l) => { for (let i = l-1; i >= 0; i--) bits.push((v >> i) & 1); };
-    pb(4, 4); pb(n, n < 256 ? 8 : 16);
+    pb(4, 4); pb(n, cntBits);
     for (const b of bytes) pb(b, 8);
     for (let i = 0; i < 4 && bits.length < totalCW*8; i++) bits.push(0);
     while (bits.length % 8) bits.push(0);
@@ -17621,10 +17647,13 @@ const QRBillEngine = (function () {
     for (let i=sz-8;i<sz;i++){used[8][i]=1;used[i][8]=1;}
     used[sz-8][8]=1;
     for (let i=8;i<sz-8;i++){setM(6,i,i%2?0:1);setM(i,6,i%2?0:1);}
-    if (ALN[ver]) {
+    if (ALN[ver] && ALN[ver].length) {
       const ap = ALN[ver];
+      const first = ap[0], last = ap[ap.length-1];
       for (const ar of ap) for (const ac of ap) {
-        if (used[ar][ac]) continue;
+        // Nur die drei Finder-Ecken auslassen — (6,22)/(22,6) etc. gehoeren platziert
+        // (sie ueberschreiben dort das Timing-Muster, gemaess QR-Spec).
+        if ((ar===first&&ac===first)||(ar===first&&ac===last)||(ar===last&&ac===first)) continue;
         for (let dr=-2;dr<=2;dr++) for (let dc=-2;dc<=2;dc++)
           setM(ar+dr,ac+dc,Math.abs(dr)===2||Math.abs(dc)===2||(!dr&&!dc)?1:0);
       }
@@ -17647,47 +17676,93 @@ const QRBillEngine = (function () {
     let bestM=0, bestP=Infinity;
     for(let m=0;m<8;m++){
       const tmp=mat.map((row,r)=>Array.from(row).map((v,c)=>used[r][c]?v:v^(MASK_FNS[m](r,c)?1:0)));
-      const fmt=FMT_M[m];
-      for(let i=0;i<6;i++){tmp[8][i]=(fmt>>i)&1;tmp[i][8]=(fmt>>(14-i))&1;}
-      tmp[8][7]=(fmt>>6)&1;tmp[7][8]=(fmt>>7)&1;tmp[8][8]=(fmt>>8)&1;
-      for(let i=0;i<8;i++)tmp[sz-1-i][8]=(fmt>>i)&1;
-      for(let i=0;i<8;i++)tmp[8][sz-8+i]=(fmt>>(14-i))&1;
-      tmp[sz-8][8]=1;
+      putFmt(tmp, FMT_M[m], sz);
       let pen=0;
       for(let r=0;r<sz;r++){let run=1;for(let c=1;c<sz;c++){if(tmp[r][c]===tmp[r][c-1]){run++;if(run===5)pen+=3;else if(run>5)pen++;}else run=1;}}
       if(pen<bestP){bestP=pen;bestM=m;}
     }
     const masked=mat.map((row,r)=>Array.from(row).map((v,c)=>used[r][c]?v:v^(MASK_FNS[bestM](r,c)?1:0)));
-    const fmt=FMT_M[bestM];
-    for(let i=0;i<6;i++){masked[8][i]=(fmt>>i)&1;masked[i][8]=(fmt>>(14-i))&1;}
-    masked[8][7]=(fmt>>6)&1;masked[7][8]=(fmt>>7)&1;masked[8][8]=(fmt>>8)&1;
-    for(let i=0;i<8;i++)masked[sz-1-i][8]=(fmt>>i)&1;
-    for(let i=0;i<8;i++)masked[8][sz-8+i]=(fmt>>(14-i))&1;
-    masked[sz-8][8]=1;
+    putFmt(masked, FMT_M[bestM], sz);
     return {matrix:masked, size:sz};
   }
   return {encode};
 })();
 
-// SPC Payload bauen
+// ── QR-Rechnung: Hilfsfunktionen (SIX QR-bill v2.3) ─────────────────
+// Zulaessiger SIX-Zeichensatz (Latin, inkl. Umlaute/Akzente). Unerlaubte
+// Zeichen werden durch '.' ersetzt; Feldlaenge optional begrenzt.
+function qrText(s, maxLen) {
+  var out = String(s == null ? '' : s).normalize('NFC');
+  var allowed = /[A-Za-z0-9.,;:'+\-\/()?*\[\]{}\\`´~ !"#%&<>÷=@_$£°§¦€àáâäçèéêëìíîïñòóôöùúûüýÿßÀÁÂÄÇÈÉÊËÌÍÎÏÑÒÓÔÖÙÚÛÜÝ]/;
+  var res = '';
+  for (var i = 0; i < out.length; i++) res += allowed.test(out[i]) ? out[i] : '.';
+  res = res.replace(/\s{2,}/g, ' ').trim();
+  if (maxLen && res.length > maxLen) res = res.slice(0, maxLen);
+  return res;
+}
+
+// QRR-Pruefziffer: Modulo 10 rekursiv (Tabelle nach SIX/ESR).
+function qrrPruefziffer(body) {
+  var T = [0, 9, 4, 6, 8, 2, 7, 1, 3, 5];
+  var carry = 0;
+  for (var i = 0; i < body.length; i++) carry = T[(carry + (body.charCodeAt(i) - 48)) % 10];
+  return (10 - carry) % 10;
+}
+
+// 27-stellige QRR-Referenz: 26 Ziffern (links mit Nullen aufgefuellt) + Pruefziffer.
+function buildQRR(quelleDigits) {
+  var body = String(quelleDigits || '').replace(/\D/g, '').padStart(26, '0').slice(-26);
+  return body + qrrPruefziffer(body);
+}
+
+// QRR einer Rechnung holen/erzeugen. Beim ersten Mal erzeugen + persistieren,
+// danach IMMER wiederverwenden — unveraenderlich (Basis Zahlungszuordnung/Mahnwesen).
+function rechnungQRR(r) {
+  if (r && typeof r.qrr === 'string' && /^\d{27}$/.test(r.qrr)) return r.qrr;
+  var ref = buildQRR(rechnungNr(r).replace(/\D/g, ''));
+  if (r) { r.qrr = ref; try { saveDb(); } catch (e) {} }
+  return ref;
+}
+
+// Betrag fuer Anzeige im Zahlteil: Leerzeichen als Tausendertrenner, 2 Dezimalen.
+function qrAmount(n) {
+  var v = (typeof n === 'number' ? n : parseFloat(n) || 0).toFixed(2);
+  var parts = v.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return parts[0] + '.' + parts[1];
+}
+
+// QRR-Referenz gruppiert anzeigen: 2 + 5x5 Ziffern.
+function qrRefFormat(ref) {
+  var d = String(ref || '').replace(/\D/g, '');
+  if (d.length !== 27) return ref;
+  return d.replace(/(\d{2})(\d{5})(\d{5})(\d{5})(\d{5})(\d{5})/, '$1 $2 $3 $4 $5 $6');
+}
+
+// SPC-Payload (Swiss Payments Code, SIX v2.3) — exakt 31 Zeilen, \n-getrennt.
+// Quelle Zahlungsempfaenger: ausschliesslich FIRMA (vom Aufrufer uebergeben).
 function buildSPCPayload(d) {
-  function splitPlzOrt(s) {
-    const m = (s||'').match(/^(\d{4,5})\s+(.+)$/);
-    return m ? [m[1], m[2]] : ['', s||''];
+  var A = qrText;
+  var lines = [
+    'SPC', '0200', '1',
+    d.iban,                          // QR-IBAN, ohne Leerzeichen
+    // Kreditor — nur Adress-Typ "S" (Typ "K" seit 11/2025 unzulaessig)
+    'S', A(d.creditor.name, 70), A(d.creditor.strasse, 70), A(d.creditor.nr, 16), A(d.creditor.plz, 16), A(d.creditor.ort, 35), 'CH',
+    // Ultimate Creditor — 7 Leerzeilen (muss leer geliefert werden)
+    '', '', '', '', '', '', '',
+    // Betrag
+    d.betrag, 'CHF'
+  ];
+  // Endbeguenstigter / Zahlbar durch (Debitor)
+  if (d.debtor && d.debtor.plz && d.debtor.ort) {
+    // strukturierte Kundenadresse, nur wenn PLZ + Ort getrennt vorliegen
+    lines.push('S', A(d.debtor.name, 70), A(d.debtor.strasse, 70), A(d.debtor.nr || '', 16), A(d.debtor.plz, 16), A(d.debtor.ort, 35), 'CH');
+  } else {
+    // 7 leere Debitor-Zeilen -> zulaessiges Blankofeld zum Handausfuellen
+    lines.push('', '', '', '', '', '', '');
   }
-  const [epz,eort] = splitPlzOrt(d.empfaenger.plzOrt);
-  const [zpz,zort] = splitPlzOrt(d.zahler.plzOrt);
-  return [
-    'SPC','0200','1',
-    d.iban,
-    'S', d.empfaenger.name, d.empfaenger.strasse, '', epz, eort, 'CH',
-    '','','','','','',
-    d.betrag, 'CHF',
-    'S', d.zahler.name, d.zahler.strasse, '', zpz, zort, 'CH',
-    'QRR', d.referenz,
-    d.mitteilung||'',
-      'EPD','',
-  ].join(String.fromCharCode(10));
+  lines.push('QRR', d.referenz, A(d.mitteilung, 140), 'EPD');
+  return lines.join('\n');
 }
 
 // QR-Code auf Canvas zeichnen, gibt DataURL zurück
@@ -17706,38 +17781,59 @@ function drawQRToDataURL(text) {
   return canvas.toDataURL('image/png');
 }
 
-// QR-Rechnung HTML generieren (für zweite Druckseite)
+// QR-Rechnung HTML generieren (Zahlteil + Empfangsschein, eigene letzte Seite)
+// Zahlungsempfaenger AUSSCHLIESSLICH aus FIRMA-Modul (localStorage-Key 'firma').
 function buildQRBillHTML(r, k) {
   try {
-  const ibanFmt   = GARAGE.iban || '';
-  const ibanClean = ibanFmt.replace(/\s/g,'');
-  const tot       = r.total != null ? r.total : ((r.subtotal||0)+(r.mwstBetrag||0));
-  const betrag    = tot.toFixed(2);
-  const reNr      = rechnungNr(r);
+  const qrIbanRaw = FIRMA.qr_iban || '';
+  const chk       = firmaCheckIban(qrIbanRaw);
+  const ibanClean = qrIbanRaw.replace(/\s/g,'').toUpperCase();
+  const ibanFmt   = ibanClean.replace(/(.{4})/g,'$1 ').trim();
 
-  // Referenz: Rechnungs-ID als einfache QRR-Referenz (27-stellig, Prüfziffer)
-  const refRaw  = String(r.id).padStart(27,'0');
-  const refFmt  = refRaw.replace(/(\d{2})(\d{5})(\d{5})(\d{5})(\d{5})(\d{5})/, '$1 $2 $3 $4 $5 $6');
+  const tot    = r.total != null ? r.total : ((r.subtotal||0)+(r.mwstBetrag||0));
+  const betrag = (typeof tot === 'number' ? tot : parseFloat(tot)||0).toFixed(2);
+  const reNr   = rechnungNr(r);
 
-  const empfName  = GARAGE.name;
-  const empfAdr   = GARAGE.strasse;
-  const empfPlzOrt = GARAGE.plz + ' ' + GARAGE.ort;
+  // Fehlende/ungueltige QR-IBAN -> klarer Hinweis statt unlesbarem Code
+  if (!chk.valid || !chk.isQr) {
+    return `
+<div class="qrb-page">
+  <div class="qrb-bill" style="align-items:center;justify-content:center;flex-direction:column;gap:6px;text-align:center;padding:10mm">
+    <div style="font-weight:700;font-size:11pt">QR-Rechnung nicht moeglich</div>
+    <div style="font-size:9pt;color:#a00">In den Firmendaten ist keine gueltige QR-IBAN hinterlegt.</div>
+    <div style="font-size:8pt;color:#666">Einstellungen &rarr; Firmendaten &rarr; QR-IBAN (IID 30000&ndash;31999)</div>
+  </div>
+</div>`;
+  }
 
-  const zahlName   = k ? ((k.vorname||'')+' '+(k.nachname||'')).trim() : '';
+  // Referenz: unveraenderlich am Rechnungsobjekt gespeichert (erstmalig erzeugt)
+  const ref    = rechnungQRR(r);
+  const refFmt = qrRefFormat(ref);
+
+  const empfName   = (FIRMA.name||'') + (FIRMA.rechtsform ? ' ' + FIRMA.rechtsform : '');
+  const empfAdr    = (FIRMA.strasse||'') + (FIRMA.nr ? ' ' + FIRMA.nr : '');
+  const empfPlzOrt = ((FIRMA.plz||'') + ' ' + (FIRMA.ort||'')).trim();
+
+  // Zahlbar durch (Debitor) — strukturiert nur wenn PLZ + Ort getrennt vorliegen
+  const hasDebtor  = !!(k && k.plz && k.ort);
+  const zahlName   = k ? (k.firma ? k.firma : ((k.vorname||'')+' '+(k.nachname||'')).trim()) : '';
   const zahlAdr    = k ? (k.strasse||'') : '';
-  const zahlPlzOrt = k ? ((k.plz||'')+' '+(k.ort||'')).trim() : '';
+  const zahlPlzOrt = hasDebtor ? ((k.plz||'')+' '+(k.ort||'')).trim() : '';
+  const zahlHtml   = (hEl) => hasDebtor
+    ? `${esc(zahlName)}<br>${esc(zahlAdr)}<br>${esc(zahlPlzOrt)}`
+    : `<div style="border:0.5pt solid #000;height:${hEl};margin-top:1mm"></div>`;
 
   const spc = buildSPCPayload({
-    iban: ibanClean, betrag, referenz: refRaw,
-    empfaenger: {name:empfName, strasse:empfAdr, plzOrt:empfPlzOrt},
-    zahler: {name:zahlName, strasse:zahlAdr, plzOrt:zahlPlzOrt},
-    mitteilung: reNr,
+    iban: ibanClean, betrag, referenz: ref,
+    creditor: { name: empfName, strasse: (FIRMA.strasse||''), nr: (FIRMA.nr||''), plz: (FIRMA.plz||''), ort: (FIRMA.ort||'') },
+    debtor:   hasDebtor ? { name: zahlName, strasse: zahlAdr, nr: '', plz: k.plz, ort: k.ort } : null,
+    mitteilung: 'Rechnung ' + reNr,
   });
 
   const qrDataURL = drawQRToDataURL(spc);
 
-  // Schweizer Kreuz als inline SVG base64
-  const kreuzSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><rect width="28" height="28" fill="white"/><rect x="10" y="3" width="8" height="22" fill="#c8102e"/><rect x="3" y="10" width="22" height="8" fill="#c8102e"/></svg>`;
+  // Schweizerkreuz im QR: schwarzes Quadrat mit weissem Kreuz (scanner-sicher, SIX)
+  const kreuzSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.2 19.2" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"><rect width="19.2" height="19.2" fill="#fff"/><rect x="1.4" y="1.4" width="16.4" height="16.4" fill="#000"/><rect x="7.9" y="4.6" width="3.4" height="10" fill="#fff"/><rect x="4.6" y="7.9" width="10" height="3.4" fill="#fff"/></svg>`;
 
   return `
 <div class="qrb-page">
@@ -17759,12 +17855,12 @@ function buildQRBillHTML(r, k) {
       </div>
       <div class="qrb-sec qrb-zah">
         <div class="qrb-lbl">Zahlbar durch</div>
-        <div class="qrb-val">${esc(zahlName)}<br>${esc(zahlAdr)}<br>${esc(zahlPlzOrt)}</div>
+        <div class="qrb-val">${zahlHtml('16mm')}</div>
       </div>
       <div class="qrb-es-bot">
         <div class="qrb-ccy-row">
           <div><div class="qrb-lbl">Währung</div><div class="qrb-val" style="font-weight:700">CHF</div></div>
-          <div><div class="qrb-lbl">Betrag</div><div class="qrb-amt">${esc(betrag)}</div></div>
+          <div><div class="qrb-lbl">Betrag</div><div class="qrb-amt">${esc(qrAmount(tot))}</div></div>
         </div>
         <div class="qrb-acc-row">
           <div><div class="qrb-lbl">Annahmestelle</div><div class="qrb-acc-box"></div></div>
@@ -17782,7 +17878,7 @@ function buildQRBillHTML(r, k) {
           </div>
           <div class="qrb-ccy2">
             <div><div class="qrb-lbl">Währung</div><div class="qrb-val2">CHF</div></div>
-            <div><div class="qrb-lbl">Betrag</div><div class="qrb-val2">${esc(betrag)}</div></div>
+            <div><div class="qrb-lbl">Betrag</div><div class="qrb-val2">${esc(qrAmount(tot))}</div></div>
           </div>
         </div>
         <div class="qrb-zt-right">
@@ -17796,11 +17892,11 @@ function buildQRBillHTML(r, k) {
           </div>
           <div class="qrb-sec">
             <div class="qrb-lbl">Zusätzliche Informationen</div>
-            <div class="qrb-val">${esc(reNr)}</div>
+            <div class="qrb-val">Rechnung ${esc(reNr)}</div>
           </div>
           <div class="qrb-sec qrb-zah">
             <div class="qrb-lbl">Zahlbar durch</div>
-            <div class="qrb-val">${esc(zahlName)}<br>${esc(zahlAdr)}<br>${esc(zahlPlzOrt)}</div>
+            <div class="qrb-val">${zahlHtml('20mm')}</div>
           </div>
         </div>
       </div>
@@ -17904,27 +18000,8 @@ function generatePdfRechnung(rechnungId) {
       : `<div class="garage-name-big">${esc(GARAGE.name)}</div>`;
 
     // ── HTML ────────────────────────────────────────────────────
-    // QR-Code inline generieren (vor html Template, da dort verwendet)
+    // Kein Inline-QR auf Seite 1 — der Swiss QR Code steht im Zahlteil (letzte Seite).
     var inlineQR = '';
-    try {
-      var ibanClean2 = (GARAGE.iban||'').replace(/\s/g,'');
-      var tot2 = r.total != null ? r.total : ((r.subtotal||0)+(r.mwstBetrag||0));
-      var refRaw2 = String(r.id).padStart(27,'0');
-      var spc2 = buildSPCPayload({
-        iban: ibanClean2, betrag: tot2.toFixed(2), referenz: refRaw2,
-        empfaenger: {name:GARAGE.name, strasse:GARAGE.strasse, plzOrt:GARAGE.plz+' '+GARAGE.ort},
-        zahler: {name:k?(k.vorname+' '+k.nachname).trim():'', strasse:k?k.strasse||'':'', plzOrt:k?(k.plz||'')+' '+(k.ort||''):''},
-        mitteilung: reNr,
-      });
-      var qrDataURL2 = drawQRToDataURL(spc2);
-      var kreuzSVG2 = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 28 28"><rect width="28" height="28" fill="white"/><rect x="10" y="3" width="8" height="22" fill="#c8102e"/><rect x="3" y="10" width="22" height="8" fill="#c8102e"/></svg>';
-      if (qrDataURL2) {
-        inlineQR = '<div style="position:relative;width:72px;height:72px;flex-shrink:0">'
-          + '<img src="'+qrDataURL2+'" width="72" height="72" style="display:block;image-rendering:pixelated">'
-          + '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;width:18px;height:18px;display:flex;align-items:center;justify-content:center">'+kreuzSVG2+'</div>'
-          + '</div>';
-      }
-    } catch(qrErr2) { console.warn('QR inline:', qrErr2.message); }
 
     const html = `
     <div class="pdf-page">
@@ -18026,8 +18103,8 @@ function generatePdfRechnung(rechnungId) {
 
     </div>`;
 
-    // QR-Rechnung zweite Seite: entfernt (inline QR oben)
-    let qrPage = '';
+    // QR-Rechnung: Swiss QR-bill (Zahlteil + Empfangsschein) als eigene letzte Seite
+    let qrPage = buildQRBillHTML(r, k);
 
     const pdfCSS = `
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18142,7 +18219,7 @@ function generatePdfRechnung(rechnungId) {
       .qrb-zt-left { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; }
       .qrb-qr-wrap { width: 175px; height: 175px; position: relative; flex-shrink: 0; }
       .qrb-qr-img  { width: 175px; height: 175px; image-rendering: pixelated; display: block; }
-      .qrb-kreuz   { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 30px; height: 30px; background: #fff; display: flex; align-items: center; justify-content: center; }
+      .qrb-kreuz   { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 27px; height: 27px; background: #fff; display: flex; align-items: center; justify-content: center; }
       .qrb-ccy2  { display: flex; gap: 16px; margin-top: 12px; }
       .qrb-val2  { font-size: 11pt; font-weight: 700; font-family: Arial; }
       .qrb-zt-right { flex: 1; display: flex; flex-direction: column; gap: 9px; }
@@ -18158,7 +18235,7 @@ function generatePdfRechnung(rechnungId) {
         .qrb-zt-left { width: 56mm; }
         .qrb-qr-wrap { width: 46mm; height: 46mm; }
         .qrb-qr-img  { width: 46mm; height: 46mm; }
-        .qrb-kreuz { width: 8mm; height: 8mm; }
+        .qrb-kreuz { width: 7mm; height: 7mm; }
       }
     `;
 
@@ -18170,6 +18247,7 @@ function generatePdfRechnung(rechnungId) {
       '<style>', pdfCSS, '</style>',
       '</head><body>',
       html,
+      qrPage,
       '</body></html>'
     ].join('');
 
@@ -18238,7 +18316,7 @@ function generatePdfRechnung(rechnungId) {
         // Inhalt in pdf-print-area laden
         const area = el('pdf-print-area');
         if (area) {
-          area.innerHTML = '<style>' + pdfCSS + '</style>' + html;
+          area.innerHTML = '<style>' + pdfCSS + '</style>' + html + qrPage;
           area.style.display = 'block';
         }
         setTimeout(function() {
