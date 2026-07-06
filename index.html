@@ -9538,6 +9538,20 @@ function openServiceErinnerungenModal() {
     });
   });
 
+  overlay.querySelectorAll('.btn-se-antwort').forEach(b => {
+    b.addEventListener('click', e => {
+      e.stopPropagation();
+      seKontaktAntwort(parseInt(b.dataset.fzid), b.dataset.typ);
+    });
+  });
+
+  overlay.querySelectorAll('.btn-se-nachfassen').forEach(b => {
+    b.addEventListener('click', e => {
+      e.stopPropagation();
+      seKontaktErfassen(parseInt(b.dataset.fzid), b.dataset.typ, 'WA');
+    });
+  });
+
   // Zeile anklicken → Fahrzeugdetail Tab "Kontakte"
   overlay.querySelectorAll('.se-row').forEach(row => {
     row.addEventListener('click', e => {
@@ -9800,16 +9814,6 @@ function renderKunden(){
   }).join('');
   tbody.querySelectorAll('[data-kid]').forEach(b=>b.addEventListener('click',()=>showKundeDetail(parseInt(b.dataset.kid))));
   tbody.querySelectorAll('.btn-fz-direct').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();showFahrzeugDetail(parseInt(b.dataset.fzid));}));
-  overlay.querySelectorAll('.btn-se-antwort').forEach(b => {
-    b.addEventListener('click', () => seKontaktAntwort(parseInt(b.dataset.fzid), b.dataset.typ));
-  });
-  overlay.querySelectorAll('.btn-se-nachfassen').forEach(b => {
-    b.addEventListener('click', () => {
-      seKontaktErfassen(parseInt(b.dataset.fzid), b.dataset.typ, 'WA');
-    });
-  });
-
-
   tbody.querySelectorAll('.btn-ek').forEach(b=>b.addEventListener('click',()=>openModal('kunde',parseInt(b.dataset.id))));
   tbody.querySelectorAll('.btn-dk').forEach(b=>b.addEventListener('click',()=>inaktivSetzenKunde(parseInt(b.dataset.id))));
   tbody.querySelectorAll('.btn-reaktiv').forEach(b=>b.addEventListener('click',()=>reaktivierenKunde(parseInt(b.dataset.id))));
