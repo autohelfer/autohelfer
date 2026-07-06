@@ -4227,8 +4227,6 @@
         font-size: 16px !important;
       }
 
-      /* Kalender-Grid auf Tablet */
-      .cal-grid { height: 140px; }
     }
 
     /* ---- IPAD PRO 13" PORTRAIT: 1024px ---- */
@@ -4265,8 +4263,6 @@
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       }
 
-      /* Kalender: mehr Höhe */
-      .cal-grid { height: 140px; }
     }
 
     /* ---- IPAD PRO 13" LANDSCAPE SPEZIFISCH: 1366px ---- */
@@ -4793,7 +4789,7 @@
     .qrb-qr-img  { width:46mm; height:46mm; image-rendering:pixelated; display:block; }
     .qrb-kreuz {
       position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      width:8mm; height:8mm; background:white;
+      width:7mm; height:7mm; background:white;
       display:flex; align-items:center; justify-content:center;
     }
     .qrb-ccy2 { display:flex; gap:4mm; margin-top:3mm; }
@@ -5010,6 +5006,10 @@
       }
     }
 
+
+/* === LOGIN: PASSWORT-SICHTBARKEIT (Auge) === */
+#login-pw-toggle:hover, #login-pw-toggle:focus-visible { color:#fff; }
+#login-pw-toggle:focus-visible { outline:1px solid #f0b429; outline-offset:-6px; border-radius:6px; }
   </style>
 </head>
 <body>
@@ -5056,10 +5056,18 @@
     <!-- Passwort -->
     <div style="margin-bottom:24px">
       <label style="display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:6px">Passwort</label>
-      <input id="login-password" type="password" autocomplete="current-password"
-        placeholder="••••••••"
-        style="width:100%;box-sizing:border-box;background:#1a1a1a;border:1px solid #333;color:#fff;padding:12px 14px;border-radius:6px;font-size:14px;outline:none;font-family:inherit"
-      />
+      <div style="position:relative">
+        <input id="login-password" type="password" autocomplete="current-password"
+          placeholder="••••••••"
+          style="width:100%;box-sizing:border-box;background:#1a1a1a;border:1px solid #333;color:#fff;padding:12px 44px 12px 14px;border-radius:6px;font-size:14px;outline:none;font-family:inherit"
+        />
+        <button type="button" id="login-pw-toggle" onclick="loginTogglePw()"
+          aria-label="Passwort anzeigen" aria-pressed="false"
+          style="position:absolute;top:0;right:0;height:100%;width:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;padding:0;margin:0;cursor:pointer;color:#666;-webkit-tap-highlight-color:transparent">
+          <svg id="login-pw-eye" viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg id="login-pw-eye-off" viewBox="0 0 24 24" style="display:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </button>
+      </div>
     </div>
 
     <!-- Login Button -->
@@ -5172,6 +5180,9 @@
 
       <!-- Aufträge ohne Termin -->
       <div id="dash-ohne-termin-wrap" style="margin-top:20px"></div>
+
+      <!-- MAHNWESEN: ueberfaellige Rechnungen je Stufe -->
+      <div id="dash-mahnwesen-wrap" style="margin-top:20px"></div>
     </div>
 
     <!-- KUNDEN -->
@@ -5458,8 +5469,8 @@
       <div id="deb-detail" style="display:none"></div>
     </div>
 
-    <!-- EINSTELLUNGEN -->
-<div class="page" id="page-mechaniker">
+    <!-- MECHANIKER -->
+    <div class="page" id="page-mechaniker">
 
       <!-- Header: Name + Filter + Datum -->
       <div style="padding:0 0 12px">
@@ -5533,6 +5544,11 @@
     <!-- ERSATZWAGEN -->
     <div class="page" id="page-ersatzwagen">
       <div id="ersatzwagen-content"></div>
+    </div>
+
+    <!-- EINSTELLUNGEN -->
+    <div class="page" id="page-einstellungen">
+      <div id="einstellungen-content"></div>
     </div>
 
   </div>
@@ -5696,93 +5712,6 @@
   </div>
 </div>
 
-<!-- SCHNELLTERMIN -->
-<div id="schnelltermin-overlay">
-  <div class="st-sheet">
-    <!-- Progress Dots -->
-    <div class="st-steps-indicator">
-      <div class="st-dot done" id="st-dot-1"></div>
-      <div class="st-dot" id="st-dot-2"></div>
-      <div class="st-dot" id="st-dot-3"></div>
-    </div>
-
-    <!-- Step 1: Kunde -->
-    <div class="st-step active" id="st-step-1">
-      <div class="st-header">
-        <div>
-          <div class="st-title">1 · Kunde wählen</div>
-          <div class="st-subtitle">Name oder Kennzeichen eingeben</div>
-        </div>
-        <button class="st-close" onclick="stClose()">×</button>
-      </div>
-      <input class="form-input" id="st-kunde-search"
-        placeholder="z.B. Keller oder BL 123 456"
-        autocomplete="off" autocorrect="off" spellcheck="false"
-        style="font-size:16px;margin-bottom:4px" />
-      <div id="st-kunde-results" class="st-kunde-result" style="display:none"></div>
-    </div>
-
-    <!-- Step 2: Datum + Zeit + Fahrzeug -->
-    <div class="st-step" id="st-step-2">
-      <div class="st-header">
-        <div>
-          <div class="st-title">2 · Datum & Zeit</div>
-          <div id="st-kunde-label" class="st-subtitle">—</div>
-        </div>
-        <button class="st-close" onclick="stGoStep(1)">←</button>
-      </div>
-      <div id="st-selected-kunde" class="st-selected-kunde" style="display:none">
-        <span style="font-size:22px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0;display:inline-block;vertical-align:middle"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-        <div>
-          <div style="font-weight:700;font-size:14px" id="st-kunde-name">—</div>
-          <div style="font-size:11px;color:var(--text-muted)" id="st-kunde-fz">—</div>
-        </div>
-      </div>
-      <div class="form-row" style="margin-top:4px">
-        <div class="form-group">
-          <label>Datum *</label>
-          <input class="form-input" id="st-datum" type="text" inputmode="numeric" placeholder="TT.MM.JJJJ" maxlength="10" style="height:48px" />
-        </div>
-        <div class="form-group">
-          <label>Ankunft</label>
-          <input class="form-input" id="st-ankunft" type="text" inputmode="numeric" placeholder="08:00" maxlength="5" style="height:48px" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Fahrzeug</label>
-        <select class="form-select" id="st-fahrzeug" style="font-size:14px">
-          <option value="">— Kein Fahrzeug —</option>
-        </select>
-      </div>
-      <button class="st-big-btn" onclick="stGoStep(3)">Weiter →</button>
-    </div>
-
-    <!-- Step 3: Beschreibung + Speichern -->
-    <div class="st-step" id="st-step-3">
-      <div class="st-header">
-        <div>
-          <div class="st-title">3 · Was wird gemacht?</div>
-          <div id="st-summary" class="st-subtitle">—</div>
-        </div>
-        <button class="st-close" onclick="stGoStep(2)">←</button>
-      </div>
-      <input class="form-input" id="st-beschreibung"
-        placeholder="z.B. Service, Bremsbeläge, MFK Vorbereitung..."
-        style="font-size:15px;margin-bottom:8px"
-        autocomplete="off" />
-      <div id="st-beschreibung-vorschlaege" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
-        <button class="tag-btn" onclick="stSetBeschreibung('Service')">Service</button>
-        <button class="tag-btn" onclick="stSetBeschreibung('Reifenwechsel')">Reifenwechsel</button>
-        <button class="tag-btn" onclick="stSetBeschreibung('MFK Vorbereitung')">MFK Vorbereitung</button>
-        <button class="tag-btn" onclick="stSetBeschreibung('Bremsbeläge')">Bremsbeläge</button>
-        <button class="tag-btn" onclick="stSetBeschreibung('Ölwechsel')">Ölwechsel</button>
-        <button class="tag-btn" onclick="stSetBeschreibung('Diagnose')">Diagnose</button>
-      </div>
-      <button class="st-big-btn green" onclick="stSpeichern()">✓ Termin speichern</button>
-    </div>
-
-  </div>
-</div>
 
 <!-- MECHANIKER VOLLBILD-MODUS -->
 <div id="mech-fullscreen">
@@ -6367,8 +6296,6 @@
         </div>
       </div>
     </div>
-      </div>
-    </div>
     <!-- Kunde informieren (erscheint nur bei Status Erledigt) -->
     <div id="a-ki-wrap" style="display:none;padding:16px 24px 0">
       <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin-bottom:10px">Kunde informieren</div>
@@ -6467,11 +6394,6 @@
     </div>
   </div>
 </div>
-
-
-    <div class="page" id="page-einstellungen">
-      <div id="einstellungen-content"></div>
-    </div>
 
     <!-- PDF-DRUCK: Wird per JS befüllt, nur beim Drucken sichtbar -->
 <div id="pdf-print-area"></div>
@@ -6722,23 +6644,78 @@ function rSaldo(r) {
   return Math.max(0, roundRp(tot - bez));
 }
 
-// Mahnstufe berechnen (automatisch nach Tagen, aber manuell überschreibbar)
+// ── Mahnwesen: Stufenlogik (Parameter aus FIRMA / Einstellungen) ──────
+// Datenmodell (API-ready): r.mahnstufe = 1|2|3, r.mahnung_log = [{stufe, datum}]
+// Stufen werden IMMER manuell ausgeloest — die App berechnet nur Vorschlaege.
+
+// ISO-Datum + n Tage
+function addTageIso(iso, n) {
+  if (!iso) return null;
+  const d = new Date(iso + 'T12:00:00');
+  if (isNaN(d.getTime())) return null;
+  d.setDate(d.getDate() + (parseInt(n, 10) || 0));
+  return d.toISOString().split('T')[0];
+}
+
+const MAHNSTUFE_TITEL = { 1: 'Zahlungserinnerung', 2: '2. Mahnung', 3: '3. Mahnung' };
+
+// Zentrale Mahn-Info einer Rechnung: Faelligkeit, Stufe, naechste Stufe, Gebuehr
+function rMahnInfo(r) {
+  const heute = new Date().toISOString().split('T')[0];
+  // Legacy-Toleranz: fruehere String-Stufen auf Zahlen mappen
+  if (typeof r.mahnstufe === 'string' && r.mahnstufe) {
+    r.mahnstufe = ({ erinnerung: 1, mahnung1: 1, mahnung2: 2 })[r.mahnstufe] || 0;
+  }
+  const stufe  = r.mahnstufe >= 1 ? Math.min(r.mahnstufe, 3) : 0;
+  const log    = Array.isArray(r.mahnung_log) ? r.mahnung_log : [];
+  const total  = r.total != null ? r.total : ((r.subtotal||r.betrag||0)+(r.mwstBetrag||0));
+  const saldo  = rSaldo(r);
+  const offen  = ['ausstehend','mahnung'].includes(r.status) && saldo > 0;
+  const faellig = addTageIso(r.datum, FIRMA.zahlungsfrist_tage);
+  const ueberfaellig = !!(offen && faellig && heute > faellig);
+  const gebuehr = stufe > 0 ? (parseFloat(FIRMA['mahnung' + stufe + '_gebuehr']) || 0) : 0;
+
+  // Naechste Stufe: ab Faelligkeit + Frist1 bzw. letztes Stufendatum + FristN
+  let naechsteStufe = null, naechsteAb = null, naechsteMoeglich = false;
+  if (offen && stufe < 3) {
+    naechsteStufe = stufe + 1;
+    const frist = parseInt(FIRMA['mahnung' + naechsteStufe + '_frist_tage'], 10) || 0;
+    const basis = stufe === 0
+      ? faellig
+      : ((log.filter(e => e.stufe === stufe).pop() || {}).datum || faellig);
+    naechsteAb = addTageIso(basis, frist);
+    naechsteMoeglich = !!(naechsteAb && heute >= naechsteAb);
+  }
+
+  let tageUeberfaellig = 0;
+  if (ueberfaellig) {
+    tageUeberfaellig = Math.max(0, Math.round(
+      (new Date(heute + 'T12:00:00') - new Date(faellig + 'T12:00:00')) / 86400000));
+  }
+
+  return {
+    stufe, faellig, ueberfaellig, offen, tageUeberfaellig, gebuehr,
+    totalMitGebuehr: roundRp(total + gebuehr),   // Rechnungsbetrag + Gebuehr aktuelle Stufe
+    offenMitGebuehr: roundRp(saldo + gebuehr),   // offener Saldo + Gebuehr (Basis QR + Texte)
+    naechsteStufe, naechsteAb, naechsteMoeglich,
+  };
+}
+
+// Anzeige-Stufe fuer Badges/Filter
 function rMahnstufe(r) {
-  if (r.mahnstufe) return r.mahnstufe; // manuell gesetzt
-  if (['bezahlt','storniert','fakturiert'].includes(r.status)) return '';
-  const tage = tageSeit(r.datum);
-  if (tage === null) return 'rechnung';
-  if (tage >= 45) return 'mahnung2';
-  if (tage >= 30) return 'mahnung1';
-  if (tage >= 15) return 'erinnerung';
+  const mi = rMahnInfo(r);
+  if (!mi.offen) return 'rechnung';
+  if (mi.stufe >= 1) return 'stufe' + mi.stufe;
+  if (mi.ueberfaellig) return 'faellig';
   return 'rechnung';
 }
 
 const MAHNSTUFE_LABEL = {
-  rechnung:   { label: 'Rechnung',    color: 'var(--text-muted)',  bg: 'var(--surface2)' },
-  erinnerung: { label: 'Erinnerung',  color: '#e67e22',            bg: 'rgba(230,126,34,0.1)' },
-  mahnung1:   { label: '1. Mahnung',  color: '#e74c3c',            bg: 'rgba(231,76,60,0.1)' },
-  mahnung2:   { label: '2. Mahnung',  color: '#c0392b',            bg: 'rgba(192,57,43,0.15)' },
+  rechnung: { label: 'Rechnung',           color: 'var(--text-muted)', bg: 'var(--surface2)' },
+  faellig:  { label: 'Überfällig',         color: '#e67e22',           bg: 'rgba(230,126,34,0.1)' },
+  stufe1:   { label: 'Zahlungserinnerung', color: '#e74c3c',           bg: 'rgba(231,76,60,0.1)' },
+  stufe2:   { label: '2. Mahnung',         color: '#c0392b',           bg: 'rgba(192,57,43,0.15)' },
+  stufe3:   { label: '3. Mahnung',         color: '#7d1f12',           bg: 'rgba(125,31,18,0.2)' },
 };
 
 
@@ -9557,6 +9534,20 @@ function openServiceErinnerungenModal() {
     });
   });
 
+  overlay.querySelectorAll('.btn-se-antwort').forEach(b => {
+    b.addEventListener('click', e => {
+      e.stopPropagation();
+      seKontaktAntwort(parseInt(b.dataset.fzid), b.dataset.typ);
+    });
+  });
+
+  overlay.querySelectorAll('.btn-se-nachfassen').forEach(b => {
+    b.addEventListener('click', e => {
+      e.stopPropagation();
+      seKontaktErfassen(parseInt(b.dataset.fzid), b.dataset.typ, 'WA');
+    });
+  });
+
   // Zeile anklicken → Fahrzeugdetail Tab "Kontakte"
   overlay.querySelectorAll('.se-row').forEach(row => {
     row.addEventListener('click', e => {
@@ -9819,16 +9810,6 @@ function renderKunden(){
   }).join('');
   tbody.querySelectorAll('[data-kid]').forEach(b=>b.addEventListener('click',()=>showKundeDetail(parseInt(b.dataset.kid))));
   tbody.querySelectorAll('.btn-fz-direct').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();showFahrzeugDetail(parseInt(b.dataset.fzid));}));
-  overlay.querySelectorAll('.btn-se-antwort').forEach(b => {
-    b.addEventListener('click', () => seKontaktAntwort(parseInt(b.dataset.fzid), b.dataset.typ));
-  });
-  overlay.querySelectorAll('.btn-se-nachfassen').forEach(b => {
-    b.addEventListener('click', () => {
-      seKontaktErfassen(parseInt(b.dataset.fzid), b.dataset.typ, 'WA');
-    });
-  });
-
-
   tbody.querySelectorAll('.btn-ek').forEach(b=>b.addEventListener('click',()=>openModal('kunde',parseInt(b.dataset.id))));
   tbody.querySelectorAll('.btn-dk').forEach(b=>b.addEventListener('click',()=>inaktivSetzenKunde(parseInt(b.dataset.id))));
   tbody.querySelectorAll('.btn-reaktiv').forEach(b=>b.addEventListener('click',()=>reaktivierenKunde(parseInt(b.dataset.id))));
@@ -12329,48 +12310,68 @@ function tageSeit(datumStr) {
 }
 
 // Zahlungserinnerungs-Text generieren
-function mahnungText(r, k) {
-  const nr  = rechnungNr(r);
-  const tot = chf(r.total != null ? r.total : ((r.subtotal||r.betrag||0)+(r.mwstBetrag||0)));
-  const dat = r.datum || '';
-  const name = k ? k.vorname + ' ' + k.nachname : 'Kunde';
-  const tage = tageSeit(dat);
-  const isMahnung = r.status === 'mahnung';
+// Mahntext je Stufe (Betrag = offener Saldo inkl. Gebuehr der Stufe)
+function mahnungTextStufe(r, k, stufe) {
+  const nr    = rechnungNr(r);
+  const dat   = formatDateDE(r.datum || '');
+  const name  = k ? (k.firma || (k.vorname + ' ' + k.nachname).trim()) : 'Kunde';
+  const firma = ((FIRMA.name || '') + ' ' + (FIRMA.rechtsform || '')).trim();
+  const geb   = stufe > 0 ? (parseFloat(FIRMA['mahnung' + stufe + '_gebuehr']) || 0) : 0;
+  const tot   = chf(roundRp(rSaldo(r) + geb));
+  const gebTxt = geb > 0 ? ` (inkl. Mahngebühr CHF ${chf(geb)})` : '';
+  const zahlbarBis = formatDateDE(addTageIso(
+    new Date().toISOString().split('T')[0], FIRMA['mahnung' + stufe + '_frist_tage']));
 
-  return isMahnung
-    ? `Guten Tag ${name}
+  if (stufe >= 3) {
+    return `Guten Tag ${name}
 
-Wir erlauben uns, Sie nochmals an die ausstehende Rechnung ${nr} vom ${dat} über CHF ${tot} zu erinnern.
+Die Rechnung ${nr} vom ${dat} ist trotz zweifacher Mahnung weiterhin unbezahlt. Der ausstehende Betrag beträgt CHF ${tot}${gebTxt}.
 
-Bitte überweisen Sie den Betrag innerhalb von 10 Tagen.
+Wir setzen Ihnen hiermit eine letzte Frist bis am ${zahlbarBis}. Nach unbenutztem Ablauf dieser Frist werden wir ohne weitere Ankündigung rechtliche Schritte einleiten (Betreibung).
 
-Mit freundlichen Grüssen
-Ihre Garage`
-    : `Guten Tag ${name}
+${firma}`;
+  }
+  if (stufe === 2) {
+    return `Guten Tag ${name}
 
-Wir erlauben uns, Sie freundlich an die Begleichung unserer Rechnung ${nr} vom ${dat} über CHF ${tot} zu erinnern.
+Trotz unserer Zahlungserinnerung ist die Rechnung ${nr} vom ${dat} weiterhin offen. Der ausstehende Betrag beträgt CHF ${tot}${gebTxt}.
 
-Falls die Zahlung bereits erfolgt ist, betrachten Sie dieses Schreiben als gegenstandslos.
+Wir bitten Sie, den Betrag bis spätestens ${zahlbarBis} zu überweisen.
 
-Mit freundlichen Grüssen
-Ihre Garage`;
+Freundliche Grüsse
+${firma}`;
+  }
+  return `Guten Tag ${name}
+
+Wir erlauben uns, Sie freundlich an unsere Rechnung ${nr} vom ${dat} über CHF ${tot} zu erinnern — möglicherweise ist sie Ihrer Aufmerksamkeit entgangen.
+
+Bitte begleichen Sie den Betrag bis am ${zahlbarBis}. Falls sich Ihre Zahlung mit dieser Nachricht kreuzt, betrachten Sie sie bitte als gegenstandslos.
+
+Freundliche Grüsse
+${firma}`;
 }
 
-// Mail-Link mit Rechnung als Text
+// Effektive Stufe fuer Kommunikation: ausgeloeste Stufe, sonst die anstehende
+function mahnungEffStufe(r) {
+  const mi = rMahnInfo(r);
+  return mi.stufe >= 1 ? mi.stufe : (mi.naechsteStufe || 1);
+}
+
+function mahnungText(r, k) { return mahnungTextStufe(r, k, mahnungEffStufe(r)); }
+
+// Mail-Link mit Mahntext der korrekten Stufe
 function mahnungMailLink(r, k) {
-  const betreff = encodeURIComponent('Zahlungserinnerung ' + rechnungNr(r));
-  const body    = encodeURIComponent(mahnungText(r, k));
+  const stufe   = mahnungEffStufe(r);
+  const betreff = encodeURIComponent(MAHNSTUFE_TITEL[stufe] + ' ' + rechnungNr(r));
+  const body    = encodeURIComponent(mahnungTextStufe(r, k, stufe));
   const email   = k ? (k.email || '') : '';
   return `mailto:${email}?subject=${betreff}&body=${body}`;
 }
 
-// WhatsApp-Link
+// WhatsApp-Link mit Mahntext der korrekten Stufe
 function mahnungWaLink(r, k) {
-  const nr  = rechnungNr(r);
-  const tot = chf(r.total != null ? r.total : ((r.subtotal||r.betrag||0)+(r.mwstBetrag||0)));
-  const name = k ? k.vorname : 'Guten Tag';
   const tel  = k ? ((k.mobile || k.telefon || '').replace(/\s/g,'').replace(/^\+/, '')) : '';
-  const text = encodeURIComponent(`Guten Tag ${name}, wir erinnern freundlich an Rechnung ${nr} über CHF ${tot}. Vielen Dank!`);
+  const text = encodeURIComponent(mahnungTextStufe(r, k, mahnungEffStufe(r)));
   return tel ? `https://wa.me/${tel}?text=${text}` : `https://wa.me/?text=${text}`;
 }
 
@@ -12442,16 +12443,38 @@ function rVersandBadge(r) {
 
 // HTML für Mahnungs-Aktionszeile
 function mahnungAktionenHTML(r, k) {
-  const tage   = tageSeit(r.datum);
+  const mi     = rMahnInfo(r);
   const telUrl = mahnungTelLink(k);
   const waUrl  = mahnungWaLink(r, k);
   const mailUrl= mahnungMailLink(r, k);
 
+  // Faelligkeits-/Stufen-Badge
   let tageBadge = '';
-  if (tage !== null) {
-    const cls = tage <= 20 ? 'tage-ok' : tage <= 40 ? 'tage-warn' : 'tage-over';
-    tageBadge = `<span class="tage-badge ${cls}">${tage} Tage</span>`;
+  if (mi.stufe >= 1) {
+    const letzte = (Array.isArray(r.mahnung_log) ? r.mahnung_log : []).filter(e => e.stufe === mi.stufe).pop();
+    tageBadge = `<span class="tage-badge tage-over">${MAHNSTUFE_TITEL[mi.stufe]}${letzte && letzte.datum ? ' am ' + formatDateDE(letzte.datum) : ''}</span>`;
+  } else if (mi.ueberfaellig) {
+    tageBadge = `<span class="tage-badge tage-warn">${mi.tageUeberfaellig} Tage überfällig</span>`;
+  } else if (mi.faellig) {
+    tageBadge = `<span class="tage-badge tage-ok">fällig am ${formatDateDE(mi.faellig)}</span>`;
   }
+
+  // Naechste Stufe ausloesen (immer manuell; hervorgehoben wenn Frist erreicht)
+  let stufenBtn = '';
+  if (mi.naechsteStufe) {
+    const titel = MAHNSTUFE_TITEL[mi.naechsteStufe];
+    stufenBtn = mi.naechsteMoeglich
+      ? `<button class="btn-mahnung btn-mahnung-status" style="background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700" onclick="mahnungAusloesen(${r.id})">+ ${titel} auslösen</button>`
+      : `<button class="btn-mahnung btn-mahnung-status" onclick="mahnungAusloesen(${r.id})" title="Empfohlen ab ${formatDateDE(mi.naechsteAb)}">${titel} ab ${formatDateDE(mi.naechsteAb)}</button>`;
+  }
+
+  // PDF + Zuruecknehmen (ab Stufe 1)
+  const pdfBtn = mi.stufe >= 1
+    ? `<button class="btn-mahnung" onclick="generatePdfMahnung(${r.id})" title="Mahnungs-PDF öffnen">Mahnung-PDF</button>`
+    : '';
+  const undoBtn = mi.stufe >= 1
+    ? `<button class="btn-mahnung" onclick="mahnungZuruecksetzen(${r.id})" title="Letzte Mahnstufe zurücknehmen" style="color:var(--text-muted)">&#8634;</button>`
+    : '';
 
   return `<div class="mahnung-actions">
     ${tageBadge}
@@ -12467,20 +12490,58 @@ function mahnungAktionenHTML(r, k) {
       <svg class="icon-svg" viewBox="0 0 24 24" style="width:12px;height:12px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       E-Mail
     </a>
-    <button class="btn-mahnung btn-mahnung-status" onclick="rechnungMahnungSetzen(${r.id})" title="Als Mahnung markieren">
-      ${r.status === 'mahnung' ? '&#9888; Mahnung' : '&#43; Mahnung setzen'}
-    </button>
+    ${stufenBtn}
+    ${pdfBtn}
+    ${undoBtn}
   </div>`;
 }
 
-function rechnungMahnungSetzen(id) {
+// Naechste Mahnstufe ausloesen (immer manuell; App versendet nie selbst)
+function mahnungAusloesen(id) {
   const r = db.rechnungen.find(x => x.id === id);
   if (!r) return;
-  r.status = r.status === 'mahnung' ? 'ausstehend' : 'mahnung';
-  r.updatedAt = new Date().toISOString();
-  saveDb();
-  renderRechnungen();
-  renderDashboard();
+  const mi = rMahnInfo(r);
+  if (!mi.naechsteStufe) { showToast('Höchste Mahnstufe bereits erreicht.', 'warning'); return; }
+  const doIt = () => {
+    const heute = new Date().toISOString().split('T')[0];
+    r.mahnstufe = mi.naechsteStufe;
+    if (!Array.isArray(r.mahnung_log)) r.mahnung_log = [];
+    r.mahnung_log.push({ stufe: mi.naechsteStufe, datum: heute });
+    r.status = 'mahnung';
+    r.updatedAt = new Date().toISOString();
+    saveDb();
+    renderRechnungen();
+    renderDashboard();
+    generatePdfMahnung(r.id);
+  };
+  if (mi.naechsteMoeglich) { doIt(); return; }
+  appConfirm(
+    MAHNSTUFE_TITEL[mi.naechsteStufe] + ' vorzeitig auslösen?',
+    'Empfohlen ab ' + formatDateDE(mi.naechsteAb) + ' (gemäss Fristen in den Firmendaten). Trotzdem jetzt auslösen?',
+    'Auslösen', false
+  ).then(ok => { if (ok) doIt(); });
+}
+
+// Letzte Mahnstufe zuruecknehmen (Fehlklick-Korrektur)
+function mahnungZuruecksetzen(id) {
+  const r = db.rechnungen.find(x => x.id === id);
+  if (!r || !(r.mahnstufe >= 1)) return;
+  appConfirm('Mahnstufe zurücknehmen',
+    MAHNSTUFE_TITEL[r.mahnstufe] + ' für ' + rechnungNr(r) + ' zurücknehmen?',
+    'Zurücknehmen', true
+  ).then(ok => {
+    if (!ok) return;
+    if (Array.isArray(r.mahnung_log)) {
+      const idx = r.mahnung_log.map(e => e.stufe).lastIndexOf(r.mahnstufe);
+      if (idx >= 0) r.mahnung_log.splice(idx, 1);
+    }
+    r.mahnstufe = r.mahnstufe - 1;
+    if (r.mahnstufe <= 0) { delete r.mahnstufe; r.status = 'ausstehend'; }
+    r.updatedAt = new Date().toISOString();
+    saveDb();
+    renderRechnungen();
+    renderDashboard();
+  });
 }
 
 
@@ -12495,10 +12556,14 @@ function rechnungenFilter(typ) {
   const badge = el('re-filter-badge');
   const label = el('re-filter-label');
   const labels = {
-    ueberfaellig: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0;display:inline-block;vertical-align:middle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Überfällige Rechnungen (> 14 Tage)',
+    ueberfaellig: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0;display:inline-block;vertical-align:middle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Überfällige Rechnungen (Zahlungsfrist überschritten)',
     ausstehend:   'Ausstehende Rechnungen',
     bezahlt:      '✓ Bezahlte Rechnungen (diesen Monat)',
-    mahnung:      '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e74c3c;flex-shrink:0;vertical-align:middle"></span> Mahnungen'
+    mahnung:      '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e74c3c;flex-shrink:0;vertical-align:middle"></span> Mahnungen',
+    'mahn-faellig': 'Überfällig — noch keine Mahnung ausgelöst',
+    'mahn-stufe1':  'Zahlungserinnerungen (Stufe 1)',
+    'mahn-stufe2':  '2. Mahnungen',
+    'mahn-stufe3':  '3. Mahnungen'
   };
   if (_reFilter && badge && label) {
     badge.style.display = 'block';
@@ -12522,15 +12587,18 @@ function renderRechnungen(){
 
   // KPI-Filter
   if (_reFilter === 'ueberfaellig') {
-    const v14 = new Date(); v14.setDate(v14.getDate()-14);
-    const v14s = v14.toISOString().split('T')[0];
-    list = list.filter(r => ['ausstehend','mahnung'].includes(r.status) && r.datum && r.datum < v14s);
+    list = list.filter(r => rMahnInfo(r).ueberfaellig);
+  } else if (_reFilter === 'mahn-faellig') {
+    list = list.filter(r => { const mi = rMahnInfo(r); return mi.ueberfaellig && mi.stufe === 0; });
+  } else if (_reFilter === 'mahn-stufe1' || _reFilter === 'mahn-stufe2' || _reFilter === 'mahn-stufe3') {
+    const s = parseInt(_reFilter.slice(-1), 10);
+    list = list.filter(r => { const mi = rMahnInfo(r); return mi.offen && mi.stufe === s; });
   } else if (_reFilter === 'ausstehend') {
     list = list.filter(r => ['ausstehend','mahnung'].includes(r.status));
   } else if (_reFilter === 'bezahlt') {
     list = list.filter(r => r.status === 'bezahlt' && (r.datum||'').startsWith(thisMonth));
   } else if (_reFilter === 'mahnung') {
-    list = list.filter(r => r.status === 'mahnung' || rMahnstufe(r) !== 'rechnung');
+    list = list.filter(r => { const mi = rMahnInfo(r); return mi.offen && mi.stufe >= 1; });
   } else if (_reFilter === 'nicht-verschickt') {
     list = list.filter(r => !['bezahlt','storniert'].includes(r.status) && (!r.sent_log || !r.sent_log.length));
   }
@@ -12604,7 +12672,8 @@ function renderRechnungen(){
     // Tage-Badge
     let tageBadge = '';
     if (tage !== null && offeneStatus.includes(r.status)) {
-      const tageCls = tage <= 14 ? '#27ae60' : tage <= 30 ? '#e67e22' : '#e74c3c';
+      // Farbe nach Faelligkeit (FIRMA-Zahlungsfrist), nicht nach fixen Tagen
+      const tageCls = stufe === 'rechnung' ? '#27ae60' : stufe === 'faellig' ? '#e67e22' : '#e74c3c';
       tageBadge = '<span style="background:' + tageCls + '18;color:' + tageCls + ';padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">' + tage + 'd</span>';
     }
 
@@ -12645,9 +12714,9 @@ function renderRechnungen(){
         '<button class="btn-wallee" data-id="' + r.id + '" title="Zahlungslink senden" style="background:rgba(39,174,96,0.1);border:1px solid #27ae60;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer;font-family:inherit;color:#27ae60;white-space:nowrap">Zahlungslink</button>'
       : '';
 
-    const rowBg = stufe === 'mahnung2' ? 'rgba(192,57,43,0.04)' : stufe === 'mahnung1' ? 'rgba(231,76,60,0.02)' : '';
+    const rowBg = stufe === 'stufe3' ? 'rgba(125,31,18,0.06)' : stufe === 'stufe2' ? 'rgba(192,57,43,0.04)' : stufe === 'stufe1' ? 'rgba(231,76,60,0.02)' : '';
 
-    html += '<tr' + (rowBg ? ' style="background:' + rowBg + '"' : '') + '>' +
+    html += '<tr class="r-row" data-rid="' + r.id + '" style="cursor:pointer' + (rowBg ? ';background:' + rowBg : '') + '">' +
       '<td style="white-space:nowrap;font-size:12px">' + esc(formatDateDE(r.datum||'')) + '</td>' +
       '<td class="mono" style="font-size:12px"><strong>' + rechnungNr(r) + '</strong></td>' +
       '<td>' + kundeHTML + '</td>' +
@@ -12677,6 +12746,12 @@ function renderRechnungen(){
   tbody.innerHTML = html;
 
   // Listeners
+  // Zeilen-Klick oeffnet das Rechnungsdetail; Klicks auf interaktive Elemente
+  // (Buttons/Links, z.B. WhatsApp/PDF/Loeschen) loesen NUR ihre eigene Aktion aus
+  tbody.querySelectorAll('tr.r-row').forEach(tr => tr.addEventListener('click', (e) => {
+    if (e.target.closest('button, a, input, select, label')) return;
+    showRechnungDetail(parseInt(tr.dataset.rid));
+  }));
   tbody.querySelectorAll('.btn-dr').forEach(b => b.addEventListener('click', () => deleteRechnung(parseInt(b.dataset.id))));
   tbody.querySelectorAll('.btn-pdf-r').forEach(b => b.addEventListener('click', () => generatePdfRechnung(parseInt(b.dataset.id))));
   tbody.querySelectorAll('.btn-teilzahl').forEach(b => b.addEventListener('click', () => openTeilzahlungModal(parseInt(b.dataset.id))));
@@ -12686,15 +12761,12 @@ function renderRechnungen(){
 }
 
 function updateRechnungenKPIs() {
-  const heute = new Date().toISOString().split('T')[0];
-  const v14 = new Date(); v14.setDate(v14.getDate()-14);
-  const v14s = v14.toISOString().split('T')[0];
   const thisMonth = new Date().toISOString().slice(0,7);
   const offene = db.rechnungen.filter(r => ['ausstehend','mahnung'].includes(r.status));
-  const ueberfaellig = offene.filter(r => r.datum && r.datum < v14s).length;
+  const ueberfaellig = offene.filter(r => rMahnInfo(r).ueberfaellig).length;
   const offChf = offene.reduce((s,r) => s + rSaldo(r), 0);
   const bezahlt = db.rechnungen.filter(r => r.status==='bezahlt'&&(r.datum||'').startsWith(thisMonth)).length;
-  const mahnungAnz = db.rechnungen.filter(r => r.status==='mahnung' || rMahnstufe(r) !== 'rechnung').length;
+  const mahnungAnz = offene.filter(r => rMahnInfo(r).stufe >= 1).length;
   if(el('kpi-ueberfaellig')) el('kpi-ueberfaellig').textContent = ueberfaellig;
   if(el('stat-umsatz'))      el('stat-umsatz').textContent = offChf > 0 ? chf(offChf) : '0';
   if(el('kpi-re-bezahlt'))   el('kpi-re-bezahlt').textContent = bezahlt;
@@ -12715,12 +12787,13 @@ function camtImport(input) {
       let matched = 0, unmatched = 0;
       entries.forEach(ntry => {
         const amt  = parseFloat(ntry.querySelector('Amt')?.textContent || '0');
-        const ref  = ntry.querySelector('RmtInf Strd Cdtr Ref')?.textContent ||
+        // QRR steht strukturiert in RmtInf > Strd > CdtrRefInf > Ref
+        const ref  = ntry.querySelector('RmtInf Strd CdtrRefInf Ref')?.textContent ||
                      ntry.querySelector('RmtInf Ustrd')?.textContent || '';
         const date = ntry.querySelector('BookgDt Dt')?.textContent || '';
-        // Rechnung via Referenz suchen
+        // Rechnung via QRR-Referenz suchen (r.qrr, gesetzt von rechnungQRR)
         const r = db.rechnungen.find(x =>
-          x.qrRef && ref.replace(/\s/g,'').includes(x.qrRef.replace(/\s/g,''))
+          x.qrr && ref.replace(/\s/g,'').includes(x.qrr.replace(/\s/g,''))
         );
         if (r && amt > 0) {
           r.bezahlt = roundRp((parseFloat(r.bezahlt||0)) + amt);
@@ -13944,6 +14017,42 @@ function showRechnungDetail(id){
 
 
 
+// Dashboard-Widget Mahnwesen: Anzahl + offene Summe je Stufe, Klick filtert Rechnungsliste
+function renderMahnwesenKachel() {
+  const wrap = el('dash-mahnwesen-wrap');
+  if (!wrap) return;
+  const cats = {
+    'mahn-faellig': { label: 'Fällig',             anz: 0, sum: 0, color: '#e67e22' },
+    'mahn-stufe1':  { label: 'Zahlungserinnerung', anz: 0, sum: 0, color: '#e74c3c' },
+    'mahn-stufe2':  { label: '2. Mahnung',         anz: 0, sum: 0, color: '#c0392b' },
+    'mahn-stufe3':  { label: '3. Mahnung',         anz: 0, sum: 0, color: '#7d1f12' },
+  };
+  db.rechnungen.forEach(r => {
+    const mi = rMahnInfo(r);
+    if (!mi.offen) return;
+    if (mi.stufe >= 1) { const c = cats['mahn-stufe' + mi.stufe]; c.anz++; c.sum += mi.offenMitGebuehr; }
+    else if (mi.ueberfaellig) { const c = cats['mahn-faellig']; c.anz++; c.sum += rSaldo(r); }
+  });
+  const total = Object.values(cats).reduce((s, c) => s + c.anz, 0);
+  let cells = '';
+  Object.keys(cats).forEach(key => {
+    const c = cats[key];
+    cells += '<div onclick="dashMahnGo(\'' + key + '\')" style="flex:1;min-width:110px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer">' +
+      '<div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + c.label + '</div>' +
+      '<div style="font-size:20px;font-weight:900;margin-top:2px;color:' + (c.anz > 0 ? c.color : 'var(--text-muted)') + '">' + c.anz + '</div>' +
+      '<div style="font-size:10px;color:var(--text-muted);font-family:monospace">CHF ' + chf(c.sum) + '</div>' +
+      '</div>';
+  });
+  wrap.innerHTML =
+    '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin-bottom:8px">Mahnwesen — überfällige Rechnungen' + (total ? '' : ' (keine)') + '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' + cells + '</div>';
+}
+
+function dashMahnGo(filter) {
+  showPage('rechnungen');
+  setTimeout(function(){ rechnungenFilter(filter); }, 60);
+}
+
 function renderDashboard(){
   renderKalender();
   if(typeof renderMaengelKachel==="function") renderMaengelKachel();
@@ -13963,9 +14072,7 @@ function renderDashboard(){
 
   const laufend = db.auftraege.filter(a=>!a.geloescht&&a.status==='in_arbeit').length;
   const heuteAnz = db.auftraege.filter(a=>!a.geloescht&&['offen','geplant','in_arbeit'].includes(a.status)&&a.datum===isoDate(0)).length;
-  const vor14 = new Date(); vor14.setDate(vor14.getDate()-14);
-  const vor14str = vor14.toISOString().split('T')[0];
-  const ueberfaellig = db.rechnungen.filter(r=>r.status==='ausstehend'&&r.datum&&r.datum<vor14str).length;
+  const ueberfaellig = db.rechnungen.filter(r=>rMahnInfo(r).ueberfaellig).length;
   if(el('kpi-laufend'))      el('kpi-laufend').textContent = laufend;
   if(el('kpi-heute'))        el('kpi-heute').textContent   = heuteAnz;
   if(el('kpi-ueberfaellig')){
@@ -13976,7 +14083,7 @@ function renderDashboard(){
   // Neue Rechnungs-KPIs
   const thisMonth = new Date().toISOString().slice(0,7); // YYYY-MM
   const bezahlt = db.rechnungen.filter(r=>r.status==='bezahlt'&&(r.datum||'').startsWith(thisMonth)).length;
-  const mahnungAnz = db.rechnungen.filter(r=>r.status==='mahnung').length;
+  const mahnungAnz = db.rechnungen.filter(r=>{ const mi=rMahnInfo(r); return mi.offen && mi.stufe>=1; }).length;
   if(el('kpi-re-bezahlt')) el('kpi-re-bezahlt').textContent = bezahlt;
   if(el('kpi-re-mahnung')){
     el('kpi-re-mahnung').textContent = mahnungAnz;
@@ -13985,6 +14092,7 @@ function renderDashboard(){
   }
   renderDashboardHeute();
   renderDashboardOhneTermin();
+  renderMahnwesenKachel();
   renderServiceKachel();
 }
 
@@ -14835,16 +14943,9 @@ function aaMicToggle() {
   r.start();
 }
 
+// Hinweis: 'ah_ocr_key' speichert historisch bedingt den Claude-API-Key
+// der KI-Features (aiCall, Diagnose, KI-Texte) — NICHT mehr fuer OCR genutzt.
 function getApiKey(){ return localStorage.getItem('ah_ocr_key')||''; }
-
-el('apikey-input')?.addEventListener('input',function(){
-  const v=this.value.trim(); localStorage.setItem('ah_ocr_key',v);
-  const s=el('apikey-status');
-  if(!v){s.textContent='';s.style.color='';}
-  else if(v.startsWith('sk-ant-')){s.textContent='Gespeichert';s.style.color='#2ecc71';}
-  else{s.textContent='Format: sk-ant-...';s.style.color='#e74c3c';}
-});
-const sk=getApiKey(); if(sk)el('apikey-input').value=sk;
 
 // ============================================================
 // OCR
@@ -14852,6 +14953,51 @@ const sk=getApiKey(); if(sk)el('apikey-input').value=sk;
 
 
 // ── OCR: Tesseract.js (kein API-Key, läuft lokal im Browser) ──
+
+// Bildvorverarbeitung fuer bessere Erkennung: Graustufen + Kontrast-Stretch
+// (2%-Perzentile), Skalierung auf 1600px Zielbreite (hoch wie runter —
+// kleine/komprimierte Fotos, z.B. via WhatsApp, profitieren vom Upscaling).
+// Liefert ein Canvas oder null (dann wird das Originalbild verwendet).
+function ocrPreprocess(imgUrl) {
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.onload = function() {
+      try {
+        var ZIEL_W = 1600;
+        var scale = ZIEL_W / Math.max(1, img.width);
+        var w = Math.max(1, Math.round(img.width * scale));
+        var h = Math.max(1, Math.round(img.height * scale));
+        var c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        var ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        var d = ctx.getImageData(0, 0, w, h), p = d.data;
+        // Graustufen (Luminanz) + Histogramm aufbauen
+        var hist = new Uint32Array(256);
+        for (var i = 0; i < p.length; i += 4) {
+          var g = (p[i] * 0.299 + p[i+1] * 0.587 + p[i+2] * 0.114) | 0;
+          p[i] = g;
+          hist[g]++;
+        }
+        // Kontrast-Stretch: 2%-Perzentile auf 0/255 spreizen
+        var total = w * h, cut = total * 0.02, lo = 0, hi = 255, cum = 0, v;
+        for (v = 0; v < 256; v++) { cum += hist[v]; if (cum >= cut) { lo = v; break; } }
+        cum = 0;
+        for (v = 255; v >= 0; v--) { cum += hist[v]; if (cum >= cut) { hi = v; break; } }
+        var range = Math.max(1, hi - lo);
+        for (var j = 0; j < p.length; j += 4) {
+          var s = Math.round((p[j] - lo) * 255 / range);
+          if (s < 0) s = 0; else if (s > 255) s = 255;
+          p[j] = p[j+1] = p[j+2] = s;
+        }
+        ctx.putImageData(d, 0, 0);
+        resolve(c);
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = function() { resolve(null); };
+    img.src = imgUrl;
+  });
+}
 
 function ocrParseText(text) {
   var result = { kennzeichen:'', stammnummer:'', vin:'', marke:'', modell:'', typ:'',
@@ -14875,13 +15021,42 @@ function ocrParseText(text) {
     if (stamM) result.stammnummer = stamM[1];
   }
 
-  // ── VIN: bereinigt (Leerzeichen entfernen, dann 17 Zeichen) ──
-  var vinClean = all.replace(/\s+/g,'');
-  var vinM = vinClean.match(/[A-HJ-NPR-Z0-9]{17}/);
-  if (vinM) result.vin = vinM[0];
+  // ── VIN: exakt 17 Zeichen, OCR-Normalisierung, Wortfolgen verwerfen ──
+  // O/I/Q kommen in echten VINs nie vor -> vor der Pruefung O->0, I->1, Q->0.
+  // Kandidaten verwerfen, die erkennbar Text sind (Vermerke, Vokalfolgen,
+  // zu wenige Ziffern).
+  var vinClean = all.toUpperCase().replace(/\s+/g,'');
+  var vinVermerk = /HALTERWECHSEL|VERBOTEN|EINSCHRAENK|BENUTZERHANDBUCH|PRUEFBERICHT|PRUEFSTELLE|HERSTELLER|ANHAENGELAST|STUETZLAST/;
+  // Datums-Spannen (TT.MM.JJJJ) merken — VIN-Fenster, die ein Datum
+  // anschneiden, sind verschobene Fehltreffer (z.B. Geburtsdatum-Ziffern).
+  var vinDaten = [], vinDm, vinDateRx = /\d{2}\.\d{2}\.\d{4}/g;
+  while ((vinDm = vinDateRx.exec(vinClean)) !== null) {
+    vinDaten.push([vinDm.index, vinDm.index + vinDm[0].length]);
+  }
+  // Besten Kandidaten waehlen: VINs enden nach Norm auf 4 Ziffern und sind
+  // ziffernreich — Textfenster (Wortfolgen) sind es nicht.
+  var vinBester = null, vinBestScore = -1;
+  for (var vi = 0; vi + 17 <= vinClean.length; vi++) {
+    var vinRoh = vinClean.substr(vi, 17);
+    if (!/^[A-Z0-9]{17}$/.test(vinRoh)) continue;
+    if (/[AEIOU]{3}/.test(vinRoh)) continue;                    // Wortfolge (Vokale)
+    if (vinVermerk.test(vinRoh)) continue;                       // Vermerk-Zeile
+    var vinImDatum = vinDaten.some(function(sp){ return vi < sp[1] && vi + 17 > sp[0]; });
+    if (vinImDatum) continue;                                    // schneidet Datum an
+    var vinKand = vinRoh.replace(/O/g,'0').replace(/I/g,'1').replace(/Q/g,'0');
+    if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vinKand)) continue;        // VIN-Alphabet
+    var vinZiffern = (vinKand.match(/\d/g) || []).length;
+    if (vinZiffern < 4) continue;                                // Woerter haben kaum Ziffern
+    var vinScore = vinZiffern + (/\d{4}$/.test(vinKand) ? 10 : 0);
+    if (vinScore > vinBestScore) { vinBestScore = vinScore; vinBester = vinKand; }
+  }
+  if (vinBester) result.vin = vinBester;
 
-  // ── Erstzulassung: erste Datumsangabe TT.MM.JJJJ ──
-  var dateM = all.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+  // ── Erstzulassung: label-verankert (Feld 36 '1. Inverkehrsetzung' /
+  // franz. '1ère mise en circulation'); Fallback nur ohne Label-Treffer ──
+  var dateM = all.match(/nverkehrsetzung[\s\S]{0,80}?(\d{2})\.(\d{2})\.(\d{4})/i)
+           || all.match(/mise\s*en\s*circulation[\s\S]{0,80}?(\d{2})\.(\d{2})\.(\d{4})/i)
+           || all.match(/(\d{2})\.(\d{2})\.(\d{4})/);
   if (dateM) result.erstzulassung = dateM[3] + '-' + dateM[2] + '-' + dateM[1];
 
   // ── Leistung: kW ──
@@ -15007,10 +15182,16 @@ async function callOcrApi(base64Data, mimeType, ctx) {
   }, 60000);
 
   try {
+    // Bild aufbereiten (Graustufen, Kontrast, ggf. verkleinern)
+    setMsg('Bild wird aufbereitet...');
+    var vorverarbeitet = await ocrPreprocess(imgUrl);
+    if (window._ocrAbort) throw new Error('Abgebrochen.');
+
     setMsg('Scan läuft...');
 
-    // Tesseract v5: einfachste API, kein manueller Worker
-    var result = await Tesseract.recognize(imgUrl, 'eng', {
+    // Tesseract v5: einfachste API, kein manueller Worker.
+    // deu+eng: deutsche Umlaute (Namen/Orte) + englische Fachbegriffe
+    var result = await Tesseract.recognize(vorverarbeitet || imgUrl, 'deu+eng', {
       logger: function(m) {
         if (window._ocrAbort || didTimeout) return;
         if (m.status === 'loading tesseract core') {
@@ -17340,6 +17521,7 @@ function appBackup() {
   const keys = [
     'autohelfer_v4',        // Hauptdatenbank (Kunden, Fahrzeuge, Aufträge, Rechnungen)
     'ah_garage_settings',   // Garage-Stammdaten, Logo, MwSt, IBAN
+    'firma',                // Firmendaten (QR-IBAN, MwSt, Mahnwesen-Parameter) — kanonisch
     'ah_reifenlager',       // Reifenlager-Einträge
     'ah_reifenlager_counter', // Laufende Einlagerungs-Nummerierung
     'ah_rl_max',            // Max. Lagerplätze
@@ -17404,6 +17586,185 @@ function saveGarage(data) {
 
 let GARAGE = loadGarage();
 
+// ============================================================
+// FIRMENDATEN — kanonische Stammdaten (Basis QR-Rechnung + Mahnwesen)
+// Flache, API-ready Struktur (spaetere Supabase-Migration). Key: 'firma'.
+// ============================================================
+const FIRMA_DEFAULTS = {
+  name:               'Garage Fuoco',       // Firmenname ohne Rechtsform
+  rechtsform:         'GmbH',               // Rechtsform-Zusatz
+  strasse:            'Frohburgerstrasse',  // Strasse (ohne Nr. — QR-Rechnung braucht getrennt)
+  nr:                 '11',                 // Hausnummer
+  plz:                '4132',
+  ort:                'Muttenz',
+  uid:                'CHE-112.803.934 MWST',
+  iban:               '',                   // Normal-IBAN
+  qr_iban:            '',                   // QR-IBAN (IID 30000-31999)
+  bank:               '',
+  telefon:            '061 461 46 33',
+  email:              'info@garage-fuoco.ch',
+  website:            'www.garage-fuoco.ch',
+  mwst_satz:          8.1,                  // Prozent
+  zahlungsfrist_tage: 30,
+  // Mahnwesen dreistufig: je Stufe Frist (Tage) + Gebuehr (CHF)
+  mahnung1_frist_tage: 14, mahnung1_gebuehr: 0,
+  mahnung2_frist_tage: 14, mahnung2_gebuehr: 20,
+  mahnung3_frist_tage: 14, mahnung3_gebuehr: 40,
+};
+
+function loadFirma() {
+  try {
+    const saved = localStorage.getItem('firma');
+    return saved ? Object.assign({}, FIRMA_DEFAULTS, JSON.parse(saved)) : { ...FIRMA_DEFAULTS };
+  } catch(e) { return { ...FIRMA_DEFAULTS }; }
+}
+
+function saveFirma(data) {
+  try { localStorage.setItem('firma', JSON.stringify(data)); } catch(e) {}
+}
+
+let FIRMA = loadFirma();
+
+// --- Validierung ---------------------------------------------------------
+
+// UID/MwSt-Nummer: Format CHE-123.456.789 (optional " MWST"/" HR")
+function firmaCheckUid(raw) {
+  const v = String(raw || '').trim();
+  if (!v) return { empty: true, valid: false };
+  const ok = /^CHE-\d{3}\.\d{3}\.\d{3}(\s+(MWST|HR))?$/i.test(v);
+  return { empty: false, valid: ok };
+}
+
+// IBAN: CH/LI, 21 Zeichen, Modulo-97-Pruefziffer. Erkennt QR-IBAN via IID.
+function firmaCheckIban(raw) {
+  const v = String(raw || '').replace(/\s+/g, '').toUpperCase();
+  if (!v) return { empty: true, valid: false };
+  if (!/^(CH|LI)[0-9A-Z]{19}$/.test(v)) {
+    return { empty: false, valid: false, reason: 'Muss mit CH oder LI beginnen (21 Zeichen)' };
+  }
+  if (v.length !== 21) {
+    return { empty: false, valid: false, reason: 'Laenge muss 21 Zeichen sein (aktuell ' + v.length + ')' };
+  }
+  // Modulo-97: erste 4 Zeichen ans Ende, Buchstaben -> Zahlen (A=10 ... Z=35)
+  const rearr = v.slice(4) + v.slice(0, 4);
+  let rem = 0;
+  for (const ch of rearr) {
+    const part = (ch >= 'A' && ch <= 'Z') ? String(ch.charCodeAt(0) - 55) : ch;
+    for (const d of part) rem = (rem * 10 + (d.charCodeAt(0) - 48)) % 97;
+  }
+  if (rem !== 1) return { empty: false, valid: false, reason: 'Pruefziffer ungueltig' };
+  // QR-IBAN: IID (Position 5-9) im Bereich 30000-31999
+  const iid = parseInt(v.slice(4, 9), 10);
+  const isQr = iid >= 30000 && iid <= 31999;
+  return { empty: false, valid: true, isQr, iid };
+}
+
+// Setzt Feld-Rahmen + Meldungszeile fuer ein Firmendaten-Feld
+function firmaSetMsg(inputId, msgId, state, text) {
+  const inp = el(inputId), m = el(msgId);
+  const colorMap = { ok: 'var(--green)', err: 'var(--danger)', neutral: 'var(--text-muted)' };
+  const col = colorMap[state] || colorMap.neutral;
+  if (m) {
+    m.textContent = text || '';
+    m.style.color = col;
+    m.style.display = text ? 'block' : 'none';
+  }
+  if (inp) inp.style.borderColor = (state === 'err') ? 'var(--danger)' : (state === 'ok' ? 'var(--green)' : '');
+}
+
+function firmaShowUid() {
+  const inp = el('fd-uid'); if (!inp) return true;
+  const r = firmaCheckUid(inp.value);
+  if (r.empty) { firmaSetMsg('fd-uid', 'fd-uid-msg', 'neutral', ''); return true; }
+  if (r.valid) { firmaSetMsg('fd-uid', 'fd-uid-msg', 'ok', '✓ Format gueltig'); return true; }
+  firmaSetMsg('fd-uid', 'fd-uid-msg', 'err', '✗ Format: CHE-123.456.789 MWST');
+  return false;
+}
+
+function firmaShowIban() {
+  const inp = el('fd-iban'); if (!inp) return true;
+  const r = firmaCheckIban(inp.value);
+  if (r.empty) { firmaSetMsg('fd-iban', 'fd-iban-msg', 'neutral', ''); return true; }
+  if (!r.valid) { firmaSetMsg('fd-iban', 'fd-iban-msg', 'err', '✗ ' + r.reason); return false; }
+  if (r.isQr) { firmaSetMsg('fd-iban', 'fd-iban-msg', 'ok', '✓ Gueltige IBAN — Hinweis: dies ist eine QR-IBAN, gehoert ins Feld QR-IBAN'); return true; }
+  firmaSetMsg('fd-iban', 'fd-iban-msg', 'ok', '✓ Gueltige IBAN');
+  return true;
+}
+
+function firmaShowQriban() {
+  const inp = el('fd-qriban'); if (!inp) return true;
+  const r = firmaCheckIban(inp.value);
+  if (r.empty) { firmaSetMsg('fd-qriban', 'fd-qriban-msg', 'neutral', ''); return true; }
+  if (!r.valid) { firmaSetMsg('fd-qriban', 'fd-qriban-msg', 'err', '✗ ' + r.reason); return false; }
+  if (!r.isQr) { firmaSetMsg('fd-qriban', 'fd-qriban-msg', 'err', '✗ Gueltige IBAN, aber KEINE QR-IBAN (IID ' + r.iid + ', noetig 30000–31999)'); return false; }
+  firmaSetMsg('fd-qriban', 'fd-qriban-msg', 'ok', '✓ Gueltige QR-IBAN (IID ' + r.iid + ')');
+  return true;
+}
+
+function firmaSave() {
+  const btn = el('btn-firma-save');
+  const name = (el('fd-name')?.value || '').trim();
+
+  // Validierung (Meldungen live aktualisieren)
+  let ok = true;
+  if (!name) { firmaSetMsg('fd-name', 'fd-name-msg', 'err', '✗ Firmenname ist erforderlich'); ok = false; }
+  else firmaSetMsg('fd-name', 'fd-name-msg', 'neutral', '');
+  if (!firmaShowUid())    ok = false;
+  if (!firmaShowIban())   ok = false;
+  if (!firmaShowQriban()) ok = false;
+
+  if (!ok) {
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = 'Bitte Fehler korrigieren';
+      btn.style.background = 'var(--danger)';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2200);
+    }
+    return;
+  }
+
+  const numOr = (id, def) => { const n = parseFloat(el(id)?.value); return isNaN(n) ? def : n; };
+  const intOr = (id, def) => { const n = parseInt(el(id)?.value, 10); return isNaN(n) ? def : n; };
+
+  FIRMA = Object.assign(FIRMA, {
+    name:               name,
+    rechtsform:         (el('fd-rechtsform')?.value || '').trim(),
+    strasse:            (el('fd-strasse')?.value || '').trim(),
+    nr:                 (el('fd-nr')?.value || '').trim(),
+    plz:                (el('fd-plz')?.value || '').trim(),
+    ort:                (el('fd-ort')?.value || '').trim(),
+    uid:                (el('fd-uid')?.value || '').trim(),
+    iban:               (el('fd-iban')?.value || '').trim(),
+    qr_iban:            (el('fd-qriban')?.value || '').trim(),
+    bank:               (el('fd-bank')?.value || '').trim(),
+    telefon:            (el('fd-telefon')?.value || '').trim(),
+    email:              (el('fd-email')?.value || '').trim(),
+    website:            (el('fd-website')?.value || '').trim(),
+    mwst_satz:          numOr('fd-mwst', 8.1),
+    zahlungsfrist_tage: intOr('fd-frist', 30),
+    mahnung1_frist_tage: intOr('fd-m1-frist', 14), mahnung1_gebuehr: numOr('fd-m1-geb', 0),
+    mahnung2_frist_tage: intOr('fd-m2-frist', 14), mahnung2_gebuehr: numOr('fd-m2-geb', 20),
+    mahnung3_frist_tage: intOr('fd-m3-frist', 14), mahnung3_gebuehr: numOr('fd-m3-geb', 40),
+  });
+  saveFirma(FIRMA);
+
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Gespeichert';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2000);
+  }
+}
+
+function firmaWire() {
+  el('fd-uid')?.addEventListener('input', firmaShowUid);
+  el('fd-iban')?.addEventListener('input', firmaShowIban);
+  el('fd-qriban')?.addEventListener('input', firmaShowQriban);
+  el('btn-firma-save')?.addEventListener('click', firmaSave);
+  // Initiale Anzeige
+  firmaShowUid(); firmaShowIban(); firmaShowQriban();
+}
+
 function pdfStatusBadge(status) {
   const map = {
     ausstehend: ['pdf-status-ausstehend', 'Ausstehend'],
@@ -17418,6 +17779,16 @@ function pdfStatusBadge(status) {
 // ============================================================
 // SWISS QR BILL ENGINE — SIX Swiss Payment Standard 2.0
 // Vollständige Eigenimplementierung (keine externe Library)
+// ============================================================
+// ============================================================
+// VENDOR — Eingebetteter QR-Code-Encoder (dependency-frei, offline)
+// ------------------------------------------------------------
+// Byte-Modus (UTF-8), Fehlerkorrektur-Level M, QR-Versionen 1–30,
+// Reed-Solomon ueber GF(256) mit Primitivpolynom 0x11d.
+// Bewusst in index.html eingebettet, damit der Rechnungsdruck
+// vollstaendig OFFLINE funktioniert (kein CDN). Projekt-intern,
+// end-to-end gegen jsQR verifiziert (Payload-Round-Trip).
+// API: QRBillEngine.encode(text) -> { matrix:number[][], size:number }
 // ============================================================
 const QRBillEngine = (function () {
   const EXP = new Uint8Array(512), LOG = new Uint8Array(256);
@@ -17455,12 +17826,13 @@ const QRBillEngine = (function () {
     [5,30,50],[8,22,36],[9,22,37],[9,24,40],[10,24,40],[10,28,47],[11,28,47],[11,26,44],[11,26,46],[12,26,44],
     [12,28,48],[14,26,43],[14,28,46],[15,28,48],[15,28,48],[16,28,47],[16,28,47],[18,28,46],[18,28,48],[19,28,46],
   ];
-  const ALN = [,[],,[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],
+  const ALN = [,[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],
     [6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],
     [6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],
     [6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126]
   ];
-  const FMT_M = [0x5BC5,0x5A71,0x57C4,0x5671,0x52D6,0x5263,0x5996,0x5823];
+  // Format-Info-Strings Level M (BCH, inkl. XOR-Maske 0x5412) — Standard QR-Spec
+  const FMT_M = [0x5412,0x5125,0x5E7C,0x5B4B,0x45F9,0x40CE,0x4F97,0x4AA0];
   const VERINFO = [0,0,0,0,0,0,0,0x07C94,0x085BC,0x09A99,0x0A4D3,0x0BBF6,0x0C762,0x0D847,0x0E60D,0x0F928,
     0x10B78,0x1145D,0x12A17,0x13532,0x149A6,0x15683,0x168C9,0x177EC,0x18EC4,0x191E1,0x1AFAB,0x1B08E,
     0x1CC1A,0x1D33F];
@@ -17470,18 +17842,33 @@ const QRBillEngine = (function () {
     (r,c)=>((r*c)%2+(r*c)%3)%2===0,(r,c)=>((r+c)%2+(r*c)%3)%2===0,
   ];
 
+  // Format-Info (15 Bit) platzieren — Copy A + Copy B, Bit-Reihenfolge nach QR-Spec.
+  function putFmt(m, fmt, sz) {
+    for (let i = 0; i <= 5; i++) m[8][i] = (fmt >> (14 - i)) & 1;          // Zeile 8 links: b14..b9
+    m[8][7] = (fmt >> 8) & 1;
+    m[8][8] = (fmt >> 7) & 1;
+    for (let i = 0; i <= 5; i++) m[i][8] = (fmt >> i) & 1;                 // Spalte 8 oben: b0..b5
+    m[7][8] = (fmt >> 6) & 1;
+    for (let i = 0; i <= 7; i++) m[8][sz - 1 - i] = (fmt >> i) & 1;        // Zeile 8 rechts: b0..b7
+    for (let i = 0; i <= 6; i++) m[sz - 1 - i][8] = (fmt >> (14 - i)) & 1; // Spalte 8 unten: b14..b8
+    m[sz - 8][8] = 1;                                                       // Dunkelmodul
+  }
+
   function encode(text) {
     const bytes = new TextEncoder().encode(text);
     const n = bytes.length;
     let ver = 1;
     for (let v = 1; v <= 30; v++) {
-      if (Math.ceil((4 + (n < 256 ? 8 : 16) + n * 8) / 8) <= CAP_M[v]) { ver = v; break; }
+      // Byte-Modus: Zaehlindikator 8 Bit (v1-9) bzw. 16 Bit (v10+) — nach Version, nicht nach n
+      const cb = v < 10 ? 8 : 16;
+      if (Math.ceil((4 + cb + n * 8) / 8) <= CAP_M[v]) { ver = v; break; }
     }
+    const cntBits = ver < 10 ? 8 : 16;
     const totalCW = CAP_M[ver];
     const [numBlk, eccPB] = BLK_M[ver];
     const bits = [];
     const pb = (v, l) => { for (let i = l-1; i >= 0; i--) bits.push((v >> i) & 1); };
-    pb(4, 4); pb(n, n < 256 ? 8 : 16);
+    pb(4, 4); pb(n, cntBits);
     for (const b of bytes) pb(b, 8);
     for (let i = 0; i < 4 && bits.length < totalCW*8; i++) bits.push(0);
     while (bits.length % 8) bits.push(0);
@@ -17519,10 +17906,13 @@ const QRBillEngine = (function () {
     for (let i=sz-8;i<sz;i++){used[8][i]=1;used[i][8]=1;}
     used[sz-8][8]=1;
     for (let i=8;i<sz-8;i++){setM(6,i,i%2?0:1);setM(i,6,i%2?0:1);}
-    if (ALN[ver]) {
+    if (ALN[ver] && ALN[ver].length) {
       const ap = ALN[ver];
+      const first = ap[0], last = ap[ap.length-1];
       for (const ar of ap) for (const ac of ap) {
-        if (used[ar][ac]) continue;
+        // Nur die drei Finder-Ecken auslassen — (6,22)/(22,6) etc. gehoeren platziert
+        // (sie ueberschreiben dort das Timing-Muster, gemaess QR-Spec).
+        if ((ar===first&&ac===first)||(ar===first&&ac===last)||(ar===last&&ac===first)) continue;
         for (let dr=-2;dr<=2;dr++) for (let dc=-2;dc<=2;dc++)
           setM(ar+dr,ac+dc,Math.abs(dr)===2||Math.abs(dc)===2||(!dr&&!dc)?1:0);
       }
@@ -17545,47 +17935,93 @@ const QRBillEngine = (function () {
     let bestM=0, bestP=Infinity;
     for(let m=0;m<8;m++){
       const tmp=mat.map((row,r)=>Array.from(row).map((v,c)=>used[r][c]?v:v^(MASK_FNS[m](r,c)?1:0)));
-      const fmt=FMT_M[m];
-      for(let i=0;i<6;i++){tmp[8][i]=(fmt>>i)&1;tmp[i][8]=(fmt>>(14-i))&1;}
-      tmp[8][7]=(fmt>>6)&1;tmp[7][8]=(fmt>>7)&1;tmp[8][8]=(fmt>>8)&1;
-      for(let i=0;i<8;i++)tmp[sz-1-i][8]=(fmt>>i)&1;
-      for(let i=0;i<8;i++)tmp[8][sz-8+i]=(fmt>>(14-i))&1;
-      tmp[sz-8][8]=1;
+      putFmt(tmp, FMT_M[m], sz);
       let pen=0;
       for(let r=0;r<sz;r++){let run=1;for(let c=1;c<sz;c++){if(tmp[r][c]===tmp[r][c-1]){run++;if(run===5)pen+=3;else if(run>5)pen++;}else run=1;}}
       if(pen<bestP){bestP=pen;bestM=m;}
     }
     const masked=mat.map((row,r)=>Array.from(row).map((v,c)=>used[r][c]?v:v^(MASK_FNS[bestM](r,c)?1:0)));
-    const fmt=FMT_M[bestM];
-    for(let i=0;i<6;i++){masked[8][i]=(fmt>>i)&1;masked[i][8]=(fmt>>(14-i))&1;}
-    masked[8][7]=(fmt>>6)&1;masked[7][8]=(fmt>>7)&1;masked[8][8]=(fmt>>8)&1;
-    for(let i=0;i<8;i++)masked[sz-1-i][8]=(fmt>>i)&1;
-    for(let i=0;i<8;i++)masked[8][sz-8+i]=(fmt>>(14-i))&1;
-    masked[sz-8][8]=1;
+    putFmt(masked, FMT_M[bestM], sz);
     return {matrix:masked, size:sz};
   }
   return {encode};
 })();
 
-// SPC Payload bauen
+// ── QR-Rechnung: Hilfsfunktionen (SIX QR-bill v2.3) ─────────────────
+// Zulaessiger SIX-Zeichensatz (Latin, inkl. Umlaute/Akzente). Unerlaubte
+// Zeichen werden durch '.' ersetzt; Feldlaenge optional begrenzt.
+function qrText(s, maxLen) {
+  var out = String(s == null ? '' : s).normalize('NFC');
+  var allowed = /[A-Za-z0-9.,;:'+\-\/()?*\[\]{}\\`´~ !"#%&<>÷=@_$£°§¦€àáâäçèéêëìíîïñòóôöùúûüýÿßÀÁÂÄÇÈÉÊËÌÍÎÏÑÒÓÔÖÙÚÛÜÝ]/;
+  var res = '';
+  for (var i = 0; i < out.length; i++) res += allowed.test(out[i]) ? out[i] : '.';
+  res = res.replace(/\s{2,}/g, ' ').trim();
+  if (maxLen && res.length > maxLen) res = res.slice(0, maxLen);
+  return res;
+}
+
+// QRR-Pruefziffer: Modulo 10 rekursiv (Tabelle nach SIX/ESR).
+function qrrPruefziffer(body) {
+  var T = [0, 9, 4, 6, 8, 2, 7, 1, 3, 5];
+  var carry = 0;
+  for (var i = 0; i < body.length; i++) carry = T[(carry + (body.charCodeAt(i) - 48)) % 10];
+  return (10 - carry) % 10;
+}
+
+// 27-stellige QRR-Referenz: 26 Ziffern (links mit Nullen aufgefuellt) + Pruefziffer.
+function buildQRR(quelleDigits) {
+  var body = String(quelleDigits || '').replace(/\D/g, '').padStart(26, '0').slice(-26);
+  return body + qrrPruefziffer(body);
+}
+
+// QRR einer Rechnung holen/erzeugen. Beim ersten Mal erzeugen + persistieren,
+// danach IMMER wiederverwenden — unveraenderlich (Basis Zahlungszuordnung/Mahnwesen).
+function rechnungQRR(r) {
+  if (r && typeof r.qrr === 'string' && /^\d{27}$/.test(r.qrr)) return r.qrr;
+  var ref = buildQRR(rechnungNr(r).replace(/\D/g, ''));
+  if (r) { r.qrr = ref; try { saveDb(); } catch (e) {} }
+  return ref;
+}
+
+// Betrag fuer Anzeige im Zahlteil: Leerzeichen als Tausendertrenner, 2 Dezimalen.
+function qrAmount(n) {
+  var v = (typeof n === 'number' ? n : parseFloat(n) || 0).toFixed(2);
+  var parts = v.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return parts[0] + '.' + parts[1];
+}
+
+// QRR-Referenz gruppiert anzeigen: 2 + 5x5 Ziffern.
+function qrRefFormat(ref) {
+  var d = String(ref || '').replace(/\D/g, '');
+  if (d.length !== 27) return ref;
+  return d.replace(/(\d{2})(\d{5})(\d{5})(\d{5})(\d{5})(\d{5})/, '$1 $2 $3 $4 $5 $6');
+}
+
+// SPC-Payload (Swiss Payments Code, SIX v2.3) — exakt 31 Zeilen, \n-getrennt.
+// Quelle Zahlungsempfaenger: ausschliesslich FIRMA (vom Aufrufer uebergeben).
 function buildSPCPayload(d) {
-  function splitPlzOrt(s) {
-    const m = (s||'').match(/^(\d{4,5})\s+(.+)$/);
-    return m ? [m[1], m[2]] : ['', s||''];
+  var A = qrText;
+  var lines = [
+    'SPC', '0200', '1',
+    d.iban,                          // QR-IBAN, ohne Leerzeichen
+    // Kreditor — nur Adress-Typ "S" (Typ "K" seit 11/2025 unzulaessig)
+    'S', A(d.creditor.name, 70), A(d.creditor.strasse, 70), A(d.creditor.nr, 16), A(d.creditor.plz, 16), A(d.creditor.ort, 35), 'CH',
+    // Ultimate Creditor — 7 Leerzeilen (muss leer geliefert werden)
+    '', '', '', '', '', '', '',
+    // Betrag
+    d.betrag, 'CHF'
+  ];
+  // Endbeguenstigter / Zahlbar durch (Debitor)
+  if (d.debtor && d.debtor.plz && d.debtor.ort) {
+    // strukturierte Kundenadresse, nur wenn PLZ + Ort getrennt vorliegen
+    lines.push('S', A(d.debtor.name, 70), A(d.debtor.strasse, 70), A(d.debtor.nr || '', 16), A(d.debtor.plz, 16), A(d.debtor.ort, 35), 'CH');
+  } else {
+    // 7 leere Debitor-Zeilen -> zulaessiges Blankofeld zum Handausfuellen
+    lines.push('', '', '', '', '', '', '');
   }
-  const [epz,eort] = splitPlzOrt(d.empfaenger.plzOrt);
-  const [zpz,zort] = splitPlzOrt(d.zahler.plzOrt);
-  return [
-    'SPC','0200','1',
-    d.iban,
-    'S', d.empfaenger.name, d.empfaenger.strasse, '', epz, eort, 'CH',
-    '','','','','','',
-    d.betrag, 'CHF',
-    'S', d.zahler.name, d.zahler.strasse, '', zpz, zort, 'CH',
-    'QRR', d.referenz,
-    d.mitteilung||'',
-      'EPD','',
-  ].join(String.fromCharCode(10));
+  lines.push('QRR', d.referenz, A(d.mitteilung, 140), 'EPD');
+  return lines.join('\n');
 }
 
 // QR-Code auf Canvas zeichnen, gibt DataURL zurück
@@ -17604,38 +18040,62 @@ function drawQRToDataURL(text) {
   return canvas.toDataURL('image/png');
 }
 
-// QR-Rechnung HTML generieren (für zweite Druckseite)
-function buildQRBillHTML(r, k) {
+// QR-Rechnung HTML generieren (Zahlteil + Empfangsschein, eigene letzte Seite)
+// Zahlungsempfaenger AUSSCHLIESSLICH aus FIRMA-Modul (localStorage-Key 'firma').
+// opts.betrag: optionaler Betrag-Override (z.B. Mahnung: Saldo + Mahngebuehr);
+// die QRR-Referenz bleibt in jedem Fall dieselbe.
+function buildQRBillHTML(r, k, opts) {
   try {
-  const ibanFmt   = GARAGE.iban || '';
-  const ibanClean = ibanFmt.replace(/\s/g,'');
-  const tot       = r.total != null ? r.total : ((r.subtotal||0)+(r.mwstBetrag||0));
-  const betrag    = tot.toFixed(2);
-  const reNr      = rechnungNr(r);
+  const qrIbanRaw = FIRMA.qr_iban || '';
+  const chk       = firmaCheckIban(qrIbanRaw);
+  const ibanClean = qrIbanRaw.replace(/\s/g,'').toUpperCase();
+  const ibanFmt   = ibanClean.replace(/(.{4})/g,'$1 ').trim();
 
-  // Referenz: Rechnungs-ID als einfache QRR-Referenz (27-stellig, Prüfziffer)
-  const refRaw  = String(r.id).padStart(27,'0');
-  const refFmt  = refRaw.replace(/(\d{2})(\d{5})(\d{5})(\d{5})(\d{5})(\d{5})/, '$1 $2 $3 $4 $5 $6');
+  const tot    = (opts && opts.betrag != null) ? opts.betrag
+               : (r.total != null ? r.total : ((r.subtotal||0)+(r.mwstBetrag||0)));
+  const betrag = (typeof tot === 'number' ? tot : parseFloat(tot)||0).toFixed(2);
+  const reNr   = rechnungNr(r);
 
-  const empfName  = GARAGE.name;
-  const empfAdr   = GARAGE.strasse;
-  const empfPlzOrt = GARAGE.plz + ' ' + GARAGE.ort;
+  // Fehlende/ungueltige QR-IBAN -> klarer Hinweis statt unlesbarem Code
+  if (!chk.valid || !chk.isQr) {
+    return `
+<div class="qrb-page">
+  <div class="qrb-bill" style="align-items:center;justify-content:center;flex-direction:column;gap:6px;text-align:center;padding:10mm">
+    <div style="font-weight:700;font-size:11pt">QR-Rechnung nicht moeglich</div>
+    <div style="font-size:9pt;color:#a00">In den Firmendaten ist keine gueltige QR-IBAN hinterlegt.</div>
+    <div style="font-size:8pt;color:#666">Einstellungen &rarr; Firmendaten &rarr; QR-IBAN (IID 30000&ndash;31999)</div>
+  </div>
+</div>`;
+  }
 
-  const zahlName   = k ? ((k.vorname||'')+' '+(k.nachname||'')).trim() : '';
+  // Referenz: unveraenderlich am Rechnungsobjekt gespeichert (erstmalig erzeugt)
+  const ref    = rechnungQRR(r);
+  const refFmt = qrRefFormat(ref);
+
+  const empfName   = (FIRMA.name||'') + (FIRMA.rechtsform ? ' ' + FIRMA.rechtsform : '');
+  const empfAdr    = (FIRMA.strasse||'') + (FIRMA.nr ? ' ' + FIRMA.nr : '');
+  const empfPlzOrt = ((FIRMA.plz||'') + ' ' + (FIRMA.ort||'')).trim();
+
+  // Zahlbar durch (Debitor) — strukturiert nur wenn PLZ + Ort getrennt vorliegen
+  const hasDebtor  = !!(k && k.plz && k.ort);
+  const zahlName   = k ? (k.firma ? k.firma : ((k.vorname||'')+' '+(k.nachname||'')).trim()) : '';
   const zahlAdr    = k ? (k.strasse||'') : '';
-  const zahlPlzOrt = k ? ((k.plz||'')+' '+(k.ort||'')).trim() : '';
+  const zahlPlzOrt = hasDebtor ? ((k.plz||'')+' '+(k.ort||'')).trim() : '';
+  const zahlHtml   = (hEl) => hasDebtor
+    ? `${esc(zahlName)}<br>${esc(zahlAdr)}<br>${esc(zahlPlzOrt)}`
+    : `<div style="border:0.5pt solid #000;height:${hEl};margin-top:1mm"></div>`;
 
   const spc = buildSPCPayload({
-    iban: ibanClean, betrag, referenz: refRaw,
-    empfaenger: {name:empfName, strasse:empfAdr, plzOrt:empfPlzOrt},
-    zahler: {name:zahlName, strasse:zahlAdr, plzOrt:zahlPlzOrt},
-    mitteilung: reNr,
+    iban: ibanClean, betrag, referenz: ref,
+    creditor: { name: empfName, strasse: (FIRMA.strasse||''), nr: (FIRMA.nr||''), plz: (FIRMA.plz||''), ort: (FIRMA.ort||'') },
+    debtor:   hasDebtor ? { name: zahlName, strasse: zahlAdr, nr: '', plz: k.plz, ort: k.ort } : null,
+    mitteilung: 'Rechnung ' + reNr,
   });
 
   const qrDataURL = drawQRToDataURL(spc);
 
-  // Schweizer Kreuz als inline SVG base64
-  const kreuzSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><rect width="28" height="28" fill="white"/><rect x="10" y="3" width="8" height="22" fill="#c8102e"/><rect x="3" y="10" width="22" height="8" fill="#c8102e"/></svg>`;
+  // Schweizerkreuz im QR: schwarzes Quadrat mit weissem Kreuz (scanner-sicher, SIX)
+  const kreuzSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.2 19.2" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"><rect width="19.2" height="19.2" fill="#fff"/><rect x="1.4" y="1.4" width="16.4" height="16.4" fill="#000"/><rect x="7.9" y="4.6" width="3.4" height="10" fill="#fff"/><rect x="4.6" y="7.9" width="10" height="3.4" fill="#fff"/></svg>`;
 
   return `
 <div class="qrb-page">
@@ -17657,12 +18117,12 @@ function buildQRBillHTML(r, k) {
       </div>
       <div class="qrb-sec qrb-zah">
         <div class="qrb-lbl">Zahlbar durch</div>
-        <div class="qrb-val">${esc(zahlName)}<br>${esc(zahlAdr)}<br>${esc(zahlPlzOrt)}</div>
+        <div class="qrb-val">${zahlHtml('16mm')}</div>
       </div>
       <div class="qrb-es-bot">
         <div class="qrb-ccy-row">
           <div><div class="qrb-lbl">Währung</div><div class="qrb-val" style="font-weight:700">CHF</div></div>
-          <div><div class="qrb-lbl">Betrag</div><div class="qrb-amt">${esc(betrag)}</div></div>
+          <div><div class="qrb-lbl">Betrag</div><div class="qrb-amt">${esc(qrAmount(tot))}</div></div>
         </div>
         <div class="qrb-acc-row">
           <div><div class="qrb-lbl">Annahmestelle</div><div class="qrb-acc-box"></div></div>
@@ -17680,7 +18140,7 @@ function buildQRBillHTML(r, k) {
           </div>
           <div class="qrb-ccy2">
             <div><div class="qrb-lbl">Währung</div><div class="qrb-val2">CHF</div></div>
-            <div><div class="qrb-lbl">Betrag</div><div class="qrb-val2">${esc(betrag)}</div></div>
+            <div><div class="qrb-lbl">Betrag</div><div class="qrb-val2">${esc(qrAmount(tot))}</div></div>
           </div>
         </div>
         <div class="qrb-zt-right">
@@ -17694,11 +18154,11 @@ function buildQRBillHTML(r, k) {
           </div>
           <div class="qrb-sec">
             <div class="qrb-lbl">Zusätzliche Informationen</div>
-            <div class="qrb-val">${esc(reNr)}</div>
+            <div class="qrb-val">Rechnung ${esc(reNr)}</div>
           </div>
           <div class="qrb-sec qrb-zah">
             <div class="qrb-lbl">Zahlbar durch</div>
-            <div class="qrb-val">${esc(zahlName)}<br>${esc(zahlAdr)}<br>${esc(zahlPlzOrt)}</div>
+            <div class="qrb-val">${zahlHtml('20mm')}</div>
           </div>
         </div>
       </div>
@@ -17711,223 +18171,8 @@ function buildQRBillHTML(r, k) {
     return '<div style="padding:10mm;font-family:Arial;color:red;font-size:10pt"><b>QR-Rechnung Fehler:</b> ' + err.message + '</div>';
   }}
 
-function generatePdfRechnung(rechnungId) {
-  try {
-    const r = db.rechnungen.find(x => x.id === rechnungId);
-    if (!r) { showToast('Rechnung #' + rechnungId + ' nicht gefunden.','error'); return; }
-    const k   = db.kunden.find(x => x.id === r.kundeId);
-    const auf = db.auftraege.find(x => x.id === r.auftragId);
-    const fz  = auf ? db.fahrzeuge.find(x => x.id === auf.fahrzeugId) : null;
-
-    const pos     = r.positionen || [];
-    const sub     = r.subtotal   != null ? r.subtotal   : (r.betrag || 0);
-    const mwstBet = r.mwstBetrag != null ? r.mwstBetrag : 0;
-    const tot     = r.total      != null ? r.total      : (sub + mwstBet);
-    const mwstPct = r.mwst || 0;
-    const reNr    = rechnungNr(r);
-    const aufNr   = auf ? auftragNr(auf) : '-';
-    const datumDE = formatDateDE(r.datum || '');
-
-    let faelligDE = '';
-    if (r.datum) {
-      const d = new Date(r.datum + 'T12:00:00');
-      d.setDate(d.getDate() + parseInt(GARAGE.zahlungsfrist || 30));
-      faelligDE = formatDateDE(d.toISOString().split('T')[0]);
-    }
-
-    const kundeName    = k ? (k.vorname + ' ' + k.nachname).trim() : 'Unbekannter Kunde';
-    const kundeAdrLines = k ? [k.firma||'', k.strasse||'', ((k.plz||'')+(k.ort?' '+k.ort:'')).trim()].filter(Boolean) : [];
-    const auftragDesc  = r.auftragBeschreibung || (auf ? auf.beschreibung : '') || '';
-
-    // ── Positionen aufbereiten ──────────────────────────────────
-    const arbeitPos   = pos.filter(p => p.typ !== 'material' && p.typ !== 'diverses' && p.beschreibung);
-    const materialPos = pos.filter(p => p.typ === 'material' && p.beschreibung);
-    const diversPos   = pos.filter(p => p.typ === 'diverses' && p.beschreibung);
-
-    const summeArb = arbeitPos.reduce((s,p) => s + (p.zwischensumme ?? p.menge * p.preis), 0);
-    const summeMat = materialPos.reduce((s,p) => s + (p.zwischensumme ?? p.menge * p.preis), 0);
-    const summeDiv = diversPos.reduce((s,p) => s + (p.zwischensumme ?? p.menge * p.preis), 0);
-
-    const posRow = (p, nr) => {
-      const zs = p.zwischensumme ?? (p.menge * p.preis);
-      return `<tr>
-        <td class="pos-nr">${String(nr).padStart(2,'0')}</td>
-        <td>${esc(p.beschreibung)}${p.notizen ? '<br><span class="pos-note">'+esc(p.notizen)+'</span>' : ''}</td>
-        <td class="r">${String(p.menge||1).replace('.',',')}</td>
-        <td class="r">${chf(p.preis)}</td>
-        <td class="r">${chf(zs)}</td>
-      </tr>`;
-    };
-
-    let posRows = '';
-    let posNr = 1;
-    if (arbeitPos.length) {
-      posRows += `<tr class="section-header"><td colspan="5">Arbeiten</td></tr>`;
-      posRows += arbeitPos.map(p => posRow(p, posNr++)).join('');
-      if (materialPos.length || diversPos.length)
-        posRows += `<tr class="subtotal-row"><td colspan="4">Arbeit</td><td class="r">${chf(summeArb)}</td></tr>`;
-    }
-    if (materialPos.length) {
-      posRows += `<tr class="section-header"><td colspan="5">Material / Ersatzteile</td></tr>`;
-      posRows += materialPos.map(p => posRow(p, posNr++)).join('');
-      if (arbeitPos.length || diversPos.length)
-        posRows += `<tr class="subtotal-row"><td colspan="4">Material</td><td class="r">${chf(summeMat)}</td></tr>`;
-    }
-    if (diversPos.length) {
-      posRows += `<tr class="section-header"><td colspan="5">Diverses</td></tr>`;
-      posRows += diversPos.map(p => posRow(p, posNr++)).join('');
-      if (arbeitPos.length || materialPos.length)
-        posRows += `<tr class="subtotal-row"><td colspan="4">Diverses</td><td class="r">${chf(summeDiv)}</td></tr>`;
-    }
-    if (!posRows) {
-      posRows = pos.filter(p=>p.beschreibung).map((p,i) => posRow(p, i+1)).join('');
-    }
-
-    // ── Fahrzeug-Block ──────────────────────────────────────────
-    const fzBlock = fz ? `
-      <div class="fz-block">
-        <div class="fz-label">Fahrzeug</div>
-        <div class="fz-row">
-          <span class="fz-kz">${esc(kz(fz.kennzeichen))}</span>
-          <span>${esc([fz.marke, fz.modell, fz.typ].filter(Boolean).join(' '))}</span>
-          ${fz.vin ? `<span class="fz-sep">·</span><span class="fz-vin">${esc(fz.vin)}</span>` : ''}
-          ${fz.erstzulassung ? `<span class="fz-sep">·</span><span>EZ ${esc(fz.erstzulassung)}</span>` : ''}
-          ${fz.km ? `<span class="fz-sep">·</span><span>${Number(fz.km).toLocaleString('de-CH')} km</span>` : ''}
-        </div>
-      </div>` : '';
-
-    // ── Logo ────────────────────────────────────────────────────
-    const logoHtml = GARAGE.logo
-      ? `<img src="${GARAGE.logo}" style="height:48px;object-fit:contain;display:block" alt="Logo">`
-      : `<div class="garage-name-big">${esc(GARAGE.name)}</div>`;
-
-    // ── HTML ────────────────────────────────────────────────────
-    // QR-Code inline generieren (vor html Template, da dort verwendet)
-    var inlineQR = '';
-    try {
-      var ibanClean2 = (GARAGE.iban||'').replace(/\s/g,'');
-      var tot2 = r.total != null ? r.total : ((r.subtotal||0)+(r.mwstBetrag||0));
-      var refRaw2 = String(r.id).padStart(27,'0');
-      var spc2 = buildSPCPayload({
-        iban: ibanClean2, betrag: tot2.toFixed(2), referenz: refRaw2,
-        empfaenger: {name:GARAGE.name, strasse:GARAGE.strasse, plzOrt:GARAGE.plz+' '+GARAGE.ort},
-        zahler: {name:k?(k.vorname+' '+k.nachname).trim():'', strasse:k?k.strasse||'':'', plzOrt:k?(k.plz||'')+' '+(k.ort||''):''},
-        mitteilung: reNr,
-      });
-      var qrDataURL2 = drawQRToDataURL(spc2);
-      var kreuzSVG2 = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 28 28"><rect width="28" height="28" fill="white"/><rect x="10" y="3" width="8" height="22" fill="#c8102e"/><rect x="3" y="10" width="22" height="8" fill="#c8102e"/></svg>';
-      if (qrDataURL2) {
-        inlineQR = '<div style="position:relative;width:72px;height:72px;flex-shrink:0">'
-          + '<img src="'+qrDataURL2+'" width="72" height="72" style="display:block;image-rendering:pixelated">'
-          + '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;width:18px;height:18px;display:flex;align-items:center;justify-content:center">'+kreuzSVG2+'</div>'
-          + '</div>';
-      }
-    } catch(qrErr2) { console.warn('QR inline:', qrErr2.message); }
-
-    const html = `
-    <div class="pdf-page">
-
-      <!-- HEADER -->
-      <div class="hdr">
-        <div class="hdr-left">
-          ${logoHtml}
-          ${GARAGE.logo ? `<div class="hdr-name-small">${esc(GARAGE.name)}</div>` : ''}
-          <div class="hdr-claim">${esc(GARAGE.claim||'')}</div>
-        </div>
-        <div class="hdr-right">
-          <div>${esc(GARAGE.strasse)}</div>
-          <div>${esc(GARAGE.plz)} ${esc(GARAGE.ort)}</div>
-          <div class="hdr-sep"></div>
-          <div>${esc(GARAGE.telefon||'')}</div>
-          <div>${esc(GARAGE.email||'')}</div>
-          <div>${esc(GARAGE.web||'')}</div>
-        </div>
-      </div>
-
-      <!-- EMPFÄNGER + META -->
-      <div class="doc-layout">
-        <div class="empf">
-          <div class="empf-gap"></div>
-          ${kundeAdrLines.length ? `<div class="empf-name">${esc(kundeName)}</div>
-          <div class="empf-adr">${kundeAdrLines.map(esc).join('<br>')}</div>` : ''}
-        </div>
-        <div class="meta">
-          <div class="meta-title">RECHNUNG</div>
-          <table class="meta-table">
-            <tr><td>Rechnungs-Nr.</td><td><strong>${reNr}</strong></td></tr>
-            <tr><td>Datum</td><td>${datumDE}</td></tr>
-            <tr><td>Fällig bis</td><td><strong>${faelligDE}</strong></td></tr>
-            <tr><td>Auftrags-Nr.</td><td>${aufNr}</td></tr>
-            ${GARAGE.uid ? `<tr><td>MwSt-Nr.</td><td>${esc(GARAGE.uid)}</td></tr>` : ''}
-          </table>
-        </div>
-      </div>
-
-      <!-- FAHRZEUG -->
-      ${fzBlock}
-
-      <!-- BETREFF -->
-      ${auftragDesc ? `<div class="betreff">Betr.: ${esc(auftragDesc)}</div>` : ''}
-
-      <!-- POSITIONEN -->
-      <table class="pos-table">
-        <thead>
-          <tr>
-            <th class="pos-nr">Pos.</th>
-            <th>Beschreibung</th>
-            <th class="r">Menge</th>
-            <th class="r">Preis CHF</th>
-            <th class="r">Betrag CHF</th>
-          </tr>
-        </thead>
-        <tbody>${posRows}</tbody>
-      </table>
-
-      <!-- TOTALS -->
-      <div class="totals-wrap">
-        ${(arbeitPos.length && (materialPos.length||diversPos.length)) ? `<div class="total-row-sm"><span>Arbeit</span><span>${chf(summeArb)}</span></div>` : ''}
-        ${(materialPos.length && (arbeitPos.length||diversPos.length)) ? `<div class="total-row-sm"><span>Material</span><span>${chf(summeMat)}</span></div>` : ''}
-        ${(diversPos.length && (arbeitPos.length||materialPos.length)) ? `<div class="total-row-sm"><span>Diverses</span><span>${chf(summeDiv)}</span></div>` : ''}
-        <div class="total-row-sm total-line"><span>Total exkl. MwSt</span><span>${chf(sub)}</span></div>
-        ${mwstPct > 0 ? `<div class="total-row-sm"><span>MwSt ${parseFloat(mwstPct).toString()}%</span><span>${chf(mwstBet)}</span></div>` : ''}
-        <div class="total-row-final">
-          <span>Gesamttotal inkl. MwSt</span>
-          <span class="total-final-val">CHF ${chf(tot)}</span>
-        </div>
-      </div>
-
-      <!-- HINWEIS + QR -->
-      <div class="hinweis">
-        <div style="display:flex;align-items:flex-start;gap:16px">
-          ${inlineQR ? '<div>'+inlineQR+'<div style="font-size:6.5pt;color:#aaa;margin-top:3px;text-align:center">QR scannen</div></div>' : ''}
-          <div>
-            ${esc(GARAGE.zahlungsbedingungen||'Zahlbar innert 30 Tagen netto.')}
-            ${GARAGE.iban ? `<br>IBAN: <strong>${esc(GARAGE.iban)}</strong>` + (reNr ? ` &nbsp;·&nbsp; Ref: ${reNr}` : '') : ''}
-            ${faelligDE ? `<br>Zahlbar bis: <strong>${faelligDE}</strong>` : ''}
-          </div>
-        </div>
-      </div>
-
-      <!-- FOOTER -->
-      <div class="ftr">
-        <div class="ftr-bar">
-          <span class="ftr-name">${esc(GARAGE.name)}</span>
-          <span class="ftr-sep">·</span>
-          <span>${esc(GARAGE.strasse)}, ${esc(GARAGE.plz)} ${esc(GARAGE.ort)}</span>
-          <span class="ftr-sep">·</span>
-          <span>${esc(GARAGE.telefon||'')}</span>
-          <span class="ftr-sep">·</span>
-          <span>${esc(GARAGE.email||'')}</span>
-          ${GARAGE.uid ? `<span class="ftr-sep">·</span><span>${esc(GARAGE.uid)}</span>` : ''}
-        </div>
-      </div>
-
-    </div>`;
-
-    // QR-Rechnung zweite Seite: entfernt (inline QR oben)
-    let qrPage = '';
-
-    const pdfCSS = `
+// PDF-Druck-CSS — gemeinsam fuer Rechnungs- und Mahnungs-PDF
+const PDF_CSS = `
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; background: #fff; color: #1a1a1a; }
 
@@ -18040,7 +18285,7 @@ function generatePdfRechnung(rechnungId) {
       .qrb-zt-left { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; }
       .qrb-qr-wrap { width: 175px; height: 175px; position: relative; flex-shrink: 0; }
       .qrb-qr-img  { width: 175px; height: 175px; image-rendering: pixelated; display: block; }
-      .qrb-kreuz   { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 30px; height: 30px; background: #fff; display: flex; align-items: center; justify-content: center; }
+      .qrb-kreuz   { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 27px; height: 27px; background: #fff; display: flex; align-items: center; justify-content: center; }
       .qrb-ccy2  { display: flex; gap: 16px; margin-top: 12px; }
       .qrb-val2  { font-size: 11pt; font-weight: 700; font-family: Arial; }
       .qrb-zt-right { flex: 1; display: flex; flex-direction: column; gap: 9px; }
@@ -18056,9 +18301,208 @@ function generatePdfRechnung(rechnungId) {
         .qrb-zt-left { width: 56mm; }
         .qrb-qr-wrap { width: 46mm; height: 46mm; }
         .qrb-qr-img  { width: 46mm; height: 46mm; }
-        .qrb-kreuz { width: 8mm; height: 8mm; }
+        .qrb-kreuz { width: 7mm; height: 7mm; }
       }
     `;
+
+function generatePdfRechnung(rechnungId) {
+  try {
+    const r = db.rechnungen.find(x => x.id === rechnungId);
+    if (!r) { showToast('Rechnung #' + rechnungId + ' nicht gefunden.','error'); return; }
+    const k   = db.kunden.find(x => x.id === r.kundeId);
+    const auf = db.auftraege.find(x => x.id === r.auftragId);
+    const fz  = auf ? db.fahrzeuge.find(x => x.id === auf.fahrzeugId) : null;
+
+    const pos     = r.positionen || [];
+    const sub     = r.subtotal   != null ? r.subtotal   : (r.betrag || 0);
+    const mwstBet = r.mwstBetrag != null ? r.mwstBetrag : 0;
+    const tot     = r.total      != null ? r.total      : (sub + mwstBet);
+    const mwstPct = r.mwst || 0;
+    const reNr    = rechnungNr(r);
+    const aufNr   = auf ? auftragNr(auf) : '-';
+    const datumDE = formatDateDE(r.datum || '');
+
+    let faelligDE = '';
+    if (r.datum) {
+      const d = new Date(r.datum + 'T12:00:00');
+      d.setDate(d.getDate() + parseInt(GARAGE.zahlungsfrist || 30));
+      faelligDE = formatDateDE(d.toISOString().split('T')[0]);
+    }
+
+    const kundeName    = k ? (k.vorname + ' ' + k.nachname).trim() : 'Unbekannter Kunde';
+    const kundeAdrLines = k ? [k.firma||'', k.strasse||'', ((k.plz||'')+(k.ort?' '+k.ort:'')).trim()].filter(Boolean) : [];
+    const auftragDesc  = r.auftragBeschreibung || (auf ? auf.beschreibung : '') || '';
+
+    // ── Positionen aufbereiten ──────────────────────────────────
+    const arbeitPos   = pos.filter(p => p.typ !== 'material' && p.typ !== 'diverses' && p.beschreibung);
+    const materialPos = pos.filter(p => p.typ === 'material' && p.beschreibung);
+    const diversPos   = pos.filter(p => p.typ === 'diverses' && p.beschreibung);
+
+    const summeArb = arbeitPos.reduce((s,p) => s + (p.zwischensumme ?? p.menge * p.preis), 0);
+    const summeMat = materialPos.reduce((s,p) => s + (p.zwischensumme ?? p.menge * p.preis), 0);
+    const summeDiv = diversPos.reduce((s,p) => s + (p.zwischensumme ?? p.menge * p.preis), 0);
+
+    const posRow = (p, nr) => {
+      const zs = p.zwischensumme ?? (p.menge * p.preis);
+      return `<tr>
+        <td class="pos-nr">${String(nr).padStart(2,'0')}</td>
+        <td>${esc(p.beschreibung)}${p.notizen ? '<br><span class="pos-note">'+esc(p.notizen)+'</span>' : ''}</td>
+        <td class="r">${String(p.menge||1).replace('.',',')}</td>
+        <td class="r">${chf(p.preis)}</td>
+        <td class="r">${chf(zs)}</td>
+      </tr>`;
+    };
+
+    let posRows = '';
+    let posNr = 1;
+    if (arbeitPos.length) {
+      posRows += `<tr class="section-header"><td colspan="5">Arbeiten</td></tr>`;
+      posRows += arbeitPos.map(p => posRow(p, posNr++)).join('');
+      if (materialPos.length || diversPos.length)
+        posRows += `<tr class="subtotal-row"><td colspan="4">Arbeit</td><td class="r">${chf(summeArb)}</td></tr>`;
+    }
+    if (materialPos.length) {
+      posRows += `<tr class="section-header"><td colspan="5">Material / Ersatzteile</td></tr>`;
+      posRows += materialPos.map(p => posRow(p, posNr++)).join('');
+      if (arbeitPos.length || diversPos.length)
+        posRows += `<tr class="subtotal-row"><td colspan="4">Material</td><td class="r">${chf(summeMat)}</td></tr>`;
+    }
+    if (diversPos.length) {
+      posRows += `<tr class="section-header"><td colspan="5">Diverses</td></tr>`;
+      posRows += diversPos.map(p => posRow(p, posNr++)).join('');
+      if (arbeitPos.length || materialPos.length)
+        posRows += `<tr class="subtotal-row"><td colspan="4">Diverses</td><td class="r">${chf(summeDiv)}</td></tr>`;
+    }
+    if (!posRows) {
+      posRows = pos.filter(p=>p.beschreibung).map((p,i) => posRow(p, i+1)).join('');
+    }
+
+    // ── Fahrzeug-Block ──────────────────────────────────────────
+    const fzBlock = fz ? `
+      <div class="fz-block">
+        <div class="fz-label">Fahrzeug</div>
+        <div class="fz-row">
+          <span class="fz-kz">${esc(kz(fz.kennzeichen))}</span>
+          <span>${esc([fz.marke, fz.modell, fz.typ].filter(Boolean).join(' '))}</span>
+          ${fz.vin ? `<span class="fz-sep">·</span><span class="fz-vin">${esc(fz.vin)}</span>` : ''}
+          ${fz.erstzulassung ? `<span class="fz-sep">·</span><span>EZ ${esc(fz.erstzulassung)}</span>` : ''}
+          ${fz.km ? `<span class="fz-sep">·</span><span>${Number(fz.km).toLocaleString('de-CH')} km</span>` : ''}
+        </div>
+      </div>` : '';
+
+    // ── Logo ────────────────────────────────────────────────────
+    const logoHtml = GARAGE.logo
+      ? `<img src="${GARAGE.logo}" style="height:48px;object-fit:contain;display:block" alt="Logo">`
+      : `<div class="garage-name-big">${esc(GARAGE.name)}</div>`;
+
+    // ── HTML ────────────────────────────────────────────────────
+    // Kein Inline-QR auf Seite 1 — der Swiss QR Code steht im Zahlteil (letzte Seite).
+    var inlineQR = '';
+
+    const html = `
+    <div class="pdf-page">
+
+      <!-- HEADER -->
+      <div class="hdr">
+        <div class="hdr-left">
+          ${logoHtml}
+          ${GARAGE.logo ? `<div class="hdr-name-small">${esc(GARAGE.name)}</div>` : ''}
+          <div class="hdr-claim">${esc(GARAGE.claim||'')}</div>
+        </div>
+        <div class="hdr-right">
+          <div>${esc(GARAGE.strasse)}</div>
+          <div>${esc(GARAGE.plz)} ${esc(GARAGE.ort)}</div>
+          <div class="hdr-sep"></div>
+          <div>${esc(GARAGE.telefon||'')}</div>
+          <div>${esc(GARAGE.email||'')}</div>
+          <div>${esc(GARAGE.web||'')}</div>
+        </div>
+      </div>
+
+      <!-- EMPFÄNGER + META -->
+      <div class="doc-layout">
+        <div class="empf">
+          <div class="empf-gap"></div>
+          ${kundeAdrLines.length ? `<div class="empf-name">${esc(kundeName)}</div>
+          <div class="empf-adr">${kundeAdrLines.map(esc).join('<br>')}</div>` : ''}
+        </div>
+        <div class="meta">
+          <div class="meta-title">RECHNUNG</div>
+          <table class="meta-table">
+            <tr><td>Rechnungs-Nr.</td><td><strong>${reNr}</strong></td></tr>
+            <tr><td>Datum</td><td>${datumDE}</td></tr>
+            <tr><td>Fällig bis</td><td><strong>${faelligDE}</strong></td></tr>
+            <tr><td>Auftrags-Nr.</td><td>${aufNr}</td></tr>
+            ${GARAGE.uid ? `<tr><td>MwSt-Nr.</td><td>${esc(GARAGE.uid)}</td></tr>` : ''}
+          </table>
+        </div>
+      </div>
+
+      <!-- FAHRZEUG -->
+      ${fzBlock}
+
+      <!-- BETREFF -->
+      ${auftragDesc ? `<div class="betreff">Betr.: ${esc(auftragDesc)}</div>` : ''}
+
+      <!-- POSITIONEN -->
+      <table class="pos-table">
+        <thead>
+          <tr>
+            <th class="pos-nr">Pos.</th>
+            <th>Beschreibung</th>
+            <th class="r">Menge</th>
+            <th class="r">Preis CHF</th>
+            <th class="r">Betrag CHF</th>
+          </tr>
+        </thead>
+        <tbody>${posRows}</tbody>
+      </table>
+
+      <!-- TOTALS -->
+      <div class="totals-wrap">
+        ${(arbeitPos.length && (materialPos.length||diversPos.length)) ? `<div class="total-row-sm"><span>Arbeit</span><span>${chf(summeArb)}</span></div>` : ''}
+        ${(materialPos.length && (arbeitPos.length||diversPos.length)) ? `<div class="total-row-sm"><span>Material</span><span>${chf(summeMat)}</span></div>` : ''}
+        ${(diversPos.length && (arbeitPos.length||materialPos.length)) ? `<div class="total-row-sm"><span>Diverses</span><span>${chf(summeDiv)}</span></div>` : ''}
+        <div class="total-row-sm total-line"><span>Total exkl. MwSt</span><span>${chf(sub)}</span></div>
+        ${mwstPct > 0 ? `<div class="total-row-sm"><span>MwSt ${parseFloat(mwstPct).toString()}%</span><span>${chf(mwstBet)}</span></div>` : ''}
+        <div class="total-row-final">
+          <span>Gesamttotal inkl. MwSt</span>
+          <span class="total-final-val">CHF ${chf(tot)}</span>
+        </div>
+      </div>
+
+      <!-- HINWEIS + QR -->
+      <div class="hinweis">
+        <div style="display:flex;align-items:flex-start;gap:16px">
+          ${inlineQR ? '<div>'+inlineQR+'<div style="font-size:6.5pt;color:#aaa;margin-top:3px;text-align:center">QR scannen</div></div>' : ''}
+          <div>
+            ${esc(GARAGE.zahlungsbedingungen||'Zahlbar innert 30 Tagen netto.')}
+            ${GARAGE.iban ? `<br>IBAN: <strong>${esc(GARAGE.iban)}</strong>` + (reNr ? ` &nbsp;·&nbsp; Ref: ${reNr}` : '') : ''}
+            ${faelligDE ? `<br>Zahlbar bis: <strong>${faelligDE}</strong>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="ftr">
+        <div class="ftr-bar">
+          <span class="ftr-name">${esc(GARAGE.name)}</span>
+          <span class="ftr-sep">·</span>
+          <span>${esc(GARAGE.strasse)}, ${esc(GARAGE.plz)} ${esc(GARAGE.ort)}</span>
+          <span class="ftr-sep">·</span>
+          <span>${esc(GARAGE.telefon||'')}</span>
+          <span class="ftr-sep">·</span>
+          <span>${esc(GARAGE.email||'')}</span>
+          ${GARAGE.uid ? `<span class="ftr-sep">·</span><span>${esc(GARAGE.uid)}</span>` : ''}
+        </div>
+      </div>
+
+    </div>`;
+
+    // QR-Rechnung: Swiss QR-bill (Zahlteil + Empfangsschein) als eigene letzte Seite
+    let qrPage = buildQRBillHTML(r, k);
+
+    const pdfCSS = PDF_CSS;
 
     const fullDoc = [
       '<!DOCTYPE html><html lang="de"><head>',
@@ -18068,6 +18512,7 @@ function generatePdfRechnung(rechnungId) {
       '<style>', pdfCSS, '</style>',
       '</head><body>',
       html,
+      qrPage,
       '</body></html>'
     ].join('');
 
@@ -18136,7 +18581,7 @@ function generatePdfRechnung(rechnungId) {
         // Inhalt in pdf-print-area laden
         const area = el('pdf-print-area');
         if (area) {
-          area.innerHTML = '<style>' + pdfCSS + '</style>' + html;
+          area.innerHTML = '<style>' + pdfCSS + '</style>' + html + qrPage;
           area.style.display = 'block';
         }
         setTimeout(function() {
@@ -18153,6 +18598,211 @@ function generatePdfRechnung(rechnungId) {
 
   } catch(err) {
     console.error('generatePdfRechnung Fehler:', err);
+    showToast('Druckfehler: ' + err.message,'error');
+  }
+}
+
+// Druck-Overlay (iframe-Vorschau + Drucken-Button) — genutzt vom Mahnungs-PDF
+function openPdfOverlay(docTitle, bodyHtml) {
+  const fullDoc = [
+    '<!DOCTYPE html><html lang="de"><head>',
+    '<meta charset="UTF-8">',
+    '<meta name="viewport" content="width=794px">',
+    '<title>', esc(docTitle), '</title>',
+    '<style>', PDF_CSS, '</style>',
+    '</head><body>',
+    bodyHtml,
+    '</body></html>'
+  ].join('');
+
+  let overlay = document.getElementById('print-overlay');
+  if (overlay) overlay.remove();
+  overlay = document.createElement('div');
+  overlay.id = 'print-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#e8e8e8;z-index:99999;display:flex;flex-direction:column';
+
+  const topbar = document.createElement('div');
+  topbar.style.cssText = 'background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0';
+  topbar.innerHTML =
+    '<button onclick="closePrintOverlay()" style="background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px;line-height:1">←</button>' +
+    '<div style="font-weight:700;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(docTitle) + '</div>' +
+    '<button id="btn-do-print" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Drucken / PDF</button>';
+
+  const scrollWrap = document.createElement('div');
+  scrollWrap.style.cssText = 'flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;display:flex;justify-content:center;';
+
+  const scale = Math.min(1, (window.innerWidth - 24) / 794);
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'border:none;background:#fff;box-shadow:0 2px 16px rgba(0,0,0,.2);width:794px;height:1300px;display:block;transform-origin:top left;transform:scale(' + scale + ');flex-shrink:0';
+  iframe.srcdoc = fullDoc;
+
+  const iframeWrap = document.createElement('div');
+  iframeWrap.style.cssText = 'width:' + Math.round(794*scale) + 'px;height:' + (Math.round(1300*scale) + 32) + 'px;flex-shrink:0;margin:16px 0;overflow:visible;';
+  iframeWrap.appendChild(iframe);
+  scrollWrap.appendChild(iframeWrap);
+  overlay.appendChild(topbar);
+  overlay.appendChild(scrollWrap);
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('touchmove', function(e){ if (e.target === overlay) e.preventDefault(); }, {passive:false});
+
+  const printBtn = document.getElementById('btn-do-print');
+  if (printBtn) {
+    printBtn.onclick = function() {
+      const area = el('pdf-print-area');
+      if (area) {
+        area.innerHTML = '<style>' + PDF_CSS + '</style>' + bodyHtml;
+        area.style.display = 'block';
+      }
+      setTimeout(function() {
+        try { window.print(); } catch(e) {}
+        setTimeout(function(){ if (area) { area.innerHTML=''; area.style.display='none'; } }, 2000);
+      }, 80);
+    };
+  }
+}
+
+// Mahnungs-PDF: Kopf wie Rechnung, Mahntext je Stufe, transparente
+// Aufschluesselung (Rechnungsbetrag / Mahngebuehr / Neues Total),
+// QR-Zahlteil mit neuem Total und DERSELBEN QRR-Referenz.
+function generatePdfMahnung(rechnungId) {
+  try {
+    const r = db.rechnungen.find(x => x.id === rechnungId);
+    if (!r) { showToast('Rechnung #' + rechnungId + ' nicht gefunden.','error'); return; }
+    const mi = rMahnInfo(r);
+    if (!(mi.stufe >= 1)) { showToast('Für diese Rechnung wurde noch keine Mahnstufe ausgelöst.','warning'); return; }
+
+    const k     = db.kunden.find(x => x.id === r.kundeId);
+    const stufe = mi.stufe;
+    const titel = MAHNSTUFE_TITEL[stufe];
+    const reNr  = rechnungNr(r);
+    const heute = new Date().toISOString().split('T')[0];
+    const zahlbarBis = addTageIso(heute, FIRMA['mahnung' + stufe + '_frist_tage']);
+    const tot = r.total != null ? r.total : ((r.subtotal||r.betrag||0)+(r.mwstBetrag||0));
+    const bez = parseFloat(r.bezahlt || 0);
+    const neuesTotal = mi.offenMitGebuehr;
+
+    const kundeName     = k ? (k.vorname + ' ' + k.nachname).trim() : 'Unbekannter Kunde';
+    const kundeAdrLines = k ? [k.firma||'', k.strasse||'', ((k.plz||'')+(k.ort?' '+k.ort:'')).trim()].filter(Boolean) : [];
+
+    // Mahntext je Stufe (Tonalitaet: freundlich / bestimmt / letzte Frist)
+    let mahntext;
+    if (stufe === 1) {
+      mahntext = `Sicher ist es Ihrer Aufmerksamkeit entgangen, dass unsere Rechnung <strong>${reNr}</strong> vom ${formatDateDE(r.datum||'')} noch offen ist. Wir erlauben uns, Sie freundlich daran zu erinnern.<br><br>Bitte begleichen Sie den untenstehenden Betrag bis am <strong>${formatDateDE(zahlbarBis)}</strong>. Falls sich Ihre Zahlung mit diesem Schreiben kreuzt, betrachten Sie es bitte als gegenstandslos.`;
+    } else if (stufe === 2) {
+      mahntext = `Trotz unserer Zahlungserinnerung ist die Rechnung <strong>${reNr}</strong> vom ${formatDateDE(r.datum||'')} weiterhin unbezahlt.<br><br>Wir fordern Sie auf, den untenstehenden Betrag bis spätestens <strong>${formatDateDE(zahlbarBis)}</strong> zu überweisen.`;
+    } else {
+      mahntext = `Die Rechnung <strong>${reNr}</strong> vom ${formatDateDE(r.datum||'')} ist trotz zweifacher Mahnung nach wie vor unbezahlt.<br><br>Wir setzen Ihnen hiermit eine <strong>letzte Frist bis am ${formatDateDE(zahlbarBis)}</strong>. Nach unbenutztem Ablauf dieser Frist sehen wir uns gezwungen, ohne weitere Ankündigung rechtliche Schritte einzuleiten (Betreibung).`;
+    }
+
+    const logoHtml = GARAGE.logo
+      ? `<img src="${GARAGE.logo}" style="height:48px;object-fit:contain;display:block" alt="Logo">`
+      : `<div class="garage-name-big">${esc(GARAGE.name)}</div>`;
+
+    const html = `
+    <div class="pdf-page">
+
+      <!-- HEADER -->
+      <div class="hdr">
+        <div class="hdr-left">
+          ${logoHtml}
+          ${GARAGE.logo ? `<div class="hdr-name-small">${esc(GARAGE.name)}</div>` : ''}
+          <div class="hdr-claim">${esc(GARAGE.claim||'')}</div>
+        </div>
+        <div class="hdr-right">
+          <div>${esc(GARAGE.strasse)}</div>
+          <div>${esc(GARAGE.plz)} ${esc(GARAGE.ort)}</div>
+          <div class="hdr-sep"></div>
+          <div>${esc(GARAGE.telefon||'')}</div>
+          <div>${esc(GARAGE.email||'')}</div>
+          <div>${esc(GARAGE.web||'')}</div>
+        </div>
+      </div>
+
+      <!-- EMPFÄNGER + META -->
+      <div class="doc-layout">
+        <div class="empf">
+          <div class="empf-gap"></div>
+          ${kundeAdrLines.length || kundeName ? `<div class="empf-name">${esc(kundeName)}</div>
+          <div class="empf-adr">${kundeAdrLines.map(esc).join('<br>')}</div>` : ''}
+        </div>
+        <div class="meta">
+          <div class="meta-title">${esc(titel.toUpperCase())}</div>
+          <table class="meta-table">
+            <tr><td>Rechnungs-Nr.</td><td><strong>${reNr}</strong></td></tr>
+            <tr><td>Rechnungsdatum</td><td>${formatDateDE(r.datum||'')}</td></tr>
+            <tr><td>Ursprünglich fällig</td><td>${formatDateDE(mi.faellig||'')}</td></tr>
+            <tr><td>Mahndatum</td><td>${formatDateDE(heute)}</td></tr>
+            <tr><td>Zahlbar bis</td><td><strong>${formatDateDE(zahlbarBis)}</strong></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- MAHNTEXT -->
+      <div class="betreff">Betr.: ${esc(titel)} zur Rechnung ${reNr}</div>
+      <div style="padding:0 54px;margin-bottom:20px;font-size:9pt;line-height:1.8">
+        Guten Tag<br><br>
+        ${mahntext}
+      </div>
+
+      <!-- ZUSAMMENFASSUNG -->
+      <table class="pos-table">
+        <thead>
+          <tr>
+            <th>Rechnung</th>
+            <th>Beschreibung</th>
+            <th class="r">Betrag CHF</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>${reNr}</strong> vom ${formatDateDE(r.datum||'')}</td>
+            <td>${esc(r.auftragBeschreibung||'')}</td>
+            <td class="r">${chf(tot)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- AUFSCHLUESSELUNG: Rechnungsbetrag / Mahngebuehr / Neues Total -->
+      <div class="totals-wrap">
+        <div class="total-row-sm total-line"><span>Rechnungsbetrag</span><span>${chf(tot)}</span></div>
+        ${bez > 0 ? `<div class="total-row-sm"><span>Bereits bezahlt</span><span>−${chf(bez)}</span></div>` : ''}
+        <div class="total-row-sm"><span>Mahngebühr (${esc(titel)})</span><span>${chf(mi.gebuehr)}</span></div>
+        <div class="total-row-final">
+          <span>Neues Total</span>
+          <span class="total-final-val">CHF ${chf(neuesTotal)}</span>
+        </div>
+      </div>
+
+      <!-- HINWEIS -->
+      <div class="hinweis">
+        Zahlbar bis <strong>${formatDateDE(zahlbarBis)}</strong> mit beiliegendem Zahlteil (QR-Referenz unverändert).
+        Bei Fragen erreichen Sie uns unter ${esc(GARAGE.telefon||'')} oder ${esc(GARAGE.email||'')}.
+      </div>
+
+      <!-- FOOTER -->
+      <div class="ftr">
+        <div class="ftr-bar">
+          <span class="ftr-name">${esc(GARAGE.name)}</span>
+          <span class="ftr-sep">·</span>
+          <span>${esc(GARAGE.strasse)}, ${esc(GARAGE.plz)} ${esc(GARAGE.ort)}</span>
+          <span class="ftr-sep">·</span>
+          <span>${esc(GARAGE.telefon||'')}</span>
+          <span class="ftr-sep">·</span>
+          <span>${esc(GARAGE.email||'')}</span>
+          ${GARAGE.uid ? `<span class="ftr-sep">·</span><span>${esc(GARAGE.uid)}</span>` : ''}
+        </div>
+      </div>
+
+    </div>`;
+
+    // QR-Zahlteil: neues Total, gleiche QRR-Referenz
+    const qrPage = buildQRBillHTML(r, k, { betrag: neuesTotal });
+
+    openPdfOverlay(titel + ' ' + reNr + (k ? ' — ' + (k.nachname||'') + ' ' + (k.vorname||'') : ''), html + qrPage);
+
+  } catch(err) {
+    console.error('generatePdfMahnung Fehler:', err);
     showToast('Druckfehler: ' + err.message,'error');
   }
 }
@@ -18371,7 +19021,7 @@ function renderTeam() {
   let html = '';
 
   if (!aktiv.length) {
-    html += '<div class="empty-state"><div class="empty-icon"><svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>Keine aktiven Mitteilungen.<p>Erstelle eine neue Team-Info oben rechts.</p></div>';
+    html += '<div class="empty-state"><div class="empty-icon"><svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>Keine aktiven Mitteilungen.<p>Erstelle eine Mitteilung über «+ Neue Mitteilung» oben rechts.</p></div>';
   } else {
     html += aktiv.map(m => tmsgCardHTML(m, false)).join('');
   }
@@ -19515,7 +20165,9 @@ function calGetKW(date) {
 function calFormatWeekLabel(days) {
   const opts = { day:'numeric', month:'short' };
   const von = days[0].toLocaleDateString('de-CH', opts);
-  const bis = days[5].toLocaleDateString('de-CH', { day:'numeric', month:'short', year:'numeric' });
+  // Wochenende = angezeigter Sonntag (days enthaelt nur Mo–Sa)
+  const so = new Date(days[5]); so.setDate(days[5].getDate() + 1);
+  const bis = so.toLocaleDateString('de-CH', { day:'numeric', month:'short', year:'numeric' });
   const kw  = calGetKW(days[0]);
   return `KW ${kw} — ${von} – ${bis}`;
 }
@@ -23208,14 +23860,20 @@ function debGetBewegungen(kundeId) {
       });
     }
 
-    // Mahnungen als Bewegungen
-    (r.mahnungen || []).forEach((m, i) => {
+    // Mahnungen als Bewegungen (neues mahnung_log + Legacy-Feld r.mahnungen)
+    const mahnEintraege = (Array.isArray(r.mahnung_log) ? r.mahnung_log : [])
+      .map(m => ({ datum: m.datum, label: MAHNSTUFE_TITEL[m.stufe] || 'Mahnung' }))
+      .concat((r.mahnungen || []).map(m => ({
+        datum: m.datum,
+        label: m.stufe === 'mahnung2' ? '2. Mahnung' : m.stufe === 'mahnung1' ? '1. Mahnung' : 'Zahlungserinnerung',
+      })));
+    mahnEintraege.forEach((m, i) => {
       bewegungen.push({
         type:   'reminder',
         id:     'rem_' + r.id + '_' + i,
         date:   m.datum || '',
         amount: 0,
-        label:  m.stufe === 'mahnung2' ? '2. Mahnung' : m.stufe === 'mahnung1' ? '1. Mahnung' : 'Zahlungserinnerung',
+        label:  m.label,
         desc:   rechnungNr(r),
         ref:    r,
       });
@@ -23239,10 +23897,9 @@ function debKundeAmpel(kundeId) {
     r.kundeId === kundeId && ['ausstehend','mahnung'].includes(r.status)
   );
   if (!rechnungen.length) return 'green';
-  const maxTage = Math.max(...rechnungen.map(r => tageSeit(r.datum)||0));
-  if (maxTage >= 30) return 'red';
-  if (maxTage >= 14) return 'orange';
-  return 'orange';
+  // rot = Zahlungsfrist ueberschritten oder Mahnstufe ausgeloest, sonst orange
+  const rot = rechnungen.some(r => { const mi = rMahnInfo(r); return mi.ueberfaellig || mi.stufe >= 1; });
+  return rot ? 'red' : 'orange';
 }
 
 // ── Hauptscreen: Debitorenliste ──
@@ -23264,7 +23921,7 @@ function renderDebitoren() {
   const heute = new Date().toISOString().split('T')[0];
   const thisMonth = new Date().toISOString().slice(0,7);
   const allOffen = db.rechnungen.filter(r => ['ausstehend','mahnung'].includes(r.status));
-  const ueberfaelligAnz  = allOffen.filter(r => (tageSeit(r.datum)||0) >= 30).length;
+  const ueberfaelligAnz  = allOffen.filter(r => rMahnInfo(r).ueberfaellig).length;
   const offenChf         = allOffen.reduce((s,r) => s + rSaldo(r), 0);
   const alleKunden       = kunden.length;
   const bezahltMonat     = db.rechnungen.filter(r => r.status==='bezahlt' && (r.datum||'').startsWith(thisMonth)).length;
@@ -23301,7 +23958,7 @@ function renderDebitoren() {
   } else if (filter === 'ueberfaellig') {
     kunden = kunden.filter(k =>
       db.rechnungen.filter(r => r.kundeId===k.id && ['ausstehend','mahnung'].includes(r.status))
-        .some(r => (tageSeit(r.datum)||0) >= 30)
+        .some(r => rMahnInfo(r).ueberfaellig)
     );
   } else if (filter === 'bezahlt') {
     kunden = kunden.filter(k =>
@@ -23510,9 +24167,116 @@ function renderEinstellungen() {
   const wrap = el('einstellungen-content');
   if (!wrap) return;
   const g = GARAGE;
+  const f = FIRMA;
 
   wrap.innerHTML = `
     <div style="max-width:600px">
+      <!-- Firmendaten — Basis QR-Rechnung + Mahnwesen -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-weight:700;font-size:15px">Firmendaten</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Basis fuer QR-Rechnung und Mahnwesen</div>
+          </div>
+          <button class="btn btn-primary" id="btn-firma-save" style="font-size:12px;white-space:nowrap">Speichern</button>
+        </div>
+        <div style="padding:20px">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Firmenname *</label>
+              <input class="form-input" id="fd-name" value="${esc(f.name)}" placeholder="Garage Fuoco" />
+              <div id="fd-name-msg" style="font-size:10px;margin-top:4px;display:none"></div>
+            </div>
+            <div class="form-group">
+              <label>Rechtsform-Zusatz</label>
+              <input class="form-input" id="fd-rechtsform" value="${esc(f.rechtsform)}" placeholder="GmbH" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:2">
+              <label>Strasse</label>
+              <input class="form-input" id="fd-strasse" value="${esc(f.strasse)}" placeholder="Frohburgerstrasse" />
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Nr.</label>
+              <input class="form-input" id="fd-nr" value="${esc(f.nr)}" placeholder="11" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:1">
+              <label>PLZ</label>
+              <input class="form-input" id="fd-plz" value="${esc(f.plz)}" placeholder="4132" maxlength="6" />
+            </div>
+            <div class="form-group" style="flex:2">
+              <label>Ort</label>
+              <input class="form-input" id="fd-ort" value="${esc(f.ort)}" placeholder="Muttenz" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>UID / MwSt-Nummer</label>
+            <input class="form-input" id="fd-uid" value="${esc(f.uid)}" placeholder="CHE-123.456.789 MWST" />
+            <div id="fd-uid-msg" style="font-size:10px;margin-top:4px;display:none"></div>
+          </div>
+          <div class="form-group">
+            <label>IBAN</label>
+            <input class="form-input" id="fd-iban" value="${esc(f.iban)}" placeholder="CH.. 21 Zeichen" style="font-family:'IBM Plex Mono',monospace;letter-spacing:1px" />
+            <div id="fd-iban-msg" style="font-size:10px;margin-top:4px;display:none"></div>
+          </div>
+          <div class="form-group">
+            <label>QR-IBAN</label>
+            <input class="form-input" id="fd-qriban" value="${esc(f.qr_iban)}" placeholder="CH.. QR-IBAN (IID 30000–31999)" style="font-family:'IBM Plex Mono',monospace;letter-spacing:1px" />
+            <div id="fd-qriban-msg" style="font-size:10px;margin-top:4px;display:none"></div>
+          </div>
+          <div class="form-group">
+            <label>Bankname</label>
+            <input class="form-input" id="fd-bank" value="${esc(f.bank)}" placeholder="z.B. PostFinance AG" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Telefon</label>
+              <input class="form-input" id="fd-telefon" value="${esc(f.telefon)}" placeholder="061 461 46 33" />
+            </div>
+            <div class="form-group">
+              <label>E-Mail</label>
+              <input class="form-input" id="fd-email" type="email" value="${esc(f.email)}" placeholder="info@garage-fuoco.ch" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:2">
+              <label>Website</label>
+              <input class="form-input" id="fd-website" value="${esc(f.website)}" placeholder="www.garage-fuoco.ch" />
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>MwSt-Satz (%)</label>
+              <input class="form-input" id="fd-mwst" type="number" min="0" step="0.1" value="${esc(f.mwst_satz)}" placeholder="8.1" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Zahlungsfrist (Tage)</label>
+            <input class="form-input" id="fd-frist" type="number" min="1" max="365" value="${esc(f.zahlungsfrist_tage)}" placeholder="30" />
+          </div>
+
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin:20px 0 10px">Mahnwesen</div>
+          <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:8px 12px;align-items:center">
+            <div style="font-size:11px;color:var(--text-muted)"></div>
+            <div style="font-size:10px;color:var(--text-muted);font-weight:600">Frist (Tage)</div>
+            <div style="font-size:10px;color:var(--text-muted);font-weight:600">Gebuehr (CHF)</div>
+
+            <div style="font-size:12px;font-weight:600">1. Mahnung</div>
+            <input class="form-input" id="fd-m1-frist" type="number" min="0" value="${esc(f.mahnung1_frist_tage)}" />
+            <input class="form-input" id="fd-m1-geb"   type="number" min="0" step="0.05" value="${esc(f.mahnung1_gebuehr)}" />
+
+            <div style="font-size:12px;font-weight:600">2. Mahnung</div>
+            <input class="form-input" id="fd-m2-frist" type="number" min="0" value="${esc(f.mahnung2_frist_tage)}" />
+            <input class="form-input" id="fd-m2-geb"   type="number" min="0" step="0.05" value="${esc(f.mahnung2_gebuehr)}" />
+
+            <div style="font-size:12px;font-weight:600">3. Mahnung</div>
+            <input class="form-input" id="fd-m3-frist" type="number" min="0" value="${esc(f.mahnung3_frist_tage)}" />
+            <input class="form-input" id="fd-m3-geb"   type="number" min="0" step="0.05" value="${esc(f.mahnung3_gebuehr)}" />
+          </div>
+        </div>
+      </div>
+
       <!-- Garage-Daten -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;overflow:hidden">
         <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
@@ -23629,10 +24393,6 @@ function renderEinstellungen() {
             </div>
           </div>
           <div class="form-group">
-            <label>MwSt-Nr. (UID)</label>
-            <input class="form-input" id="g-uid" type="text" placeholder="CHE-123.456.789 MWST" value="${esc(g.uid||'')}">
-          </div>
-          <div class="form-group">
             <label>Zahlungsbedingungen</label>
             <textarea class="form-textarea" id="g-zb" rows="2">${esc(g.zahlungsbedingungen)}</textarea>
           </div>
@@ -23685,6 +24445,9 @@ function renderEinstellungen() {
   if (walleeSpaceInp) walleeSpaceInp.value = g.wallee_space_id || '';
   if (walleeLinkInp)  walleeLinkInp.value  = g.wallee_payment_link || '';
 
+  // Firmendaten-Abschnitt verdrahten (Live-Validierung + Speichern)
+  firmaWire();
+
   // Speichern
   el('btn-garage-save')?.addEventListener('click', () => {
     const walleeSpaceEl = document.getElementById('g-wallee-space');
@@ -23725,7 +24488,6 @@ function removeLogo() {
       iban:                document.getElementById('g-iban').value.trim(),
       zahlungsfrist:       document.getElementById('g-frist').value.trim(),
       stundenansatz:       parseFloat(document.getElementById('g-stundenansatz')?.value) || 175,
-      uid:                 document.getElementById('g-uid')?.value.trim() || '',
       mwstSatz:            parseFloat(document.getElementById('g-mwst-satz')?.value) || 8.1,
       mwstPflichtig:       document.getElementById('g-mwst-pflichtig')?.value !== 'false',
       zahlungsbedingungen: document.getElementById('g-zb').value.trim(),
@@ -24302,10 +25064,24 @@ async function doLogin() {
   btn.disabled = true;
   errEl.style.display = 'none';
 
-  var result = await _sb.auth.signInWithPassword({ email: email, password: password });
+  var result = null;
+  try {
+    result = await _sb.auth.signInWithPassword({ email: email, password: password });
+  } catch (e) {
+    result = { error: e };
+  }
 
   if (result.error) {
-    showLoginError('Falsche E-Mail oder Passwort.');
+    var err = result.error || {};
+    var msg = (err.message || '').toLowerCase();
+    var isNetwork = !err.status || msg.indexOf('fetch') !== -1 || msg.indexOf('network') !== -1 || msg.indexOf('load failed') !== -1;
+    if (isNetwork) {
+      showLoginError('Keine Verbindung zum Server. Bitte Internetverbindung pr\u00fcfen und erneut versuchen.');
+    } else if (err.status === 429) {
+      showLoginError('Zu viele Anmeldeversuche. Bitte einen Moment warten.');
+    } else {
+      showLoginError('Falsche E-Mail oder Passwort.');
+    }
     btn.textContent = 'Anmelden';
     btn.disabled = false;
     return;
@@ -24425,6 +25201,31 @@ function applyMechanikerView() {
   if (typeof showPage === 'function') showPage('mechanik');
 }
 
+// ── Passwort ein-/ausblenden im Login (Auge) ─────────────────
+function loginSetPwVisible(visible) {
+  var inp    = document.getElementById('login-password');
+  var btn    = document.getElementById('login-pw-toggle');
+  var eye    = document.getElementById('login-pw-eye');
+  var eyeOff = document.getElementById('login-pw-eye-off');
+  if (!inp || !btn || !eye || !eyeOff) return;
+  inp.type = visible ? 'text' : 'password';
+  eye.style.display    = visible ? 'none'  : 'block';
+  eyeOff.style.display = visible ? 'block' : 'none';
+  btn.setAttribute('aria-pressed', visible ? 'true' : 'false');
+  btn.setAttribute('aria-label', visible ? 'Passwort verbergen' : 'Passwort anzeigen');
+}
+
+function loginTogglePw() {
+  var inp = document.getElementById('login-password');
+  if (!inp) return;
+  var pos = null;
+  try { pos = inp.selectionStart; } catch (e) {}
+  loginSetPwVisible(inp.type === 'password');
+  // Fokus + Cursorposition im Feld erhalten
+  inp.focus();
+  try { if (pos !== null) inp.setSelectionRange(pos, pos); } catch (e) {}
+}
+
 // ── Logout ───────────────────────────────────────────────────
 async function doLogout() {
   await _sb.auth.signOut();
@@ -24434,6 +25235,7 @@ async function doLogout() {
   // Login-Screen wieder anzeigen
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-password').value = '';
+  loginSetPwVisible(false);
   document.getElementById('login-error').style.display = 'none';
   document.getElementById('login-btn').textContent = 'Anmelden';
   document.getElementById('login-btn').disabled = false;
