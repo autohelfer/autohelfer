@@ -12716,7 +12716,7 @@ function renderRechnungen(){
 
     const rowBg = stufe === 'stufe3' ? 'rgba(125,31,18,0.06)' : stufe === 'stufe2' ? 'rgba(192,57,43,0.04)' : stufe === 'stufe1' ? 'rgba(231,76,60,0.02)' : '';
 
-    html += '<tr' + (rowBg ? ' style="background:' + rowBg + '"' : '') + '>' +
+    html += '<tr class="r-row" data-rid="' + r.id + '" style="cursor:pointer' + (rowBg ? ';background:' + rowBg : '') + '">' +
       '<td style="white-space:nowrap;font-size:12px">' + esc(formatDateDE(r.datum||'')) + '</td>' +
       '<td class="mono" style="font-size:12px"><strong>' + rechnungNr(r) + '</strong></td>' +
       '<td>' + kundeHTML + '</td>' +
@@ -12746,6 +12746,12 @@ function renderRechnungen(){
   tbody.innerHTML = html;
 
   // Listeners
+  // Zeilen-Klick oeffnet das Rechnungsdetail; Klicks auf interaktive Elemente
+  // (Buttons/Links, z.B. WhatsApp/PDF/Loeschen) loesen NUR ihre eigene Aktion aus
+  tbody.querySelectorAll('tr.r-row').forEach(tr => tr.addEventListener('click', (e) => {
+    if (e.target.closest('button, a, input, select, label')) return;
+    showRechnungDetail(parseInt(tr.dataset.rid));
+  }));
   tbody.querySelectorAll('.btn-dr').forEach(b => b.addEventListener('click', () => deleteRechnung(parseInt(b.dataset.id))));
   tbody.querySelectorAll('.btn-pdf-r').forEach(b => b.addEventListener('click', () => generatePdfRechnung(parseInt(b.dataset.id))));
   tbody.querySelectorAll('.btn-teilzahl').forEach(b => b.addEventListener('click', () => openTeilzahlungModal(parseInt(b.dataset.id))));
