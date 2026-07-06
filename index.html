@@ -12781,12 +12781,13 @@ function camtImport(input) {
       let matched = 0, unmatched = 0;
       entries.forEach(ntry => {
         const amt  = parseFloat(ntry.querySelector('Amt')?.textContent || '0');
-        const ref  = ntry.querySelector('RmtInf Strd Cdtr Ref')?.textContent ||
+        // QRR steht strukturiert in RmtInf > Strd > CdtrRefInf > Ref
+        const ref  = ntry.querySelector('RmtInf Strd CdtrRefInf Ref')?.textContent ||
                      ntry.querySelector('RmtInf Ustrd')?.textContent || '';
         const date = ntry.querySelector('BookgDt Dt')?.textContent || '';
-        // Rechnung via Referenz suchen
+        // Rechnung via QRR-Referenz suchen (r.qrr, gesetzt von rechnungQRR)
         const r = db.rechnungen.find(x =>
-          x.qrRef && ref.replace(/\s/g,'').includes(x.qrRef.replace(/\s/g,''))
+          x.qrr && ref.replace(/\s/g,'').includes(x.qrr.replace(/\s/g,''))
         );
         if (r && amt > 0) {
           r.bezahlt = roundRp((parseFloat(r.bezahlt||0)) + amt);
