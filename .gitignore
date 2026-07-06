@@ -14,3 +14,6 @@ $RECYCLE.BIN/
 
 # Node (falls spaeter genutzt)
 node_modules/
+
+# Echte Kundendaten fuer lokale OCR-Tests — NIE committen
+testdaten/

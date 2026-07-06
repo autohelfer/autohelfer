@@ -14955,15 +14955,16 @@ function getApiKey(){ return localStorage.getItem('ah_ocr_key')||''; }
 // ── OCR: Tesseract.js (kein API-Key, läuft lokal im Browser) ──
 
 // Bildvorverarbeitung fuer bessere Erkennung: Graustufen + Kontrast-Stretch
-// (2%-Perzentile), sehr grosse Fotos auf sinnvolle Breite skalieren.
+// (2%-Perzentile), Skalierung auf 1600px Zielbreite (hoch wie runter —
+// kleine/komprimierte Fotos, z.B. via WhatsApp, profitieren vom Upscaling).
 // Liefert ein Canvas oder null (dann wird das Originalbild verwendet).
 function ocrPreprocess(imgUrl) {
   return new Promise(function(resolve) {
     var img = new Image();
     img.onload = function() {
       try {
-        var MAX_W = 1600;
-        var scale = img.width > MAX_W ? MAX_W / img.width : 1;
+        var ZIEL_W = 1600;
+        var scale = ZIEL_W / Math.max(1, img.width);
         var w = Math.max(1, Math.round(img.width * scale));
         var h = Math.max(1, Math.round(img.height * scale));
         var c = document.createElement('canvas');
@@ -15020,13 +15021,42 @@ function ocrParseText(text) {
     if (stamM) result.stammnummer = stamM[1];
   }
 
-  // ── VIN: bereinigt (Leerzeichen entfernen, dann 17 Zeichen) ──
-  var vinClean = all.replace(/\s+/g,'');
-  var vinM = vinClean.match(/[A-HJ-NPR-Z0-9]{17}/);
-  if (vinM) result.vin = vinM[0];
+  // ── VIN: exakt 17 Zeichen, OCR-Normalisierung, Wortfolgen verwerfen ──
+  // O/I/Q kommen in echten VINs nie vor -> vor der Pruefung O->0, I->1, Q->0.
+  // Kandidaten verwerfen, die erkennbar Text sind (Vermerke, Vokalfolgen,
+  // zu wenige Ziffern).
+  var vinClean = all.toUpperCase().replace(/\s+/g,'');
+  var vinVermerk = /HALTERWECHSEL|VERBOTEN|EINSCHRAENK|BENUTZERHANDBUCH|PRUEFBERICHT|PRUEFSTELLE|HERSTELLER|ANHAENGELAST|STUETZLAST/;
+  // Datums-Spannen (TT.MM.JJJJ) merken — VIN-Fenster, die ein Datum
+  // anschneiden, sind verschobene Fehltreffer (z.B. Geburtsdatum-Ziffern).
+  var vinDaten = [], vinDm, vinDateRx = /\d{2}\.\d{2}\.\d{4}/g;
+  while ((vinDm = vinDateRx.exec(vinClean)) !== null) {
+    vinDaten.push([vinDm.index, vinDm.index + vinDm[0].length]);
+  }
+  // Besten Kandidaten waehlen: VINs enden nach Norm auf 4 Ziffern und sind
+  // ziffernreich — Textfenster (Wortfolgen) sind es nicht.
+  var vinBester = null, vinBestScore = -1;
+  for (var vi = 0; vi + 17 <= vinClean.length; vi++) {
+    var vinRoh = vinClean.substr(vi, 17);
+    if (!/^[A-Z0-9]{17}$/.test(vinRoh)) continue;
+    if (/[AEIOU]{3}/.test(vinRoh)) continue;                    // Wortfolge (Vokale)
+    if (vinVermerk.test(vinRoh)) continue;                       // Vermerk-Zeile
+    var vinImDatum = vinDaten.some(function(sp){ return vi < sp[1] && vi + 17 > sp[0]; });
+    if (vinImDatum) continue;                                    // schneidet Datum an
+    var vinKand = vinRoh.replace(/O/g,'0').replace(/I/g,'1').replace(/Q/g,'0');
+    if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vinKand)) continue;        // VIN-Alphabet
+    var vinZiffern = (vinKand.match(/\d/g) || []).length;
+    if (vinZiffern < 4) continue;                                // Woerter haben kaum Ziffern
+    var vinScore = vinZiffern + (/\d{4}$/.test(vinKand) ? 10 : 0);
+    if (vinScore > vinBestScore) { vinBestScore = vinScore; vinBester = vinKand; }
+  }
+  if (vinBester) result.vin = vinBester;
 
-  // ── Erstzulassung: erste Datumsangabe TT.MM.JJJJ ──
-  var dateM = all.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+  // ── Erstzulassung: label-verankert (Feld 36 '1. Inverkehrsetzung' /
+  // franz. '1ère mise en circulation'); Fallback nur ohne Label-Treffer ──
+  var dateM = all.match(/nverkehrsetzung[\s\S]{0,80}?(\d{2})\.(\d{2})\.(\d{4})/i)
+           || all.match(/mise\s*en\s*circulation[\s\S]{0,80}?(\d{2})\.(\d{2})\.(\d{4})/i)
+           || all.match(/(\d{2})\.(\d{2})\.(\d{4})/);
   if (dateM) result.erstzulassung = dateM[3] + '-' + dateM[2] + '-' + dateM[1];
 
   // ── Leistung: kW ──
