@@ -4227,8 +4227,6 @@
         font-size: 16px !important;
       }
 
-      /* Kalender-Grid auf Tablet */
-      .cal-grid { height: 140px; }
     }
 
     /* ---- IPAD PRO 13" PORTRAIT: 1024px ---- */
@@ -4265,8 +4263,6 @@
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       }
 
-      /* Kalender: mehr Höhe */
-      .cal-grid { height: 140px; }
     }
 
     /* ---- IPAD PRO 13" LANDSCAPE SPEZIFISCH: 1366px ---- */
@@ -20096,7 +20092,9 @@ function calGetKW(date) {
 function calFormatWeekLabel(days) {
   const opts = { day:'numeric', month:'short' };
   const von = days[0].toLocaleDateString('de-CH', opts);
-  const bis = days[5].toLocaleDateString('de-CH', { day:'numeric', month:'short', year:'numeric' });
+  // Wochenende = angezeigter Sonntag (days enthaelt nur Mo–Sa)
+  const so = new Date(days[5]); so.setDate(days[5].getDate() + 1);
+  const bis = so.toLocaleDateString('de-CH', { day:'numeric', month:'short', year:'numeric' });
   const kw  = calGetKW(days[0]);
   return `KW ${kw} — ${von} – ${bis}`;
 }
