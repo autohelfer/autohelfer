@@ -18952,7 +18952,7 @@ function renderTeam() {
   let html = '';
 
   if (!aktiv.length) {
-    html += '<div class="empty-state"><div class="empty-icon"><svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>Keine aktiven Mitteilungen.<p>Erstelle eine neue Team-Info oben rechts.</p></div>';
+    html += '<div class="empty-state"><div class="empty-icon"><svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>Keine aktiven Mitteilungen.<p>Erstelle eine Mitteilung über «+ Neue Mitteilung» oben rechts.</p></div>';
   } else {
     html += aktiv.map(m => tmsgCardHTML(m, false)).join('');
   }
