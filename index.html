@@ -24322,10 +24322,6 @@ function renderEinstellungen() {
             </div>
           </div>
           <div class="form-group">
-            <label>MwSt-Nr. (UID)</label>
-            <input class="form-input" id="g-uid" type="text" placeholder="CHE-123.456.789 MWST" value="${esc(g.uid||'')}">
-          </div>
-          <div class="form-group">
             <label>Zahlungsbedingungen</label>
             <textarea class="form-textarea" id="g-zb" rows="2">${esc(g.zahlungsbedingungen)}</textarea>
           </div>
@@ -24421,7 +24417,6 @@ function removeLogo() {
       iban:                document.getElementById('g-iban').value.trim(),
       zahlungsfrist:       document.getElementById('g-frist').value.trim(),
       stundenansatz:       parseFloat(document.getElementById('g-stundenansatz')?.value) || 175,
-      uid:                 document.getElementById('g-uid')?.value.trim() || '',
       mwstSatz:            parseFloat(document.getElementById('g-mwst-satz')?.value) || 8.1,
       mwstPflichtig:       document.getElementById('g-mwst-pflichtig')?.value !== 'false',
       zahlungsbedingungen: document.getElementById('g-zb').value.trim(),
