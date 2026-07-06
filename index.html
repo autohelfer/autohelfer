@@ -5184,6 +5184,9 @@
 
       <!-- Aufträge ohne Termin -->
       <div id="dash-ohne-termin-wrap" style="margin-top:20px"></div>
+
+      <!-- MAHNWESEN: ueberfaellige Rechnungen je Stufe -->
+      <div id="dash-mahnwesen-wrap" style="margin-top:20px"></div>
     </div>
 
     <!-- KUNDEN -->
@@ -6645,23 +6648,78 @@ function rSaldo(r) {
   return Math.max(0, roundRp(tot - bez));
 }
 
-// Mahnstufe berechnen (automatisch nach Tagen, aber manuell überschreibbar)
+// ── Mahnwesen: Stufenlogik (Parameter aus FIRMA / Einstellungen) ──────
+// Datenmodell (API-ready): r.mahnstufe = 1|2|3, r.mahnung_log = [{stufe, datum}]
+// Stufen werden IMMER manuell ausgeloest — die App berechnet nur Vorschlaege.
+
+// ISO-Datum + n Tage
+function addTageIso(iso, n) {
+  if (!iso) return null;
+  const d = new Date(iso + 'T12:00:00');
+  if (isNaN(d.getTime())) return null;
+  d.setDate(d.getDate() + (parseInt(n, 10) || 0));
+  return d.toISOString().split('T')[0];
+}
+
+const MAHNSTUFE_TITEL = { 1: 'Zahlungserinnerung', 2: '2. Mahnung', 3: '3. Mahnung' };
+
+// Zentrale Mahn-Info einer Rechnung: Faelligkeit, Stufe, naechste Stufe, Gebuehr
+function rMahnInfo(r) {
+  const heute = new Date().toISOString().split('T')[0];
+  // Legacy-Toleranz: fruehere String-Stufen auf Zahlen mappen
+  if (typeof r.mahnstufe === 'string' && r.mahnstufe) {
+    r.mahnstufe = ({ erinnerung: 1, mahnung1: 1, mahnung2: 2 })[r.mahnstufe] || 0;
+  }
+  const stufe  = r.mahnstufe >= 1 ? Math.min(r.mahnstufe, 3) : 0;
+  const log    = Array.isArray(r.mahnung_log) ? r.mahnung_log : [];
+  const total  = r.total != null ? r.total : ((r.subtotal||r.betrag||0)+(r.mwstBetrag||0));
+  const saldo  = rSaldo(r);
+  const offen  = ['ausstehend','mahnung'].includes(r.status) && saldo > 0;
+  const faellig = addTageIso(r.datum, FIRMA.zahlungsfrist_tage);
+  const ueberfaellig = !!(offen && faellig && heute > faellig);
+  const gebuehr = stufe > 0 ? (parseFloat(FIRMA['mahnung' + stufe + '_gebuehr']) || 0) : 0;
+
+  // Naechste Stufe: ab Faelligkeit + Frist1 bzw. letztes Stufendatum + FristN
+  let naechsteStufe = null, naechsteAb = null, naechsteMoeglich = false;
+  if (offen && stufe < 3) {
+    naechsteStufe = stufe + 1;
+    const frist = parseInt(FIRMA['mahnung' + naechsteStufe + '_frist_tage'], 10) || 0;
+    const basis = stufe === 0
+      ? faellig
+      : ((log.filter(e => e.stufe === stufe).pop() || {}).datum || faellig);
+    naechsteAb = addTageIso(basis, frist);
+    naechsteMoeglich = !!(naechsteAb && heute >= naechsteAb);
+  }
+
+  let tageUeberfaellig = 0;
+  if (ueberfaellig) {
+    tageUeberfaellig = Math.max(0, Math.round(
+      (new Date(heute + 'T12:00:00') - new Date(faellig + 'T12:00:00')) / 86400000));
+  }
+
+  return {
+    stufe, faellig, ueberfaellig, offen, tageUeberfaellig, gebuehr,
+    totalMitGebuehr: roundRp(total + gebuehr),   // Rechnungsbetrag + Gebuehr aktuelle Stufe
+    offenMitGebuehr: roundRp(saldo + gebuehr),   // offener Saldo + Gebuehr (Basis QR + Texte)
+    naechsteStufe, naechsteAb, naechsteMoeglich,
+  };
+}
+
+// Anzeige-Stufe fuer Badges/Filter
 function rMahnstufe(r) {
-  if (r.mahnstufe) return r.mahnstufe; // manuell gesetzt
-  if (['bezahlt','storniert','fakturiert'].includes(r.status)) return '';
-  const tage = tageSeit(r.datum);
-  if (tage === null) return 'rechnung';
-  if (tage >= 45) return 'mahnung2';
-  if (tage >= 30) return 'mahnung1';
-  if (tage >= 15) return 'erinnerung';
+  const mi = rMahnInfo(r);
+  if (!mi.offen) return 'rechnung';
+  if (mi.stufe >= 1) return 'stufe' + mi.stufe;
+  if (mi.ueberfaellig) return 'faellig';
   return 'rechnung';
 }
 
 const MAHNSTUFE_LABEL = {
-  rechnung:   { label: 'Rechnung',    color: 'var(--text-muted)',  bg: 'var(--surface2)' },
-  erinnerung: { label: 'Erinnerung',  color: '#e67e22',            bg: 'rgba(230,126,34,0.1)' },
-  mahnung1:   { label: '1. Mahnung',  color: '#e74c3c',            bg: 'rgba(231,76,60,0.1)' },
-  mahnung2:   { label: '2. Mahnung',  color: '#c0392b',            bg: 'rgba(192,57,43,0.15)' },
+  rechnung: { label: 'Rechnung',           color: 'var(--text-muted)', bg: 'var(--surface2)' },
+  faellig:  { label: 'Überfällig',         color: '#e67e22',           bg: 'rgba(230,126,34,0.1)' },
+  stufe1:   { label: 'Zahlungserinnerung', color: '#e74c3c',           bg: 'rgba(231,76,60,0.1)' },
+  stufe2:   { label: '2. Mahnung',         color: '#c0392b',           bg: 'rgba(192,57,43,0.15)' },
+  stufe3:   { label: '3. Mahnung',         color: '#7d1f12',           bg: 'rgba(125,31,18,0.2)' },
 };
 
 
@@ -12252,48 +12310,68 @@ function tageSeit(datumStr) {
 }
 
 // Zahlungserinnerungs-Text generieren
-function mahnungText(r, k) {
-  const nr  = rechnungNr(r);
-  const tot = chf(r.total != null ? r.total : ((r.subtotal||r.betrag||0)+(r.mwstBetrag||0)));
-  const dat = r.datum || '';
-  const name = k ? k.vorname + ' ' + k.nachname : 'Kunde';
-  const tage = tageSeit(dat);
-  const isMahnung = r.status === 'mahnung';
+// Mahntext je Stufe (Betrag = offener Saldo inkl. Gebuehr der Stufe)
+function mahnungTextStufe(r, k, stufe) {
+  const nr    = rechnungNr(r);
+  const dat   = formatDateDE(r.datum || '');
+  const name  = k ? (k.firma || (k.vorname + ' ' + k.nachname).trim()) : 'Kunde';
+  const firma = ((FIRMA.name || '') + ' ' + (FIRMA.rechtsform || '')).trim();
+  const geb   = stufe > 0 ? (parseFloat(FIRMA['mahnung' + stufe + '_gebuehr']) || 0) : 0;
+  const tot   = chf(roundRp(rSaldo(r) + geb));
+  const gebTxt = geb > 0 ? ` (inkl. Mahngebühr CHF ${chf(geb)})` : '';
+  const zahlbarBis = formatDateDE(addTageIso(
+    new Date().toISOString().split('T')[0], FIRMA['mahnung' + stufe + '_frist_tage']));
 
-  return isMahnung
-    ? `Guten Tag ${name}
+  if (stufe >= 3) {
+    return `Guten Tag ${name}
 
-Wir erlauben uns, Sie nochmals an die ausstehende Rechnung ${nr} vom ${dat} über CHF ${tot} zu erinnern.
+Die Rechnung ${nr} vom ${dat} ist trotz zweifacher Mahnung weiterhin unbezahlt. Der ausstehende Betrag beträgt CHF ${tot}${gebTxt}.
 
-Bitte überweisen Sie den Betrag innerhalb von 10 Tagen.
+Wir setzen Ihnen hiermit eine letzte Frist bis am ${zahlbarBis}. Nach unbenutztem Ablauf dieser Frist werden wir ohne weitere Ankündigung rechtliche Schritte einleiten (Betreibung).
 
-Mit freundlichen Grüssen
-Ihre Garage`
-    : `Guten Tag ${name}
+${firma}`;
+  }
+  if (stufe === 2) {
+    return `Guten Tag ${name}
 
-Wir erlauben uns, Sie freundlich an die Begleichung unserer Rechnung ${nr} vom ${dat} über CHF ${tot} zu erinnern.
+Trotz unserer Zahlungserinnerung ist die Rechnung ${nr} vom ${dat} weiterhin offen. Der ausstehende Betrag beträgt CHF ${tot}${gebTxt}.
 
-Falls die Zahlung bereits erfolgt ist, betrachten Sie dieses Schreiben als gegenstandslos.
+Wir bitten Sie, den Betrag bis spätestens ${zahlbarBis} zu überweisen.
 
-Mit freundlichen Grüssen
-Ihre Garage`;
+Freundliche Grüsse
+${firma}`;
+  }
+  return `Guten Tag ${name}
+
+Wir erlauben uns, Sie freundlich an unsere Rechnung ${nr} vom ${dat} über CHF ${tot} zu erinnern — möglicherweise ist sie Ihrer Aufmerksamkeit entgangen.
+
+Bitte begleichen Sie den Betrag bis am ${zahlbarBis}. Falls sich Ihre Zahlung mit dieser Nachricht kreuzt, betrachten Sie sie bitte als gegenstandslos.
+
+Freundliche Grüsse
+${firma}`;
 }
 
-// Mail-Link mit Rechnung als Text
+// Effektive Stufe fuer Kommunikation: ausgeloeste Stufe, sonst die anstehende
+function mahnungEffStufe(r) {
+  const mi = rMahnInfo(r);
+  return mi.stufe >= 1 ? mi.stufe : (mi.naechsteStufe || 1);
+}
+
+function mahnungText(r, k) { return mahnungTextStufe(r, k, mahnungEffStufe(r)); }
+
+// Mail-Link mit Mahntext der korrekten Stufe
 function mahnungMailLink(r, k) {
-  const betreff = encodeURIComponent('Zahlungserinnerung ' + rechnungNr(r));
-  const body    = encodeURIComponent(mahnungText(r, k));
+  const stufe   = mahnungEffStufe(r);
+  const betreff = encodeURIComponent(MAHNSTUFE_TITEL[stufe] + ' ' + rechnungNr(r));
+  const body    = encodeURIComponent(mahnungTextStufe(r, k, stufe));
   const email   = k ? (k.email || '') : '';
   return `mailto:${email}?subject=${betreff}&body=${body}`;
 }
 
-// WhatsApp-Link
+// WhatsApp-Link mit Mahntext der korrekten Stufe
 function mahnungWaLink(r, k) {
-  const nr  = rechnungNr(r);
-  const tot = chf(r.total != null ? r.total : ((r.subtotal||r.betrag||0)+(r.mwstBetrag||0)));
-  const name = k ? k.vorname : 'Guten Tag';
   const tel  = k ? ((k.mobile || k.telefon || '').replace(/\s/g,'').replace(/^\+/, '')) : '';
-  const text = encodeURIComponent(`Guten Tag ${name}, wir erinnern freundlich an Rechnung ${nr} über CHF ${tot}. Vielen Dank!`);
+  const text = encodeURIComponent(mahnungTextStufe(r, k, mahnungEffStufe(r)));
   return tel ? `https://wa.me/${tel}?text=${text}` : `https://wa.me/?text=${text}`;
 }
 
@@ -12365,16 +12443,38 @@ function rVersandBadge(r) {
 
 // HTML für Mahnungs-Aktionszeile
 function mahnungAktionenHTML(r, k) {
-  const tage   = tageSeit(r.datum);
+  const mi     = rMahnInfo(r);
   const telUrl = mahnungTelLink(k);
   const waUrl  = mahnungWaLink(r, k);
   const mailUrl= mahnungMailLink(r, k);
 
+  // Faelligkeits-/Stufen-Badge
   let tageBadge = '';
-  if (tage !== null) {
-    const cls = tage <= 20 ? 'tage-ok' : tage <= 40 ? 'tage-warn' : 'tage-over';
-    tageBadge = `<span class="tage-badge ${cls}">${tage} Tage</span>`;
+  if (mi.stufe >= 1) {
+    const letzte = (Array.isArray(r.mahnung_log) ? r.mahnung_log : []).filter(e => e.stufe === mi.stufe).pop();
+    tageBadge = `<span class="tage-badge tage-over">${MAHNSTUFE_TITEL[mi.stufe]}${letzte && letzte.datum ? ' am ' + formatDateDE(letzte.datum) : ''}</span>`;
+  } else if (mi.ueberfaellig) {
+    tageBadge = `<span class="tage-badge tage-warn">${mi.tageUeberfaellig} Tage überfällig</span>`;
+  } else if (mi.faellig) {
+    tageBadge = `<span class="tage-badge tage-ok">fällig am ${formatDateDE(mi.faellig)}</span>`;
   }
+
+  // Naechste Stufe ausloesen (immer manuell; hervorgehoben wenn Frist erreicht)
+  let stufenBtn = '';
+  if (mi.naechsteStufe) {
+    const titel = MAHNSTUFE_TITEL[mi.naechsteStufe];
+    stufenBtn = mi.naechsteMoeglich
+      ? `<button class="btn-mahnung btn-mahnung-status" style="background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700" onclick="mahnungAusloesen(${r.id})">+ ${titel} auslösen</button>`
+      : `<button class="btn-mahnung btn-mahnung-status" onclick="mahnungAusloesen(${r.id})" title="Empfohlen ab ${formatDateDE(mi.naechsteAb)}">${titel} ab ${formatDateDE(mi.naechsteAb)}</button>`;
+  }
+
+  // PDF + Zuruecknehmen (ab Stufe 1)
+  const pdfBtn = mi.stufe >= 1
+    ? `<button class="btn-mahnung" onclick="generatePdfMahnung(${r.id})" title="Mahnungs-PDF öffnen">Mahnung-PDF</button>`
+    : '';
+  const undoBtn = mi.stufe >= 1
+    ? `<button class="btn-mahnung" onclick="mahnungZuruecksetzen(${r.id})" title="Letzte Mahnstufe zurücknehmen" style="color:var(--text-muted)">&#8634;</button>`
+    : '';
 
   return `<div class="mahnung-actions">
     ${tageBadge}
@@ -12390,20 +12490,58 @@ function mahnungAktionenHTML(r, k) {
       <svg class="icon-svg" viewBox="0 0 24 24" style="width:12px;height:12px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       E-Mail
     </a>
-    <button class="btn-mahnung btn-mahnung-status" onclick="rechnungMahnungSetzen(${r.id})" title="Als Mahnung markieren">
-      ${r.status === 'mahnung' ? '&#9888; Mahnung' : '&#43; Mahnung setzen'}
-    </button>
+    ${stufenBtn}
+    ${pdfBtn}
+    ${undoBtn}
   </div>`;
 }
 
-function rechnungMahnungSetzen(id) {
+// Naechste Mahnstufe ausloesen (immer manuell; App versendet nie selbst)
+function mahnungAusloesen(id) {
   const r = db.rechnungen.find(x => x.id === id);
   if (!r) return;
-  r.status = r.status === 'mahnung' ? 'ausstehend' : 'mahnung';
-  r.updatedAt = new Date().toISOString();
-  saveDb();
-  renderRechnungen();
-  renderDashboard();
+  const mi = rMahnInfo(r);
+  if (!mi.naechsteStufe) { showToast('Höchste Mahnstufe bereits erreicht.', 'warning'); return; }
+  const doIt = () => {
+    const heute = new Date().toISOString().split('T')[0];
+    r.mahnstufe = mi.naechsteStufe;
+    if (!Array.isArray(r.mahnung_log)) r.mahnung_log = [];
+    r.mahnung_log.push({ stufe: mi.naechsteStufe, datum: heute });
+    r.status = 'mahnung';
+    r.updatedAt = new Date().toISOString();
+    saveDb();
+    renderRechnungen();
+    renderDashboard();
+    generatePdfMahnung(r.id);
+  };
+  if (mi.naechsteMoeglich) { doIt(); return; }
+  appConfirm(
+    MAHNSTUFE_TITEL[mi.naechsteStufe] + ' vorzeitig auslösen?',
+    'Empfohlen ab ' + formatDateDE(mi.naechsteAb) + ' (gemäss Fristen in den Firmendaten). Trotzdem jetzt auslösen?',
+    'Auslösen', false
+  ).then(ok => { if (ok) doIt(); });
+}
+
+// Letzte Mahnstufe zuruecknehmen (Fehlklick-Korrektur)
+function mahnungZuruecksetzen(id) {
+  const r = db.rechnungen.find(x => x.id === id);
+  if (!r || !(r.mahnstufe >= 1)) return;
+  appConfirm('Mahnstufe zurücknehmen',
+    MAHNSTUFE_TITEL[r.mahnstufe] + ' für ' + rechnungNr(r) + ' zurücknehmen?',
+    'Zurücknehmen', true
+  ).then(ok => {
+    if (!ok) return;
+    if (Array.isArray(r.mahnung_log)) {
+      const idx = r.mahnung_log.map(e => e.stufe).lastIndexOf(r.mahnstufe);
+      if (idx >= 0) r.mahnung_log.splice(idx, 1);
+    }
+    r.mahnstufe = r.mahnstufe - 1;
+    if (r.mahnstufe <= 0) { delete r.mahnstufe; r.status = 'ausstehend'; }
+    r.updatedAt = new Date().toISOString();
+    saveDb();
+    renderRechnungen();
+    renderDashboard();
+  });
 }
 
 
@@ -12418,10 +12556,14 @@ function rechnungenFilter(typ) {
   const badge = el('re-filter-badge');
   const label = el('re-filter-label');
   const labels = {
-    ueberfaellig: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0;display:inline-block;vertical-align:middle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Überfällige Rechnungen (> 14 Tage)',
+    ueberfaellig: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0;display:inline-block;vertical-align:middle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Überfällige Rechnungen (Zahlungsfrist überschritten)',
     ausstehend:   'Ausstehende Rechnungen',
     bezahlt:      '✓ Bezahlte Rechnungen (diesen Monat)',
-    mahnung:      '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e74c3c;flex-shrink:0;vertical-align:middle"></span> Mahnungen'
+    mahnung:      '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e74c3c;flex-shrink:0;vertical-align:middle"></span> Mahnungen',
+    'mahn-faellig': 'Überfällig — noch keine Mahnung ausgelöst',
+    'mahn-stufe1':  'Zahlungserinnerungen (Stufe 1)',
+    'mahn-stufe2':  '2. Mahnungen',
+    'mahn-stufe3':  '3. Mahnungen'
   };
   if (_reFilter && badge && label) {
     badge.style.display = 'block';
@@ -12445,15 +12587,18 @@ function renderRechnungen(){
 
   // KPI-Filter
   if (_reFilter === 'ueberfaellig') {
-    const v14 = new Date(); v14.setDate(v14.getDate()-14);
-    const v14s = v14.toISOString().split('T')[0];
-    list = list.filter(r => ['ausstehend','mahnung'].includes(r.status) && r.datum && r.datum < v14s);
+    list = list.filter(r => rMahnInfo(r).ueberfaellig);
+  } else if (_reFilter === 'mahn-faellig') {
+    list = list.filter(r => { const mi = rMahnInfo(r); return mi.ueberfaellig && mi.stufe === 0; });
+  } else if (_reFilter === 'mahn-stufe1' || _reFilter === 'mahn-stufe2' || _reFilter === 'mahn-stufe3') {
+    const s = parseInt(_reFilter.slice(-1), 10);
+    list = list.filter(r => { const mi = rMahnInfo(r); return mi.offen && mi.stufe === s; });
   } else if (_reFilter === 'ausstehend') {
     list = list.filter(r => ['ausstehend','mahnung'].includes(r.status));
   } else if (_reFilter === 'bezahlt') {
     list = list.filter(r => r.status === 'bezahlt' && (r.datum||'').startsWith(thisMonth));
   } else if (_reFilter === 'mahnung') {
-    list = list.filter(r => r.status === 'mahnung' || rMahnstufe(r) !== 'rechnung');
+    list = list.filter(r => { const mi = rMahnInfo(r); return mi.offen && mi.stufe >= 1; });
   } else if (_reFilter === 'nicht-verschickt') {
     list = list.filter(r => !['bezahlt','storniert'].includes(r.status) && (!r.sent_log || !r.sent_log.length));
   }
@@ -12527,7 +12672,8 @@ function renderRechnungen(){
     // Tage-Badge
     let tageBadge = '';
     if (tage !== null && offeneStatus.includes(r.status)) {
-      const tageCls = tage <= 14 ? '#27ae60' : tage <= 30 ? '#e67e22' : '#e74c3c';
+      // Farbe nach Faelligkeit (FIRMA-Zahlungsfrist), nicht nach fixen Tagen
+      const tageCls = stufe === 'rechnung' ? '#27ae60' : stufe === 'faellig' ? '#e67e22' : '#e74c3c';
       tageBadge = '<span style="background:' + tageCls + '18;color:' + tageCls + ';padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">' + tage + 'd</span>';
     }
 
@@ -12568,7 +12714,7 @@ function renderRechnungen(){
         '<button class="btn-wallee" data-id="' + r.id + '" title="Zahlungslink senden" style="background:rgba(39,174,96,0.1);border:1px solid #27ae60;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer;font-family:inherit;color:#27ae60;white-space:nowrap">Zahlungslink</button>'
       : '';
 
-    const rowBg = stufe === 'mahnung2' ? 'rgba(192,57,43,0.04)' : stufe === 'mahnung1' ? 'rgba(231,76,60,0.02)' : '';
+    const rowBg = stufe === 'stufe3' ? 'rgba(125,31,18,0.06)' : stufe === 'stufe2' ? 'rgba(192,57,43,0.04)' : stufe === 'stufe1' ? 'rgba(231,76,60,0.02)' : '';
 
     html += '<tr' + (rowBg ? ' style="background:' + rowBg + '"' : '') + '>' +
       '<td style="white-space:nowrap;font-size:12px">' + esc(formatDateDE(r.datum||'')) + '</td>' +
@@ -12609,15 +12755,12 @@ function renderRechnungen(){
 }
 
 function updateRechnungenKPIs() {
-  const heute = new Date().toISOString().split('T')[0];
-  const v14 = new Date(); v14.setDate(v14.getDate()-14);
-  const v14s = v14.toISOString().split('T')[0];
   const thisMonth = new Date().toISOString().slice(0,7);
   const offene = db.rechnungen.filter(r => ['ausstehend','mahnung'].includes(r.status));
-  const ueberfaellig = offene.filter(r => r.datum && r.datum < v14s).length;
+  const ueberfaellig = offene.filter(r => rMahnInfo(r).ueberfaellig).length;
   const offChf = offene.reduce((s,r) => s + rSaldo(r), 0);
   const bezahlt = db.rechnungen.filter(r => r.status==='bezahlt'&&(r.datum||'').startsWith(thisMonth)).length;
-  const mahnungAnz = db.rechnungen.filter(r => r.status==='mahnung' || rMahnstufe(r) !== 'rechnung').length;
+  const mahnungAnz = offene.filter(r => rMahnInfo(r).stufe >= 1).length;
   if(el('kpi-ueberfaellig')) el('kpi-ueberfaellig').textContent = ueberfaellig;
   if(el('stat-umsatz'))      el('stat-umsatz').textContent = offChf > 0 ? chf(offChf) : '0';
   if(el('kpi-re-bezahlt'))   el('kpi-re-bezahlt').textContent = bezahlt;
@@ -13867,6 +14010,42 @@ function showRechnungDetail(id){
 
 
 
+// Dashboard-Widget Mahnwesen: Anzahl + offene Summe je Stufe, Klick filtert Rechnungsliste
+function renderMahnwesenKachel() {
+  const wrap = el('dash-mahnwesen-wrap');
+  if (!wrap) return;
+  const cats = {
+    'mahn-faellig': { label: 'Fällig',             anz: 0, sum: 0, color: '#e67e22' },
+    'mahn-stufe1':  { label: 'Zahlungserinnerung', anz: 0, sum: 0, color: '#e74c3c' },
+    'mahn-stufe2':  { label: '2. Mahnung',         anz: 0, sum: 0, color: '#c0392b' },
+    'mahn-stufe3':  { label: '3. Mahnung',         anz: 0, sum: 0, color: '#7d1f12' },
+  };
+  db.rechnungen.forEach(r => {
+    const mi = rMahnInfo(r);
+    if (!mi.offen) return;
+    if (mi.stufe >= 1) { const c = cats['mahn-stufe' + mi.stufe]; c.anz++; c.sum += mi.offenMitGebuehr; }
+    else if (mi.ueberfaellig) { const c = cats['mahn-faellig']; c.anz++; c.sum += rSaldo(r); }
+  });
+  const total = Object.values(cats).reduce((s, c) => s + c.anz, 0);
+  let cells = '';
+  Object.keys(cats).forEach(key => {
+    const c = cats[key];
+    cells += '<div onclick="dashMahnGo(\'' + key + '\')" style="flex:1;min-width:110px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer">' +
+      '<div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + c.label + '</div>' +
+      '<div style="font-size:20px;font-weight:900;margin-top:2px;color:' + (c.anz > 0 ? c.color : 'var(--text-muted)') + '">' + c.anz + '</div>' +
+      '<div style="font-size:10px;color:var(--text-muted);font-family:monospace">CHF ' + chf(c.sum) + '</div>' +
+      '</div>';
+  });
+  wrap.innerHTML =
+    '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin-bottom:8px">Mahnwesen — überfällige Rechnungen' + (total ? '' : ' (keine)') + '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' + cells + '</div>';
+}
+
+function dashMahnGo(filter) {
+  showPage('rechnungen');
+  setTimeout(function(){ rechnungenFilter(filter); }, 60);
+}
+
 function renderDashboard(){
   renderKalender();
   if(typeof renderMaengelKachel==="function") renderMaengelKachel();
@@ -13886,9 +14065,7 @@ function renderDashboard(){
 
   const laufend = db.auftraege.filter(a=>!a.geloescht&&a.status==='in_arbeit').length;
   const heuteAnz = db.auftraege.filter(a=>!a.geloescht&&['offen','geplant','in_arbeit'].includes(a.status)&&a.datum===isoDate(0)).length;
-  const vor14 = new Date(); vor14.setDate(vor14.getDate()-14);
-  const vor14str = vor14.toISOString().split('T')[0];
-  const ueberfaellig = db.rechnungen.filter(r=>r.status==='ausstehend'&&r.datum&&r.datum<vor14str).length;
+  const ueberfaellig = db.rechnungen.filter(r=>rMahnInfo(r).ueberfaellig).length;
   if(el('kpi-laufend'))      el('kpi-laufend').textContent = laufend;
   if(el('kpi-heute'))        el('kpi-heute').textContent   = heuteAnz;
   if(el('kpi-ueberfaellig')){
@@ -13899,7 +14076,7 @@ function renderDashboard(){
   // Neue Rechnungs-KPIs
   const thisMonth = new Date().toISOString().slice(0,7); // YYYY-MM
   const bezahlt = db.rechnungen.filter(r=>r.status==='bezahlt'&&(r.datum||'').startsWith(thisMonth)).length;
-  const mahnungAnz = db.rechnungen.filter(r=>r.status==='mahnung').length;
+  const mahnungAnz = db.rechnungen.filter(r=>{ const mi=rMahnInfo(r); return mi.offen && mi.stufe>=1; }).length;
   if(el('kpi-re-bezahlt')) el('kpi-re-bezahlt').textContent = bezahlt;
   if(el('kpi-re-mahnung')){
     el('kpi-re-mahnung').textContent = mahnungAnz;
@@ -13908,6 +14085,7 @@ function renderDashboard(){
   }
   renderDashboardHeute();
   renderDashboardOhneTermin();
+  renderMahnwesenKachel();
   renderServiceKachel();
 }
 
@@ -17784,14 +17962,17 @@ function drawQRToDataURL(text) {
 
 // QR-Rechnung HTML generieren (Zahlteil + Empfangsschein, eigene letzte Seite)
 // Zahlungsempfaenger AUSSCHLIESSLICH aus FIRMA-Modul (localStorage-Key 'firma').
-function buildQRBillHTML(r, k) {
+// opts.betrag: optionaler Betrag-Override (z.B. Mahnung: Saldo + Mahngebuehr);
+// die QRR-Referenz bleibt in jedem Fall dieselbe.
+function buildQRBillHTML(r, k, opts) {
   try {
   const qrIbanRaw = FIRMA.qr_iban || '';
   const chk       = firmaCheckIban(qrIbanRaw);
   const ibanClean = qrIbanRaw.replace(/\s/g,'').toUpperCase();
   const ibanFmt   = ibanClean.replace(/(.{4})/g,'$1 ').trim();
 
-  const tot    = r.total != null ? r.total : ((r.subtotal||0)+(r.mwstBetrag||0));
+  const tot    = (opts && opts.betrag != null) ? opts.betrag
+               : (r.total != null ? r.total : ((r.subtotal||0)+(r.mwstBetrag||0)));
   const betrag = (typeof tot === 'number' ? tot : parseFloat(tot)||0).toFixed(2);
   const reNr   = rechnungNr(r);
 
@@ -17909,6 +18090,140 @@ function buildQRBillHTML(r, k) {
     console.error('buildQRBillHTML Fehler:', err);
     return '<div style="padding:10mm;font-family:Arial;color:red;font-size:10pt"><b>QR-Rechnung Fehler:</b> ' + err.message + '</div>';
   }}
+
+// PDF-Druck-CSS — gemeinsam fuer Rechnungs- und Mahnungs-PDF
+const PDF_CSS = `
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; background: #fff; color: #1a1a1a; }
+
+      /* PAGE */
+      .pdf-page {
+        width: 794px;
+        min-height: 1123px;
+        margin: 0 auto;
+        background: #fff;
+        position: relative;
+        padding: 0 0 120px 0;
+      }
+
+      /* HEADER */
+      .hdr {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        padding: 32px 54px 24px 54px;
+        border-bottom: 3px solid #1a1a1a;
+        margin-bottom: 28px;
+      }
+      .hdr-left { display: flex; flex-direction: column; gap: 4px; }
+      .garage-name-big { font-size: 22pt; font-weight: 900; letter-spacing: 2px; color: #1a1a1a; line-height: 1; }
+      .hdr-name-small  { font-size: 9pt; font-weight: 700; margin-top: 4px; }
+      .hdr-claim  { font-size: 7.5pt; color: #666; letter-spacing: 0.5px; }
+      .hdr-right  { text-align: right; font-size: 8pt; color: #444; line-height: 1.7; }
+      .hdr-sep    { height: 6px; }
+
+      /* EMPFÄNGER + META */
+      .doc-layout { display: flex; gap: 40px; padding: 0 54px; margin-bottom: 24px; }
+      .empf       { flex: 1; }
+      .empf-gap   { height: 20px; }
+      .empf-name  { font-size: 10pt; font-weight: 700; margin-bottom: 3px; }
+      .empf-adr   { font-size: 9pt; color: #333; line-height: 1.6; }
+      .meta       { width: 220px; flex-shrink: 0; }
+      .meta-title { font-size: 15pt; font-weight: 900; letter-spacing: 3px; color: #1a1a1a; margin-bottom: 10px; }
+      .meta-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+      .meta-table td { padding: 3px 6px 3px 0; vertical-align: top; }
+      .meta-table td:first-child { color: #888; white-space: nowrap; padding-right: 12px; }
+      .meta-table td:last-child  { font-weight: 600; color: #1a1a1a; }
+
+      /* FAHRZEUG */
+      .fz-block { padding: 8px 54px; margin-bottom: 14px; background: #f7f7f7; border-top: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8; }
+      .fz-label { font-size: 7pt; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 4px; }
+      .fz-row   { display: flex; align-items: center; gap: 8px; font-size: 8.5pt; flex-wrap: wrap; }
+      .fz-kz    { font-weight: 700; font-size: 9pt; }
+      .fz-vin   { font-size: 7.5pt; color: #666; font-family: 'Courier New', monospace; }
+      .fz-sep   { color: #ccc; }
+
+      /* BETREFF */
+      .betreff { padding: 0 54px; margin-bottom: 16px; font-size: 9pt; font-weight: 600; }
+
+      /* POSITIONEN */
+      .pos-table { width: calc(100% - 108px); margin: 0 54px; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 0; }
+      .pos-table th { border-bottom: 2px solid #1a1a1a; padding: 6px 8px; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.5px; color: #555; }
+      .pos-table th.r { text-align: right; }
+      .pos-table td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+      .pos-table .r { text-align: right; }
+      .pos-nr { color: #aaa; font-size: 7.5pt; width: 28px; }
+      .pos-note { color: #888; font-size: 7.5pt; }
+      tr.section-header td { background: #f4f4f4; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #555; padding: 5px 8px; border-bottom: 1px solid #e8e8e8; }
+      tr.subtotal-row td { font-weight: 700; font-size: 8.5pt; background: #fafafa; border-top: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; padding: 5px 8px; color: #333; }
+
+      /* TOTALS */
+      .totals-wrap { width: calc(100% - 108px); margin: 12px 54px 0 54px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+      .total-row-sm { display: flex; justify-content: space-between; width: 260px; font-size: 8.5pt; padding: 3px 0; color: #444; }
+      .total-line { border-top: 1px solid #e0e0e0; padding-top: 7px; margin-top: 3px; }
+      .total-row-final {
+        display: flex; justify-content: space-between; align-items: baseline; width: 260px;
+        border-top: 2px solid #1a1a1a; margin-top: 4px; padding-top: 7px;
+        font-size: 9.5pt; font-weight: 700;
+      }
+      .total-final-val { font-size: 12pt; font-weight: 900; }
+
+      /* HINWEIS */
+      .hinweis {
+        margin: 20px 54px 0 54px;
+        font-size: 7.5pt; color: #888; line-height: 1.7;
+        padding-top: 12px; border-top: 1px solid #ebebeb;
+      }
+
+      /* FOOTER */
+      .ftr { position: absolute; bottom: 0; left: 0; right: 0; }
+      .ftr-bar {
+        background: #1a1a1a; color: #fff;
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        padding: 14px 54px; font-size: 7.5pt;
+      }
+      .ftr-name { font-weight: 700; letter-spacing: 0.5px; }
+      .ftr-sep  { color: #666; }
+
+      /* QR-RECHNUNG */
+      .qrb-page { width: 794px; margin: 0 auto; background: #fff; page-break-before: always; }
+      .qrb-sep  { width: 100%; height: 28px; position: relative; border-top: 1px dashed #888; display: flex; align-items: center; }
+      .qrb-scissors { position: absolute; left: 10px; background: #fff; padding: 0 4px; font-size: 16px; }
+      .qrb-sep-txt  { position: absolute; left: 50%; transform: translateX(-50%); font-size: 8px; background: #fff; padding: 0 8px; white-space: nowrap; color: #555; }
+      .qrb-bill  { width: 100%; height: 397px; display: flex; border-top: 1px solid #000; background: #fff; overflow: hidden; }
+      .qrb-es    { width: 235px; height: 397px; padding: 18px; border-right: 1px solid #000; display: flex; flex-direction: column; flex-shrink: 0; }
+      .qrb-title { font-size: 11pt; font-weight: 700; margin-bottom: 10px; font-family: Arial; }
+      .qrb-sec   { margin-bottom: 9px; }
+      .qrb-zah   { margin-top: auto; }
+      .qrb-lbl   { font-size: 6pt; font-weight: 700; line-height: 1.4; font-family: Arial; }
+      .qrb-val   { font-size: 8pt; line-height: 1.4; font-family: Arial; }
+      .qrb-es-bot { margin-top: auto; }
+      .qrb-ccy-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+      .qrb-amt   { border: 1px solid #000; min-height: 28px; width: 108px; padding: 3px 6px; font-size: 9pt; font-weight: 700; font-family: Arial; }
+      .qrb-acc-row { display: flex; justify-content: flex-end; }
+      .qrb-acc-box { border: 1px solid #000; width: 98px; height: 40px; margin-top: 3px; }
+      .qrb-zt    { flex: 1; height: 397px; padding: 18px; display: flex; flex-direction: column; }
+      .qrb-zt-main { display: flex; gap: 18px; flex: 1; }
+      .qrb-zt-left { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; }
+      .qrb-qr-wrap { width: 175px; height: 175px; position: relative; flex-shrink: 0; }
+      .qrb-qr-img  { width: 175px; height: 175px; image-rendering: pixelated; display: block; }
+      .qrb-kreuz   { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 27px; height: 27px; background: #fff; display: flex; align-items: center; justify-content: center; }
+      .qrb-ccy2  { display: flex; gap: 16px; margin-top: 12px; }
+      .qrb-val2  { font-size: 11pt; font-weight: 700; font-family: Arial; }
+      .qrb-zt-right { flex: 1; display: flex; flex-direction: column; gap: 9px; }
+
+      @media print {
+        @page { size: A4; margin: 0; }
+        body  { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .pdf-page { width: 210mm; min-height: 297mm; }
+        .qrb-page { width: 210mm; }
+        .qrb-bill { height: 105mm; }
+        .qrb-es   { width: 62mm; padding: 5mm; }
+        .qrb-zt   { padding: 5mm; }
+        .qrb-zt-left { width: 56mm; }
+        .qrb-qr-wrap { width: 46mm; height: 46mm; }
+        .qrb-qr-img  { width: 46mm; height: 46mm; }
+        .qrb-kreuz { width: 7mm; height: 7mm; }
+      }
+    `;
 
 function generatePdfRechnung(rechnungId) {
   try {
@@ -18107,138 +18422,7 @@ function generatePdfRechnung(rechnungId) {
     // QR-Rechnung: Swiss QR-bill (Zahlteil + Empfangsschein) als eigene letzte Seite
     let qrPage = buildQRBillHTML(r, k);
 
-    const pdfCSS = `
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; background: #fff; color: #1a1a1a; }
-
-      /* PAGE */
-      .pdf-page {
-        width: 794px;
-        min-height: 1123px;
-        margin: 0 auto;
-        background: #fff;
-        position: relative;
-        padding: 0 0 120px 0;
-      }
-
-      /* HEADER */
-      .hdr {
-        display: flex; justify-content: space-between; align-items: flex-start;
-        padding: 32px 54px 24px 54px;
-        border-bottom: 3px solid #1a1a1a;
-        margin-bottom: 28px;
-      }
-      .hdr-left { display: flex; flex-direction: column; gap: 4px; }
-      .garage-name-big { font-size: 22pt; font-weight: 900; letter-spacing: 2px; color: #1a1a1a; line-height: 1; }
-      .hdr-name-small  { font-size: 9pt; font-weight: 700; margin-top: 4px; }
-      .hdr-claim  { font-size: 7.5pt; color: #666; letter-spacing: 0.5px; }
-      .hdr-right  { text-align: right; font-size: 8pt; color: #444; line-height: 1.7; }
-      .hdr-sep    { height: 6px; }
-
-      /* EMPFÄNGER + META */
-      .doc-layout { display: flex; gap: 40px; padding: 0 54px; margin-bottom: 24px; }
-      .empf       { flex: 1; }
-      .empf-gap   { height: 20px; }
-      .empf-name  { font-size: 10pt; font-weight: 700; margin-bottom: 3px; }
-      .empf-adr   { font-size: 9pt; color: #333; line-height: 1.6; }
-      .meta       { width: 220px; flex-shrink: 0; }
-      .meta-title { font-size: 15pt; font-weight: 900; letter-spacing: 3px; color: #1a1a1a; margin-bottom: 10px; }
-      .meta-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
-      .meta-table td { padding: 3px 6px 3px 0; vertical-align: top; }
-      .meta-table td:first-child { color: #888; white-space: nowrap; padding-right: 12px; }
-      .meta-table td:last-child  { font-weight: 600; color: #1a1a1a; }
-
-      /* FAHRZEUG */
-      .fz-block { padding: 8px 54px; margin-bottom: 14px; background: #f7f7f7; border-top: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8; }
-      .fz-label { font-size: 7pt; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 4px; }
-      .fz-row   { display: flex; align-items: center; gap: 8px; font-size: 8.5pt; flex-wrap: wrap; }
-      .fz-kz    { font-weight: 700; font-size: 9pt; }
-      .fz-vin   { font-size: 7.5pt; color: #666; font-family: 'Courier New', monospace; }
-      .fz-sep   { color: #ccc; }
-
-      /* BETREFF */
-      .betreff { padding: 0 54px; margin-bottom: 16px; font-size: 9pt; font-weight: 600; }
-
-      /* POSITIONEN */
-      .pos-table { width: calc(100% - 108px); margin: 0 54px; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 0; }
-      .pos-table th { border-bottom: 2px solid #1a1a1a; padding: 6px 8px; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.5px; color: #555; }
-      .pos-table th.r { text-align: right; }
-      .pos-table td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
-      .pos-table .r { text-align: right; }
-      .pos-nr { color: #aaa; font-size: 7.5pt; width: 28px; }
-      .pos-note { color: #888; font-size: 7.5pt; }
-      tr.section-header td { background: #f4f4f4; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #555; padding: 5px 8px; border-bottom: 1px solid #e8e8e8; }
-      tr.subtotal-row td { font-weight: 700; font-size: 8.5pt; background: #fafafa; border-top: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; padding: 5px 8px; color: #333; }
-
-      /* TOTALS */
-      .totals-wrap { width: calc(100% - 108px); margin: 12px 54px 0 54px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-      .total-row-sm { display: flex; justify-content: space-between; width: 260px; font-size: 8.5pt; padding: 3px 0; color: #444; }
-      .total-line { border-top: 1px solid #e0e0e0; padding-top: 7px; margin-top: 3px; }
-      .total-row-final {
-        display: flex; justify-content: space-between; align-items: baseline; width: 260px;
-        border-top: 2px solid #1a1a1a; margin-top: 4px; padding-top: 7px;
-        font-size: 9.5pt; font-weight: 700;
-      }
-      .total-final-val { font-size: 12pt; font-weight: 900; }
-
-      /* HINWEIS */
-      .hinweis {
-        margin: 20px 54px 0 54px;
-        font-size: 7.5pt; color: #888; line-height: 1.7;
-        padding-top: 12px; border-top: 1px solid #ebebeb;
-      }
-
-      /* FOOTER */
-      .ftr { position: absolute; bottom: 0; left: 0; right: 0; }
-      .ftr-bar {
-        background: #1a1a1a; color: #fff;
-        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-        padding: 14px 54px; font-size: 7.5pt;
-      }
-      .ftr-name { font-weight: 700; letter-spacing: 0.5px; }
-      .ftr-sep  { color: #666; }
-
-      /* QR-RECHNUNG */
-      .qrb-page { width: 794px; margin: 0 auto; background: #fff; page-break-before: always; }
-      .qrb-sep  { width: 100%; height: 28px; position: relative; border-top: 1px dashed #888; display: flex; align-items: center; }
-      .qrb-scissors { position: absolute; left: 10px; background: #fff; padding: 0 4px; font-size: 16px; }
-      .qrb-sep-txt  { position: absolute; left: 50%; transform: translateX(-50%); font-size: 8px; background: #fff; padding: 0 8px; white-space: nowrap; color: #555; }
-      .qrb-bill  { width: 100%; height: 397px; display: flex; border-top: 1px solid #000; background: #fff; overflow: hidden; }
-      .qrb-es    { width: 235px; height: 397px; padding: 18px; border-right: 1px solid #000; display: flex; flex-direction: column; flex-shrink: 0; }
-      .qrb-title { font-size: 11pt; font-weight: 700; margin-bottom: 10px; font-family: Arial; }
-      .qrb-sec   { margin-bottom: 9px; }
-      .qrb-zah   { margin-top: auto; }
-      .qrb-lbl   { font-size: 6pt; font-weight: 700; line-height: 1.4; font-family: Arial; }
-      .qrb-val   { font-size: 8pt; line-height: 1.4; font-family: Arial; }
-      .qrb-es-bot { margin-top: auto; }
-      .qrb-ccy-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
-      .qrb-amt   { border: 1px solid #000; min-height: 28px; width: 108px; padding: 3px 6px; font-size: 9pt; font-weight: 700; font-family: Arial; }
-      .qrb-acc-row { display: flex; justify-content: flex-end; }
-      .qrb-acc-box { border: 1px solid #000; width: 98px; height: 40px; margin-top: 3px; }
-      .qrb-zt    { flex: 1; height: 397px; padding: 18px; display: flex; flex-direction: column; }
-      .qrb-zt-main { display: flex; gap: 18px; flex: 1; }
-      .qrb-zt-left { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; }
-      .qrb-qr-wrap { width: 175px; height: 175px; position: relative; flex-shrink: 0; }
-      .qrb-qr-img  { width: 175px; height: 175px; image-rendering: pixelated; display: block; }
-      .qrb-kreuz   { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 27px; height: 27px; background: #fff; display: flex; align-items: center; justify-content: center; }
-      .qrb-ccy2  { display: flex; gap: 16px; margin-top: 12px; }
-      .qrb-val2  { font-size: 11pt; font-weight: 700; font-family: Arial; }
-      .qrb-zt-right { flex: 1; display: flex; flex-direction: column; gap: 9px; }
-
-      @media print {
-        @page { size: A4; margin: 0; }
-        body  { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .pdf-page { width: 210mm; min-height: 297mm; }
-        .qrb-page { width: 210mm; }
-        .qrb-bill { height: 105mm; }
-        .qrb-es   { width: 62mm; padding: 5mm; }
-        .qrb-zt   { padding: 5mm; }
-        .qrb-zt-left { width: 56mm; }
-        .qrb-qr-wrap { width: 46mm; height: 46mm; }
-        .qrb-qr-img  { width: 46mm; height: 46mm; }
-        .qrb-kreuz { width: 7mm; height: 7mm; }
-      }
-    `;
+    const pdfCSS = PDF_CSS;
 
     const fullDoc = [
       '<!DOCTYPE html><html lang="de"><head>',
@@ -18334,6 +18518,211 @@ function generatePdfRechnung(rechnungId) {
 
   } catch(err) {
     console.error('generatePdfRechnung Fehler:', err);
+    showToast('Druckfehler: ' + err.message,'error');
+  }
+}
+
+// Druck-Overlay (iframe-Vorschau + Drucken-Button) — genutzt vom Mahnungs-PDF
+function openPdfOverlay(docTitle, bodyHtml) {
+  const fullDoc = [
+    '<!DOCTYPE html><html lang="de"><head>',
+    '<meta charset="UTF-8">',
+    '<meta name="viewport" content="width=794px">',
+    '<title>', esc(docTitle), '</title>',
+    '<style>', PDF_CSS, '</style>',
+    '</head><body>',
+    bodyHtml,
+    '</body></html>'
+  ].join('');
+
+  let overlay = document.getElementById('print-overlay');
+  if (overlay) overlay.remove();
+  overlay = document.createElement('div');
+  overlay.id = 'print-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#e8e8e8;z-index:99999;display:flex;flex-direction:column';
+
+  const topbar = document.createElement('div');
+  topbar.style.cssText = 'background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0';
+  topbar.innerHTML =
+    '<button onclick="closePrintOverlay()" style="background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px;line-height:1">←</button>' +
+    '<div style="font-weight:700;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(docTitle) + '</div>' +
+    '<button id="btn-do-print" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Drucken / PDF</button>';
+
+  const scrollWrap = document.createElement('div');
+  scrollWrap.style.cssText = 'flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;display:flex;justify-content:center;';
+
+  const scale = Math.min(1, (window.innerWidth - 24) / 794);
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'border:none;background:#fff;box-shadow:0 2px 16px rgba(0,0,0,.2);width:794px;height:1300px;display:block;transform-origin:top left;transform:scale(' + scale + ');flex-shrink:0';
+  iframe.srcdoc = fullDoc;
+
+  const iframeWrap = document.createElement('div');
+  iframeWrap.style.cssText = 'width:' + Math.round(794*scale) + 'px;height:' + (Math.round(1300*scale) + 32) + 'px;flex-shrink:0;margin:16px 0;overflow:visible;';
+  iframeWrap.appendChild(iframe);
+  scrollWrap.appendChild(iframeWrap);
+  overlay.appendChild(topbar);
+  overlay.appendChild(scrollWrap);
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('touchmove', function(e){ if (e.target === overlay) e.preventDefault(); }, {passive:false});
+
+  const printBtn = document.getElementById('btn-do-print');
+  if (printBtn) {
+    printBtn.onclick = function() {
+      const area = el('pdf-print-area');
+      if (area) {
+        area.innerHTML = '<style>' + PDF_CSS + '</style>' + bodyHtml;
+        area.style.display = 'block';
+      }
+      setTimeout(function() {
+        try { window.print(); } catch(e) {}
+        setTimeout(function(){ if (area) { area.innerHTML=''; area.style.display='none'; } }, 2000);
+      }, 80);
+    };
+  }
+}
+
+// Mahnungs-PDF: Kopf wie Rechnung, Mahntext je Stufe, transparente
+// Aufschluesselung (Rechnungsbetrag / Mahngebuehr / Neues Total),
+// QR-Zahlteil mit neuem Total und DERSELBEN QRR-Referenz.
+function generatePdfMahnung(rechnungId) {
+  try {
+    const r = db.rechnungen.find(x => x.id === rechnungId);
+    if (!r) { showToast('Rechnung #' + rechnungId + ' nicht gefunden.','error'); return; }
+    const mi = rMahnInfo(r);
+    if (!(mi.stufe >= 1)) { showToast('Für diese Rechnung wurde noch keine Mahnstufe ausgelöst.','warning'); return; }
+
+    const k     = db.kunden.find(x => x.id === r.kundeId);
+    const stufe = mi.stufe;
+    const titel = MAHNSTUFE_TITEL[stufe];
+    const reNr  = rechnungNr(r);
+    const heute = new Date().toISOString().split('T')[0];
+    const zahlbarBis = addTageIso(heute, FIRMA['mahnung' + stufe + '_frist_tage']);
+    const tot = r.total != null ? r.total : ((r.subtotal||r.betrag||0)+(r.mwstBetrag||0));
+    const bez = parseFloat(r.bezahlt || 0);
+    const neuesTotal = mi.offenMitGebuehr;
+
+    const kundeName     = k ? (k.vorname + ' ' + k.nachname).trim() : 'Unbekannter Kunde';
+    const kundeAdrLines = k ? [k.firma||'', k.strasse||'', ((k.plz||'')+(k.ort?' '+k.ort:'')).trim()].filter(Boolean) : [];
+
+    // Mahntext je Stufe (Tonalitaet: freundlich / bestimmt / letzte Frist)
+    let mahntext;
+    if (stufe === 1) {
+      mahntext = `Sicher ist es Ihrer Aufmerksamkeit entgangen, dass unsere Rechnung <strong>${reNr}</strong> vom ${formatDateDE(r.datum||'')} noch offen ist. Wir erlauben uns, Sie freundlich daran zu erinnern.<br><br>Bitte begleichen Sie den untenstehenden Betrag bis am <strong>${formatDateDE(zahlbarBis)}</strong>. Falls sich Ihre Zahlung mit diesem Schreiben kreuzt, betrachten Sie es bitte als gegenstandslos.`;
+    } else if (stufe === 2) {
+      mahntext = `Trotz unserer Zahlungserinnerung ist die Rechnung <strong>${reNr}</strong> vom ${formatDateDE(r.datum||'')} weiterhin unbezahlt.<br><br>Wir fordern Sie auf, den untenstehenden Betrag bis spätestens <strong>${formatDateDE(zahlbarBis)}</strong> zu überweisen.`;
+    } else {
+      mahntext = `Die Rechnung <strong>${reNr}</strong> vom ${formatDateDE(r.datum||'')} ist trotz zweifacher Mahnung nach wie vor unbezahlt.<br><br>Wir setzen Ihnen hiermit eine <strong>letzte Frist bis am ${formatDateDE(zahlbarBis)}</strong>. Nach unbenutztem Ablauf dieser Frist sehen wir uns gezwungen, ohne weitere Ankündigung rechtliche Schritte einzuleiten (Betreibung).`;
+    }
+
+    const logoHtml = GARAGE.logo
+      ? `<img src="${GARAGE.logo}" style="height:48px;object-fit:contain;display:block" alt="Logo">`
+      : `<div class="garage-name-big">${esc(GARAGE.name)}</div>`;
+
+    const html = `
+    <div class="pdf-page">
+
+      <!-- HEADER -->
+      <div class="hdr">
+        <div class="hdr-left">
+          ${logoHtml}
+          ${GARAGE.logo ? `<div class="hdr-name-small">${esc(GARAGE.name)}</div>` : ''}
+          <div class="hdr-claim">${esc(GARAGE.claim||'')}</div>
+        </div>
+        <div class="hdr-right">
+          <div>${esc(GARAGE.strasse)}</div>
+          <div>${esc(GARAGE.plz)} ${esc(GARAGE.ort)}</div>
+          <div class="hdr-sep"></div>
+          <div>${esc(GARAGE.telefon||'')}</div>
+          <div>${esc(GARAGE.email||'')}</div>
+          <div>${esc(GARAGE.web||'')}</div>
+        </div>
+      </div>
+
+      <!-- EMPFÄNGER + META -->
+      <div class="doc-layout">
+        <div class="empf">
+          <div class="empf-gap"></div>
+          ${kundeAdrLines.length || kundeName ? `<div class="empf-name">${esc(kundeName)}</div>
+          <div class="empf-adr">${kundeAdrLines.map(esc).join('<br>')}</div>` : ''}
+        </div>
+        <div class="meta">
+          <div class="meta-title">${esc(titel.toUpperCase())}</div>
+          <table class="meta-table">
+            <tr><td>Rechnungs-Nr.</td><td><strong>${reNr}</strong></td></tr>
+            <tr><td>Rechnungsdatum</td><td>${formatDateDE(r.datum||'')}</td></tr>
+            <tr><td>Ursprünglich fällig</td><td>${formatDateDE(mi.faellig||'')}</td></tr>
+            <tr><td>Mahndatum</td><td>${formatDateDE(heute)}</td></tr>
+            <tr><td>Zahlbar bis</td><td><strong>${formatDateDE(zahlbarBis)}</strong></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- MAHNTEXT -->
+      <div class="betreff">Betr.: ${esc(titel)} zur Rechnung ${reNr}</div>
+      <div style="padding:0 54px;margin-bottom:20px;font-size:9pt;line-height:1.8">
+        Guten Tag<br><br>
+        ${mahntext}
+      </div>
+
+      <!-- ZUSAMMENFASSUNG -->
+      <table class="pos-table">
+        <thead>
+          <tr>
+            <th>Rechnung</th>
+            <th>Beschreibung</th>
+            <th class="r">Betrag CHF</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>${reNr}</strong> vom ${formatDateDE(r.datum||'')}</td>
+            <td>${esc(r.auftragBeschreibung||'')}</td>
+            <td class="r">${chf(tot)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- AUFSCHLUESSELUNG: Rechnungsbetrag / Mahngebuehr / Neues Total -->
+      <div class="totals-wrap">
+        <div class="total-row-sm total-line"><span>Rechnungsbetrag</span><span>${chf(tot)}</span></div>
+        ${bez > 0 ? `<div class="total-row-sm"><span>Bereits bezahlt</span><span>−${chf(bez)}</span></div>` : ''}
+        <div class="total-row-sm"><span>Mahngebühr (${esc(titel)})</span><span>${chf(mi.gebuehr)}</span></div>
+        <div class="total-row-final">
+          <span>Neues Total</span>
+          <span class="total-final-val">CHF ${chf(neuesTotal)}</span>
+        </div>
+      </div>
+
+      <!-- HINWEIS -->
+      <div class="hinweis">
+        Zahlbar bis <strong>${formatDateDE(zahlbarBis)}</strong> mit beiliegendem Zahlteil (QR-Referenz unverändert).
+        Bei Fragen erreichen Sie uns unter ${esc(GARAGE.telefon||'')} oder ${esc(GARAGE.email||'')}.
+      </div>
+
+      <!-- FOOTER -->
+      <div class="ftr">
+        <div class="ftr-bar">
+          <span class="ftr-name">${esc(GARAGE.name)}</span>
+          <span class="ftr-sep">·</span>
+          <span>${esc(GARAGE.strasse)}, ${esc(GARAGE.plz)} ${esc(GARAGE.ort)}</span>
+          <span class="ftr-sep">·</span>
+          <span>${esc(GARAGE.telefon||'')}</span>
+          <span class="ftr-sep">·</span>
+          <span>${esc(GARAGE.email||'')}</span>
+          ${GARAGE.uid ? `<span class="ftr-sep">·</span><span>${esc(GARAGE.uid)}</span>` : ''}
+        </div>
+      </div>
+
+    </div>`;
+
+    // QR-Zahlteil: neues Total, gleiche QRR-Referenz
+    const qrPage = buildQRBillHTML(r, k, { betrag: neuesTotal });
+
+    openPdfOverlay(titel + ' ' + reNr + (k ? ' — ' + (k.nachname||'') + ' ' + (k.vorname||'') : ''), html + qrPage);
+
+  } catch(err) {
+    console.error('generatePdfMahnung Fehler:', err);
     showToast('Druckfehler: ' + err.message,'error');
   }
 }
@@ -23389,14 +23778,20 @@ function debGetBewegungen(kundeId) {
       });
     }
 
-    // Mahnungen als Bewegungen
-    (r.mahnungen || []).forEach((m, i) => {
+    // Mahnungen als Bewegungen (neues mahnung_log + Legacy-Feld r.mahnungen)
+    const mahnEintraege = (Array.isArray(r.mahnung_log) ? r.mahnung_log : [])
+      .map(m => ({ datum: m.datum, label: MAHNSTUFE_TITEL[m.stufe] || 'Mahnung' }))
+      .concat((r.mahnungen || []).map(m => ({
+        datum: m.datum,
+        label: m.stufe === 'mahnung2' ? '2. Mahnung' : m.stufe === 'mahnung1' ? '1. Mahnung' : 'Zahlungserinnerung',
+      })));
+    mahnEintraege.forEach((m, i) => {
       bewegungen.push({
         type:   'reminder',
         id:     'rem_' + r.id + '_' + i,
         date:   m.datum || '',
         amount: 0,
-        label:  m.stufe === 'mahnung2' ? '2. Mahnung' : m.stufe === 'mahnung1' ? '1. Mahnung' : 'Zahlungserinnerung',
+        label:  m.label,
         desc:   rechnungNr(r),
         ref:    r,
       });
@@ -23420,10 +23815,9 @@ function debKundeAmpel(kundeId) {
     r.kundeId === kundeId && ['ausstehend','mahnung'].includes(r.status)
   );
   if (!rechnungen.length) return 'green';
-  const maxTage = Math.max(...rechnungen.map(r => tageSeit(r.datum)||0));
-  if (maxTage >= 30) return 'red';
-  if (maxTage >= 14) return 'orange';
-  return 'orange';
+  // rot = Zahlungsfrist ueberschritten oder Mahnstufe ausgeloest, sonst orange
+  const rot = rechnungen.some(r => { const mi = rMahnInfo(r); return mi.ueberfaellig || mi.stufe >= 1; });
+  return rot ? 'red' : 'orange';
 }
 
 // ── Hauptscreen: Debitorenliste ──
@@ -23445,7 +23839,7 @@ function renderDebitoren() {
   const heute = new Date().toISOString().split('T')[0];
   const thisMonth = new Date().toISOString().slice(0,7);
   const allOffen = db.rechnungen.filter(r => ['ausstehend','mahnung'].includes(r.status));
-  const ueberfaelligAnz  = allOffen.filter(r => (tageSeit(r.datum)||0) >= 30).length;
+  const ueberfaelligAnz  = allOffen.filter(r => rMahnInfo(r).ueberfaellig).length;
   const offenChf         = allOffen.reduce((s,r) => s + rSaldo(r), 0);
   const alleKunden       = kunden.length;
   const bezahltMonat     = db.rechnungen.filter(r => r.status==='bezahlt' && (r.datum||'').startsWith(thisMonth)).length;
@@ -23482,7 +23876,7 @@ function renderDebitoren() {
   } else if (filter === 'ueberfaellig') {
     kunden = kunden.filter(k =>
       db.rechnungen.filter(r => r.kundeId===k.id && ['ausstehend','mahnung'].includes(r.status))
-        .some(r => (tageSeit(r.datum)||0) >= 30)
+        .some(r => rMahnInfo(r).ueberfaellig)
     );
   } else if (filter === 'bezahlt') {
     kunden = kunden.filter(k =>
