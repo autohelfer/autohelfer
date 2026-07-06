@@ -14943,16 +14943,9 @@ function aaMicToggle() {
   r.start();
 }
 
+// Hinweis: 'ah_ocr_key' speichert historisch bedingt den Claude-API-Key
+// der KI-Features (aiCall, Diagnose, KI-Texte) — NICHT mehr fuer OCR genutzt.
 function getApiKey(){ return localStorage.getItem('ah_ocr_key')||''; }
-
-el('apikey-input')?.addEventListener('input',function(){
-  const v=this.value.trim(); localStorage.setItem('ah_ocr_key',v);
-  const s=el('apikey-status');
-  if(!v){s.textContent='';s.style.color='';}
-  else if(v.startsWith('sk-ant-')){s.textContent='Gespeichert';s.style.color='#2ecc71';}
-  else{s.textContent='Format: sk-ant-...';s.style.color='#e74c3c';}
-});
-const sk=getApiKey(); if(sk)el('apikey-input').value=sk;
 
 // ============================================================
 // OCR
@@ -14960,6 +14953,50 @@ const sk=getApiKey(); if(sk)el('apikey-input').value=sk;
 
 
 // ── OCR: Tesseract.js (kein API-Key, läuft lokal im Browser) ──
+
+// Bildvorverarbeitung fuer bessere Erkennung: Graustufen + Kontrast-Stretch
+// (2%-Perzentile), sehr grosse Fotos auf sinnvolle Breite skalieren.
+// Liefert ein Canvas oder null (dann wird das Originalbild verwendet).
+function ocrPreprocess(imgUrl) {
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.onload = function() {
+      try {
+        var MAX_W = 1600;
+        var scale = img.width > MAX_W ? MAX_W / img.width : 1;
+        var w = Math.max(1, Math.round(img.width * scale));
+        var h = Math.max(1, Math.round(img.height * scale));
+        var c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        var ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        var d = ctx.getImageData(0, 0, w, h), p = d.data;
+        // Graustufen (Luminanz) + Histogramm aufbauen
+        var hist = new Uint32Array(256);
+        for (var i = 0; i < p.length; i += 4) {
+          var g = (p[i] * 0.299 + p[i+1] * 0.587 + p[i+2] * 0.114) | 0;
+          p[i] = g;
+          hist[g]++;
+        }
+        // Kontrast-Stretch: 2%-Perzentile auf 0/255 spreizen
+        var total = w * h, cut = total * 0.02, lo = 0, hi = 255, cum = 0, v;
+        for (v = 0; v < 256; v++) { cum += hist[v]; if (cum >= cut) { lo = v; break; } }
+        cum = 0;
+        for (v = 255; v >= 0; v--) { cum += hist[v]; if (cum >= cut) { hi = v; break; } }
+        var range = Math.max(1, hi - lo);
+        for (var j = 0; j < p.length; j += 4) {
+          var s = Math.round((p[j] - lo) * 255 / range);
+          if (s < 0) s = 0; else if (s > 255) s = 255;
+          p[j] = p[j+1] = p[j+2] = s;
+        }
+        ctx.putImageData(d, 0, 0);
+        resolve(c);
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = function() { resolve(null); };
+    img.src = imgUrl;
+  });
+}
 
 function ocrParseText(text) {
   var result = { kennzeichen:'', stammnummer:'', vin:'', marke:'', modell:'', typ:'',
@@ -15115,10 +15152,16 @@ async function callOcrApi(base64Data, mimeType, ctx) {
   }, 60000);
 
   try {
+    // Bild aufbereiten (Graustufen, Kontrast, ggf. verkleinern)
+    setMsg('Bild wird aufbereitet...');
+    var vorverarbeitet = await ocrPreprocess(imgUrl);
+    if (window._ocrAbort) throw new Error('Abgebrochen.');
+
     setMsg('Scan läuft...');
 
-    // Tesseract v5: einfachste API, kein manueller Worker
-    var result = await Tesseract.recognize(imgUrl, 'eng', {
+    // Tesseract v5: einfachste API, kein manueller Worker.
+    // deu+eng: deutsche Umlaute (Namen/Orte) + englische Fachbegriffe
+    var result = await Tesseract.recognize(vorverarbeitet || imgUrl, 'deu+eng', {
       logger: function(m) {
         if (window._ocrAbort || didTimeout) return;
         if (m.status === 'loading tesseract core') {
