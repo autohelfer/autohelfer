@@ -15242,7 +15242,10 @@ async function callOcrApi(base64Data, mimeType, ctx) {
       },
       workerPath:  'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/worker.min.js',
       langPath:    'https://tessdata.projectnaptha.com/4.0.0_fast',
-      corePath:    'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js-core/5.0.0/tesseract-core.wasm.js'
+      // Verzeichnis (kein Einzelfile): Tesseract waehlt selbst den passenden
+      // Core-Build (SIMD wo verfuegbar). cdnjs hostet tesseract.js-core NICHT
+      // (404 — deshalb schlug jede Erkennung fehl), jsDelivr schon.
+      corePath:    'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0'
     });
 
     clearTimeout(timeoutId);
