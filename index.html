@@ -9399,7 +9399,8 @@ async function fzKiSearch() {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-5',
+        thinking: { type: 'disabled' },
         max_tokens: 500,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -13777,7 +13778,7 @@ async function kiGenRechnungstext(rId) {
     const box = document.getElementById('rd-ki-result');
     const textEl = document.getElementById('rd-ki-text');
     if (box && textEl) {
-      textEl.value = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0;display:inline-block;vertical-align:middle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Kein API-Key eingetragen.' + String.fromCharCode(10) + 'Bitte in der Sidebar den Claude API-Key eintragen (sk-ant-...).' + String.fromCharCode(10) + 'Den Key erhältst du auf console.anthropic.com';
+      textEl.value = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0;display:inline-block;vertical-align:middle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Kein API-Key eingetragen.' + String.fromCharCode(10) + 'Bitte in den Einstellungen den Claude API-Key eintragen (sk-ant-...).' + String.fromCharCode(10) + 'Den Key erhältst du auf console.anthropic.com';
       box.style.display = 'block';
     }
     return;
@@ -13853,7 +13854,8 @@ Antworte NUR mit dem Begleittext, kein JSON, keine Erklärungen, keine Anführun
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-5',
+        thinking: { type: 'disabled' },
         max_tokens: 400,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -14326,7 +14328,8 @@ function renderDashboardHeute(){
 // ============================================================
 const AI_CONFIG = {
   endpoint:      'https://api.anthropic.com/v1/messages',
-  model:         'claude-sonnet-4-6',
+  model:         'claude-sonnet-5',
+  thinking:      { type: 'disabled' },
   maxTokens:     1000,
   directBrowser: true,
 };
@@ -19586,7 +19589,8 @@ async function kiAuftragGenerieren() {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-5',
+        thinking: { type: 'disabled' },
         max_tokens: 600,
         messages: [{ role: 'user', content: PROMPTS[stil] }]
       })
@@ -19690,7 +19694,8 @@ async function kiDiagnoseStarten() {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-5',
+        thinking: { type: 'disabled' },
         max_tokens: 700,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -24450,6 +24455,22 @@ function renderEinstellungen() {
         </div>
       </div>
 
+      <!-- KI-Funktionen (Claude API) -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;overflow:hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
+          <div style="font-weight:700;font-size:14px">KI-Funktionen (Claude API)</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Für KI-Diagnose, Rechnungstexte und KI-Fahrzeugsuche</div>
+        </div>
+        <div style="padding:20px">
+          <div class="form-group">
+            <label>Claude API-Key</label>
+            <input class="form-input" id="apikey-input" type="password" placeholder="sk-ant-..." autocomplete="off" style="font-family:'IBM Plex Mono',monospace;letter-spacing:1px" />
+            <div id="apikey-status" class="apikey-status"></div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:4px">Key von console.anthropic.com — wird nur lokal in diesem Browser gespeichert. Der OCR-Scanner läuft ohne Key.</div>
+          </div>
+        </div>
+      </div>
+
       <!-- PDF Vorschau Button -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:20px">
         <div style="font-weight:700;font-size:14px;margin-bottom:10px">PDF Test</div>
@@ -24478,6 +24499,21 @@ function renderEinstellungen() {
 
   // Firmendaten-Abschnitt verdrahten (Live-Validierung + Speichern)
   firmaWire();
+
+  // KI-API-Key verdrahten (localStorage 'ah_ocr_key' — historischer Name, siehe getApiKey)
+  const akInp = el('apikey-input');
+  if (akInp) {
+    akInp.value = getApiKey();
+    akInp.addEventListener('input', function() {
+      const v = this.value.trim();
+      try { localStorage.setItem('ah_ocr_key', v); } catch (e) {}
+      const s = el('apikey-status');
+      if (!s) return;
+      if (!v) { s.textContent = ''; s.style.color = ''; }
+      else if (v.startsWith('sk-ant-')) { s.textContent = '✓ Gespeichert'; s.style.color = 'var(--green)'; }
+      else { s.textContent = 'Format: sk-ant-...'; s.style.color = 'var(--danger)'; }
+    });
+  }
 
   // Speichern
   el('btn-garage-save')?.addEventListener('click', () => {
