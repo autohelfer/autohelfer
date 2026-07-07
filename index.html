@@ -15128,7 +15128,7 @@ function ocrPreprocess(imgUrl) {
 }
 
 function ocrParseText(text) {
-  var result = { kennzeichen:'', stammnummer:'', vin:'', marke:'', modell:'', typ:'',
+  var result = { kennzeichen:'', stammnummer:'', typengenehmigung:'', vin:'', marke:'', modell:'', typ:'',
     erstzulassung:'', leistung:'', treibstoff:'', versicherung:'',
     halter_vorname:'', halter_nachname:'', halter_strasse:'', halter_plz:'', halter_ort:'',
     halter_geburtsdatum:'' };
@@ -15142,13 +15142,20 @@ function ocrParseText(text) {
   if (pm) result.kennzeichen = pm[1] + pm[2];
 
   // ── Stammnummer: Format NNN.NNN.NNN oder nach Label ──
-  var stamDot = all.match(/\b(\d{3}\.\d{3}\.\d{3})\b/);
+  // OCR liest den Punkt oft als Leerzeichen ('530.246 807') —
+  // beide Trenner zulassen und auf Punkte normalisieren.
+  var stamDot = all.match(/\b(\d{3})[.\s](\d{3})[.\s](\d{3})\b/);
   if (stamDot) {
-    result.stammnummer = stamDot[1];
+    result.stammnummer = stamDot[1] + '.' + stamDot[2] + '.' + stamDot[3];
   } else {
     var stamM = all.match(/(?:Stamm(?:nummer)?)[^\d]*(\d{6,12})/i);
     if (stamM) result.stammnummer = stamM[1];
   }
+
+  // ── Typengenehmigung: label-verankert, sonst CH-Format 'NLLN NN' ──
+  var tgM = all.match(/typengenehmigung[^A-Z0-9]{0,15}([A-Z0-9]{4,8})/i)
+         || all.match(/\b(\d[A-Z]{2}\d)\s?(\d{2})\b/);
+  if (tgM) result.typengenehmigung = tgM[2] ? tgM[1] + ' ' + tgM[2] : tgM[1];
 
   // ── VIN: exakt 17 Zeichen, OCR-Normalisierung, Wortfolgen verwerfen ──
   // O/I/Q kommen in echten VINs nie vor -> vor der Pruefung O->0, I->1, Q->0.
@@ -15223,17 +15230,36 @@ function ocrParseText(text) {
     ['SKODA','Skoda'], ['SEAT','Seat'], ['MINI','Mini'], ['JEEP','Jeep'],
     ['LAND ROVER','Land Rover'], ['DACIA','Dacia'], ['CUPRA','Cupra']
   ];
-  var searchText = markeIdx >= 0 && markeIdx+1 < lines.length ? lines[markeIdx+1] : all;
-  for (var bi=0; bi<markenListe.length; bi++) {
-    if (searchText.toUpperCase().includes(markenListe[bi][0])) {
-      result.marke = markenListe[bi][1];
-      // Modell = Rest nach Marke aus der Zeile
-      if (markeIdx >= 0 && markeIdx+1 < lines.length) {
-        result.modell = lines[markeIdx+1]
+  if (markeIdx >= 0 && markeIdx+1 < lines.length) {
+    // Label lesbar: Marke + Modell aus der Folgezeile
+    var searchText = lines[markeIdx+1];
+    for (var bi=0; bi<markenListe.length; bi++) {
+      if (searchText.toUpperCase().includes(markenListe[bi][0])) {
+        result.marke = markenListe[bi][1];
+        result.modell = searchText
           .replace(new RegExp(markenListe[bi][0],'i'),'')
           .replace(/^[-\s]+/,'').trim();
+        break;
       }
-      break;
+    }
+  }
+  if (!result.marke) {
+    // Kein Label lesbar: Zeile mit Markennamen suchen. Nur uebernehmen,
+    // wenn hinter der Marke auch ein Modell-Rest steht — ein einzelnes
+    // Markenwort irgendwo im Formulartext ist zu oft ein Fehltreffer.
+    for (var mli = 0; mli < lines.length && !result.marke; mli++) {
+      var mlUp = lines[mli].toUpperCase();
+      for (var mbi = 0; mbi < markenListe.length; mbi++) {
+        var mPos = mlUp.indexOf(markenListe[mbi][0]);
+        if (mPos === -1) continue;
+        var mRest = lines[mli].slice(mPos + markenListe[mbi][0].length)
+          .replace(/[^A-Za-z0-9 .-]/g, ' ').replace(/\s+/g, ' ').trim();
+        if (mRest.length >= 2) {
+          result.marke = markenListe[mbi][1];
+          result.modell = mRest.slice(0, 40);
+          break;
+        }
+      }
     }
   }
 
