@@ -9630,7 +9630,7 @@ function prepKundeModal(editId){
   setVal('k-email-rechnung', k&&k.emailRechnung ? k.emailRechnung : '');
 }
 
-function saveKunde(){
+async function saveKunde(){
   const kArt = val('k-art') || 'privat';
   const validRules = kArt === 'firma'
     ? [{id:'k-firma', check:v=>v.length>0, msg:'Firmenname erforderlich'}]
@@ -9652,7 +9652,7 @@ function saveKunde(){
   });
   if (duplikat) {
     const dupName = duplikat.firma || (duplikat.vorname + ' ' + duplikat.nachname);
-    if (!confirm('Möglicherweise bereits vorhanden: ' + dupName + ' — Trotzdem als neuen Kunden speichern?')) return; // TODO: appConfirm // TODO: appConfirm
+    if (!(await appConfirm('Kunde möglicherweise vorhanden', dupName + ' existiert bereits. Trotzdem als neuen Kunden speichern?', 'Trotzdem speichern'))) return;
   }
   const now=new Date().toISOString();
   const fields={}; K_FIELDS.forEach(f=>fields[f]=val('k-'+f));
@@ -10530,7 +10530,7 @@ function prepFahrzeugModal(editId, preselectedKundeId=null){
   }
 }
 
-function saveFahrzeug(){
+async function saveFahrzeug(){
   if(!validateFields([{id:'f-kennzeichen',check:v=>v.length>0,msg:'Kontrollschild erforderlich'},{id:'f-marke',check:v=>v.length>0,msg:'Marke erforderlich'}]))return;
 
   // Kennzeichen-Duplikat prüfen
@@ -10540,7 +10540,7 @@ function saveFahrzeug(){
   if (dupFz) {
     const dupKunde = db.kunden.find(k => k.id === dupFz.kundeId);
     const dupKundeName = dupKunde ? (dupKunde.firma || dupKunde.vorname + ' ' + dupKunde.nachname) : 'Unbekannt';
-    if (!confirm('Kennzeichen ' + newKz + ' bereits erfasst! (' + dupKundeName + ' — ' + dupFz.marke + ' ' + dupFz.modell + ') Trotzdem speichern?')) return; // TODO: appConfirm // TODO: appConfirm
+    if (!(await appConfirm('Kennzeichen bereits erfasst', newKz + ' gehört zu ' + dupKundeName + ' (' + dupFz.marke + ' ' + dupFz.modell + '). Trotzdem speichern?', 'Trotzdem speichern'))) return;
   }
   const now = new Date().toISOString();
   const heute = now.split('T')[0];
