@@ -15139,7 +15139,28 @@ function ocrParseText(text) {
   // ── Kennzeichen: CH-Kanton + Ziffern ──
   var plateRx = /\b(AG|AI|AR|BE|BL|BS|FR|GE|GL|GR|JU|LU|NE|NW|OW|SG|SH|SO|SZ|TG|TI|UR|VD|VS|ZG|ZH)\s*(\d{3,6})\b/;
   var pm = all.match(plateRx);
-  if (pm) result.kennzeichen = pm[1] + pm[2];
+  if (pm) {
+    result.kennzeichen = pm[1] + pm[2];
+  } else {
+    // Auf Handyfotos zerfaellt das Schild oft in getrennte OCR-Zeilen
+    // ('BL' / '223701 we;'). Anker: die Schildnummer steht im Ausweis
+    // direkt vor der Farbe ('weiss'/'blanc'). Kanton-Kuerzel aus den
+    // Nachbarzeilen — nur uebernehmen, wenn genau EIN Kanton vorkommt.
+    var kantonTokRx = /^(AG|AI|AR|BE|BL|BS|FR|GE|GL|GR|JU|LU|NE|NW|OW|SG|SH|SO|SZ|TG|TI|UR|VD|VS|ZG|ZH)$/;
+    for (var kli = 0; kli < lines.length && !result.kennzeichen; kli++) {
+      var farbM = lines[kli].match(/\b(\d{4,6})\b\s*[^A-Za-z0-9]{0,3}(weiss|we[i1l]s?\b|we\b|blanc\w*|bianc\w*)/i);
+      if (!farbM) continue;
+      var kantone = {};
+      for (var kni = Math.max(0, kli - 3); kni <= Math.min(lines.length - 1, kli + 3); kni++) {
+        var kToks = lines[kni].split(/[^A-Z]+/);
+        for (var kti = 0; kti < kToks.length; kti++) {
+          if (kantonTokRx.test(kToks[kti])) kantone[kToks[kti]] = true;
+        }
+      }
+      var kk = Object.keys(kantone);
+      if (kk.length === 1) result.kennzeichen = kk[0] + farbM[1];
+    }
+  }
 
   // ── Stammnummer: Format NNN.NNN.NNN oder nach Label ──
   // OCR liest den Punkt oft als Leerzeichen ('530.246 807') —
