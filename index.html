@@ -15158,62 +15158,86 @@ function ocrParseText(text) {
   }
 
   // ── Halter: CH-Fahrzeugausweis Layout ──
-  // Links im Ausweis: "Nachname Vorname(n)" (EINE Zeile) / Strasse Nr /
-  // "PLZ Ort". Dazwischen koennen Labels ("Name, Vornamen", "Wohnort"),
-  // die Ausweisnummer oder Leerguterkennungen liegen — daher rueckwaerts
-  // von der PLZ-Zeile aus suchen und untaugliche Zeilen ueberspringen.
-  var halterLabelRx = /name|vorname|wohnort|domicil|cognome|indirizzo|geburt|naissance|nascita|heimat|origine|pays|assur|versich|assicur|kanton|verf|eintrag/i;
+  // Handyfotos liefern Zeilen mit Formular-Schrott davor/dahinter
+  // ('| N 4059 Base] " 1', 'Nom zrenoms pPasserini Sarah {7 Uw').
+  // Deshalb: PLZ+Ort MITTEN in der Zeile suchen, Namens-Tokens einzeln
+  // saeubern, Name/Vorname entweder in EINER Zeile ('Tomicevic Admira')
+  // oder in ZWEI benachbarten Zeilen ('Barron' / 'Rahul').
   var plzIdx = -1;
   for (var pi = 0; pi < lines.length; pi++) {
-    if (/^\d{4}\s+[A-Za-zÀ-ÿ]/.test(lines[pi]) &&
-        !/stamm|fahrgestell|platz|achse|gewicht|cylindr|hubraum/i.test(lines[pi])) {
-      var plzNum = parseInt(lines[pi].slice(0, 4), 10);
-      if (plzNum >= 1000 && plzNum <= 9999) { plzIdx = pi; break; }
+    if (/stamm|fahrgestell|achse|gesamtgewicht|hubraum/i.test(lines[pi])) continue;
+    // vierstellige Zahl 1000-9999 + grossgeschriebenes Wort; kein Match
+    // auf Datum (Punkt davor) oder laengere Zahlen (Ziffer davor).
+    var pm2 = lines[pi].match(/(?:^|[^\d.,])([1-9]\d{3})\s+([A-ZÀ-Ý][A-Za-zà-ÿÀ-Ý\]\)|-]{2,})/);
+    if (pm2) {
+      plzIdx = pi;
+      result.halter_plz = pm2[1];
+      // OCR liest 'l' am Wortende oft als ']' oder ')' — 'Base]' -> 'Basel'
+      result.halter_ort = pm2[2].replace(/[\]\)|]/g, 'l');
+      break;
     }
   }
   if (plzIdx >= 1) {
-    var plzMatch = lines[plzIdx].match(/^(\d{4})\s+(.+)$/);
-    if (plzMatch) { result.halter_plz = plzMatch[1]; result.halter_ort = plzMatch[2].trim(); }
-    // Strasse: oberhalb der PLZ-Zeile — endet auf Hausnummer oder enthaelt
-    // ein Strassen-Wort; Labels ueberspringen.
-    var idx = plzIdx - 1, strasseIdx = -1;
-    for (var s = 0; s < 3 && idx >= 0; s++, idx--) {
-      var ln = lines[idx];
-      if (halterLabelRx.test(ln)) continue;
-      if (/\s\d+\s*[a-zA-Z]?$/.test(ln) || /str(\.|asse)|weg|gasse|platz|allee/i.test(ln)) { strasseIdx = idx; break; }
-    }
-    if (strasseIdx === -1 && plzIdx >= 1 && !halterLabelRx.test(lines[plzIdx - 1])) strasseIdx = plzIdx - 1;
-    if (strasseIdx >= 0) result.halter_strasse = lines[strasseIdx];
-    // Namenszeile: oberhalb der Strasse — 2+ Woerter, nur Buchstaben
-    // (keine Ziffern: schliesst Ausweisnummer und Daten aus).
-    // Erster Token = Nachname, Rest = Vorname(n).
-    idx = (strasseIdx >= 0 ? strasseIdx : plzIdx) - 1;
-    for (var n = 0; n < 3 && idx >= 0; n++, idx--) {
-      var nl = lines[idx];
-      if (halterLabelRx.test(nl) || /\d/.test(nl)) continue;
-      var toks = nl.split(/\s+/).filter(Boolean);
-      // Die rechte Ausweisspalte kann in dieselbe OCR-Zeile rutschen
-      // ('Scherer Andreas CUPRA LEON') — ab dem ersten ALL-CAPS-Token
-      // (Marke/Typ) abschneiden; echte Namen sind gemischt geschrieben.
-      var capsIdx = -1;
-      for (var ci = 0; ci < toks.length; ci++) {
-        var t = toks[ci];
-        if (t.length >= 2 && /[A-ZÀ-Ý]/.test(t) && t === t.toUpperCase()) { capsIdx = ci; break; }
-      }
-      if (capsIdx > 1) toks = toks.slice(0, capsIdx);
-      if (toks.length >= 2 && toks.length <= 4 &&
-          toks.every(function(t) { return /^[A-Za-zÀ-ÿ'’.-]+$/.test(t); })) {
-        result.halter_nachname = toks[0];
-        result.halter_vorname  = toks.slice(1).join(' ');
+    // Strasse: bis 3 Zeilen oberhalb — Strassen-Wort mit grossem Anfangs-
+    // buchstaben, optional Hausnummer. Nur das saubere Fragment
+    // uebernehmen, nie die ganze (verschmutzte) Zeile.
+    var strasseIdx = -1;
+    var strRx = /([A-ZÀ-Ý][A-Za-zà-ÿ-]*(?:strasse|str\.|weg|gasse|platz|allee))\s*[<>«»]?\s*(\d{1,3}[a-z]?\b)?/;
+    for (var si = plzIdx - 1, s = 0; s < 3 && si >= 0; s++, si--) {
+      var sm = lines[si].match(strRx);
+      if (sm) {
+        strasseIdx = si;
+        result.halter_strasse = sm[1] + (sm[2] ? ' ' + sm[2] : '');
         break;
       }
     }
+    // Name/Vorname: Fenster von 5 Zeilen oberhalb von Strasse (bzw. PLZ).
+    // Pro Zeile den laengsten Lauf aufeinanderfolgender Namens-Tokens
+    // bilden; Label-Woerter ('Nom', 'Vornamen') zaehlen nicht als Name.
+    var labelTokRx = /^(nom|noms|name|namen|vorname|vornamen|prenom|prenoms|prénom|prénoms|cognome|nome|wohnort|domicile|indirizzo|via)$/i;
+    function nameRun(line) {
+      var toks = line.split(/\s+/), best = [], cur = [];
+      for (var ti = 0; ti < toks.length; ti++) {
+        var t = toks[ti]
+          .replace(/^[^A-Za-zÀ-ÿ]+|[^A-Za-zà-ÿÀ-Ý'’.-]+$/g, '')
+          .replace(/^[a-z]{1,2}(?=[A-ZÀ-Ý])/, '')
+          .replace(/\.$/, '');
+        if (/^[A-ZÀ-Ý][a-zà-ÿ'’-]{2,}$/.test(t) && !labelTokRx.test(t)) {
+          cur.push(t);
+        } else {
+          if (cur.length > best.length) best = cur;
+          cur = [];
+        }
+      }
+      if (cur.length > best.length) best = cur;
+      return best;
+    }
+    var anchor = (strasseIdx >= 0 ? strasseIdx : plzIdx);
+    var runs = [];
+    for (var ni = anchor - 1, n = 0; n < 5 && ni >= 0; n++, ni--) {
+      if (strRx.test(lines[ni])) continue;   // weitere Adresszeile, kein Name
+      var r = nameRun(lines[ni]);
+      if (r.length >= 1 && r.length <= 4) runs.push({ idx: ni, run: r });
+    }
+    var mehrTok = runs.filter(function(x){ return x.run.length >= 2; });
+    if (mehrTok.length) {
+      // Lauf von 2-4 Tokens = 'Nachname Vorname(n)' in EINER Zeile;
+      // laengster Lauf gewinnt, bei Gleichstand der naechste an der Adresse.
+      mehrTok.sort(function(a,b){ return b.run.length - a.run.length || b.idx - a.idx; });
+      result.halter_nachname = mehrTok[0].run[0];
+      result.halter_vorname  = mehrTok[0].run.slice(1).join(' ');
+    } else {
+      // zwei benachbarte Einzel-Token-Zeilen: oben Nachname, unten Vorname
+      runs.sort(function(a,b){ return a.idx - b.idx; });
+      for (var ri = 0; ri + 1 < runs.length; ri++) {
+        if (runs[ri + 1].idx - runs[ri].idx === 1) {
+          result.halter_nachname = runs[ri].run[0];
+          result.halter_vorname  = runs[ri + 1].run[0];
+          break;
+        }
+      }
+    }
   }
-
-  // ── Bereinigen: Feldnummern/Labels aus Namen entfernen ──
-  ['halter_nachname','halter_vorname','halter_strasse'].forEach(function(k) {
-    if (result[k]) result[k] = result[k].replace(/^\d{2}-\d{2}\s*/,'').replace(/^[A-Z]\s+\d+\s+/,'').trim();
-  });
 
   return result;
 }
