@@ -6760,6 +6760,42 @@ let db=(()=>{
 // Migration: verbrauchsmaterial Feld hinzufügen falls fehlt
 if (!db.verbrauchsmaterial) { db.verbrauchsmaterial = []; }
 
+// ── Selbstheilung: ID-Kollisionen aus dem Demo-Seed ──
+// loadDemoData haengte Gerber (id 11) und Huber (id 12) an die Demo-
+// Kunden an, liess den Zaehler aber auf 10 — die naechsten zwei neu
+// erfassten Kunden erhielten dadurch DIESELBEN IDs wie die Demo-
+// Eintraege (Symptom: Dubletten-Link oeffnet den falschen Kunden,
+// Fahrzeug-Zuordnung mehrdeutig). Reparatur: die referenzlosen Demo-
+// Eintraege bekommen frische IDs, echte Kunden behalten ihre ID samt
+// Fahrzeugen/Auftraegen. Danach alle Zaehler aufs echte Maximum heben.
+(function(){
+  db._c = db._c || { k:0, f:0, a:0, r:0 };
+  var geaendert = false;
+  var demoAltlasten = [
+    { id: 11, nachname: 'Gerber', createdAt: '2022-03-01T08:00:00Z' },
+    { id: 12, nachname: 'Huber',  createdAt: '2021-06-10T08:00:00Z' }
+  ];
+  demoAltlasten.forEach(function(d){
+    var traeger = db.kunden.filter(function(k){ return k.id === d.id; });
+    if (traeger.length < 2) return;   // keine Kollision auf dieser ID
+    var demo = traeger.find(function(k){
+      return k.nachname === d.nachname && k.createdAt === d.createdAt;
+    });
+    if (!demo) return;                // Kollision, aber nicht der Demo-Eintrag
+    var maxId = db.kunden.reduce(function(m,k){ return Math.max(m, k.id||0); }, 0);
+    demo.id = maxId + 1;              // Demo-Eintrag hat keine Verweise — gefahrlos
+    geaendert = true;
+  });
+  // Zaehler duerfen nie unter dem hoechsten vergebenen Wert stehen —
+  // sonst entstehen neue Kollisionen. Nur anheben, nie senken.
+  var colMap = { k:'kunden', f:'fahrzeuge', a:'auftraege', r:'rechnungen' };
+  Object.keys(colMap).forEach(function(t){
+    var maxId = (db[colMap[t]]||[]).reduce(function(m,x){ return Math.max(m, x.id||0); }, 0);
+    if ((db._c[t]||0) < maxId) { db._c[t] = maxId; geaendert = true; }
+  });
+  if (geaendert) saveDb();
+})();
+
 function saveDb(){
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
@@ -23056,7 +23092,10 @@ function loadDemoData() {
        subtotal:87.5, mwst:8.1, mwstBetrag:7.10, total:94.60,
        datum:'2026-03-15', status:'ausstehend', createdAt:'2026-03-15T10:00:00Z', updatedAt:'2026-03-15T10:00:00Z'}
     ];
-    db._c = {...DEMO_DATA._c, r:6};
+    // k:12 — die zwei oben angehaengten Inaktiv-Kunden (Gerber 11, Huber 12)
+    // muessen im Zaehler beruecksichtigt sein, sonst kollidieren die IDs
+    // der naechsten zwei neu erfassten Kunden mit ihnen.
+    db._c = {...DEMO_DATA._c, k:12, r:6};
     saveDb();
 
     // Verbrauchsmaterial-Katalog
