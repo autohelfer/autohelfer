@@ -7489,6 +7489,41 @@ function mfsToggleChk(idx) {
   mfsRender(_mfsAuftragId);
 }
 
+// ── Foto-Kompression vor dem Speichern ──────────────────────
+// localStorage ist auf ~5 MB begrenzt; unkomprimierte Handy-Fotos als
+// base64 sprengen das schnell. Verkleinert Bilder auf max. 800px
+// (laengste Kante) und speichert als JPEG 0.7 — spart ~90%.
+// Nicht-Bilder (PDF, Word, ...) werden unveraendert durchgereicht.
+// Liefert IMMER eine DataURL; bei Fehlern das unkomprimierte Original.
+function fotoKomprimieren(file) {
+  return new Promise(function(resolve) {
+    var reader = new FileReader();
+    reader.onerror = function() { resolve(null); };
+    reader.onload = function(ev) {
+      var raw = ev.target.result;
+      if (!file.type || file.type.indexOf('image/') !== 0) { resolve(raw); return; }
+      var img = new Image();
+      img.onload = function() {
+        try {
+          var MAX = 800;
+          var scale = Math.min(1, MAX / Math.max(img.width, img.height, 1));
+          var w = Math.max(1, Math.round(img.width * scale));
+          var h = Math.max(1, Math.round(img.height * scale));
+          var c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          var out = c.toDataURL('image/jpeg', 0.7);
+          // Sicherheitsnetz: nie groesser speichern als das Original
+          resolve(out.length < raw.length ? out : raw);
+        } catch (e) { resolve(raw); }
+      };
+      img.onerror = function() { resolve(raw); };
+      img.src = raw;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // ── Fotos hinzufügen ──
 function mfsAddFotos(input) {
   const a = db.auftraege.find(x => x.id === _mfsAuftragId);
@@ -7507,7 +7542,7 @@ function mfsAddFotos(input) {
         mfsRender(_mfsAuftragId);
       }
     };
-    reader.readAsDataURL(file);
+    fotoKomprimieren(file).then(dataUrl => { if (dataUrl) reader.onload({ target: { result: dataUrl } }); });
   });
 }
 
@@ -7581,7 +7616,7 @@ function mfsDocsAdd(input) {
         pending--;
         if (pending === 0) { saveDb(); mfsRender(_mfsAuftragId); }
       };
-      reader.readAsDataURL(file);
+      fotoKomprimieren(file).then(function(dataUrl) { if (dataUrl) reader.onload({ target: { result: dataUrl } }); });
       ov.remove();
     }
     pnl.querySelectorAll('.mfs-doc-lbl-btn').forEach(function(btn) {
@@ -19058,12 +19093,8 @@ async function tmsgHandleFotos(e) {
   const files = Array.from(e.target.files);
   for (const file of files) {
     if (!file.type.startsWith('image/')) continue;
-    const b64 = await new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(r.result);
-      r.onerror = rej;
-      r.readAsDataURL(file);
-    });
+    const b64 = await fotoKomprimieren(file);
+    if (!b64) continue;
     _tmsgFotos.push(b64);
   }
   tmsgRenderFotoPreview();
@@ -22704,7 +22735,7 @@ function openLieferantDetail(id) {
         saveLieferanten(list);
         openLieferantDetail(id); // neu rendern
       };
-      reader.readAsDataURL(file);
+      fotoKomprimieren(file).then(dataUrl => { if (dataUrl) reader.onload({ target: { result: dataUrl } }); });
     });
   });
 
@@ -23384,7 +23415,7 @@ function openEwRueckgabeModal(ausgabeId) {
             prev.appendChild(d);
           }
         };
-        reader.readAsDataURL(file);
+        fotoKomprimieren(file).then(dataUrl => { if (dataUrl) reader.onload({ target: { result: dataUrl } }); });
       });
     });
   }
@@ -23625,7 +23656,7 @@ function openEwAusgabeModal(editId) {
             prev.appendChild(d);
           }
         };
-        reader.readAsDataURL(file);
+        fotoKomprimieren(file).then(dataUrl => { if (dataUrl) reader.onload({ target: { result: dataUrl } }); });
       });
     });
   }
@@ -23652,7 +23683,7 @@ function openEwAusgabeModal(editId) {
           '<button id="btn-ew-del-fsch2" style="position:absolute;top:4px;right:4px;background:#e74c3c;border:none;border-radius:4px;padding:2px 8px;color:#fff;font-size:11px;cursor:pointer">Löschen</button></div>';
         el('btn-ew-del-fsch2')?.addEventListener('click', () => { _ewFschFoto = null; if(prev) prev.innerHTML=''; });
       };
-      reader.readAsDataURL(file);
+      fotoKomprimieren(file).then(dataUrl => { if (dataUrl) reader.onload({ target: { result: dataUrl } }); });
     });
   }
   el('btn-ew-del-fsch')?.addEventListener('click', () => { _ewFschFoto = null; openEwAusgabeModal(editId); });
@@ -23680,7 +23711,7 @@ function openEwAusgabeModal(editId) {
             });
           }
         };
-        reader.readAsDataURL(file);
+        fotoKomprimieren(file).then(dataUrl => { if (dataUrl) reader.onload({ target: { result: dataUrl } }); });
       });
     });
   }
