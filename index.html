@@ -9696,7 +9696,7 @@ async function saveKunde(){
           // Kunde verknüpfen
           kundeComboboxSet(neuerKunde.id);
           // Status-Meldung im Fahrzeug-Modal
-          ocrSetStatus('success', 'Fahrzeugdaten aus Scan \u00fcbernommen \u2014 bitte pr\u00fcfen.');
+          ocrSetStatusCtx('fahrzeug', 'success', 'Fahrzeugdaten aus Scan \u00fcbernommen \u2014 bitte pr\u00fcfen.');
           // OCR-Sektion ausblenden (schon gescannt)
           var ocrSec = el('ocr-section');
           if (ocrSec) ocrSec.style.display = 'none';
@@ -15001,7 +15001,9 @@ function ocrPreprocess(imgUrl) {
     var img = new Image();
     img.onload = function() {
       try {
-        var ZIEL_W = 1600;
+        // 2400px: die klein gedruckten Halterdaten (links im Ausweis) sind
+        // bei 1600px nur ~19px hoch — unter Tesseracts Lesbarkeitsschwelle.
+        var ZIEL_W = 2400;
         var scale = ZIEL_W / Math.max(1, img.width);
         var w = Math.max(1, Math.round(img.width * scale));
         var h = Math.max(1, Math.round(img.height * scale));
@@ -15156,28 +15158,55 @@ function ocrParseText(text) {
   }
 
   // ── Halter: CH-Fahrzeugausweis Layout ──
-  // Muster links: Nachname / Vorname / Strasse / "NNNN Ort"
-  // Suche PLZ-Zeile und arbeite rückwärts
+  // Links im Ausweis: "Nachname Vorname(n)" (EINE Zeile) / Strasse Nr /
+  // "PLZ Ort". Dazwischen koennen Labels ("Name, Vornamen", "Wohnort"),
+  // die Ausweisnummer oder Leerguterkennungen liegen — daher rueckwaerts
+  // von der PLZ-Zeile aus suchen und untaugliche Zeilen ueberspringen.
+  var halterLabelRx = /name|vorname|wohnort|domicil|cognome|indirizzo|geburt|naissance|nascita|heimat|origine|pays|assur|versich|assicur|kanton|verf|eintrag/i;
   var plzIdx = -1;
-  for (var pi=0; pi<lines.length; pi++) {
-    if (/^\d{4}\s+[A-Za-zÀ-ÿ]/.test(lines[pi])) {
-      // Sicherstellen dass es kein Fahrzeugfeld ist (keine Schlüsselwörter)
-      if (!/stamm|fahrgestell|platz|achse|gewicht|cylindr|hubraum/i.test(lines[pi])) {
-        plzIdx = pi; break;
-      }
+  for (var pi = 0; pi < lines.length; pi++) {
+    if (/^\d{4}\s+[A-Za-zÀ-ÿ]/.test(lines[pi]) &&
+        !/stamm|fahrgestell|platz|achse|gewicht|cylindr|hubraum/i.test(lines[pi])) {
+      var plzNum = parseInt(lines[pi].slice(0, 4), 10);
+      if (plzNum >= 1000 && plzNum <= 9999) { plzIdx = pi; break; }
     }
   }
   if (plzIdx >= 1) {
     var plzMatch = lines[plzIdx].match(/^(\d{4})\s+(.+)$/);
-    if (plzMatch) { result.halter_plz = plzMatch[1]; result.halter_ort = plzMatch[2]; }
-    // Strasse ist die Zeile davor
-    result.halter_strasse = lines[plzIdx - 1];
-    // Vorname 2 Zeilen davor, Nachname 3 Zeilen davor
-    if (plzIdx >= 3) {
-      result.halter_vorname  = lines[plzIdx - 2];
-      result.halter_nachname = lines[plzIdx - 3];
-    } else if (plzIdx >= 2) {
-      result.halter_nachname = lines[plzIdx - 2];
+    if (plzMatch) { result.halter_plz = plzMatch[1]; result.halter_ort = plzMatch[2].trim(); }
+    // Strasse: oberhalb der PLZ-Zeile — endet auf Hausnummer oder enthaelt
+    // ein Strassen-Wort; Labels ueberspringen.
+    var idx = plzIdx - 1, strasseIdx = -1;
+    for (var s = 0; s < 3 && idx >= 0; s++, idx--) {
+      var ln = lines[idx];
+      if (halterLabelRx.test(ln)) continue;
+      if (/\s\d+\s*[a-zA-Z]?$/.test(ln) || /str(\.|asse)|weg|gasse|platz|allee/i.test(ln)) { strasseIdx = idx; break; }
+    }
+    if (strasseIdx === -1 && plzIdx >= 1 && !halterLabelRx.test(lines[plzIdx - 1])) strasseIdx = plzIdx - 1;
+    if (strasseIdx >= 0) result.halter_strasse = lines[strasseIdx];
+    // Namenszeile: oberhalb der Strasse — 2+ Woerter, nur Buchstaben
+    // (keine Ziffern: schliesst Ausweisnummer und Daten aus).
+    // Erster Token = Nachname, Rest = Vorname(n).
+    idx = (strasseIdx >= 0 ? strasseIdx : plzIdx) - 1;
+    for (var n = 0; n < 3 && idx >= 0; n++, idx--) {
+      var nl = lines[idx];
+      if (halterLabelRx.test(nl) || /\d/.test(nl)) continue;
+      var toks = nl.split(/\s+/).filter(Boolean);
+      // Die rechte Ausweisspalte kann in dieselbe OCR-Zeile rutschen
+      // ('Scherer Andreas CUPRA LEON') — ab dem ersten ALL-CAPS-Token
+      // (Marke/Typ) abschneiden; echte Namen sind gemischt geschrieben.
+      var capsIdx = -1;
+      for (var ci = 0; ci < toks.length; ci++) {
+        var t = toks[ci];
+        if (t.length >= 2 && /[A-ZÀ-Ý]/.test(t) && t === t.toUpperCase()) { capsIdx = ci; break; }
+      }
+      if (capsIdx > 1) toks = toks.slice(0, capsIdx);
+      if (toks.length >= 2 && toks.length <= 4 &&
+          toks.every(function(t) { return /^[A-Za-zÀ-ÿ'’.-]+$/.test(t); })) {
+        result.halter_nachname = toks[0];
+        result.halter_vorname  = toks.slice(1).join(' ');
+        break;
+      }
     }
   }
 
@@ -15306,9 +15335,14 @@ async function handleOcrFile(file, ctx) {
       if (parsed.halter_plz)      setVal('k-plz',      parsed.halter_plz);
       if (parsed.halter_ort)      setVal('k-ort',      parsed.halter_ort);
       window._ocrFahrzeugData = parsed;
+      var kAnz = ['halter_vorname','halter_nachname','halter_strasse','halter_plz','halter_ort']
+        .filter(function(k) { return parsed[k]; }).length;
       var fzHint = (parsed.kennzeichen || parsed.marke)
         ? ' • Fahrzeug: ' + [parsed.kennzeichen, parsed.marke, parsed.modell].filter(Boolean).join(' ') : '';
-      ocrSetStatusCtx('kunde', 'success', 'Kundendaten erkannt' + fzHint + ' — bitte prüfen.');
+      var kText = kAnz > 0
+        ? 'Kundendaten erkannt'
+        : 'Keine Halterdaten lesbar (Ausweis gerade und formatfüllend fotografieren)';
+      ocrSetStatusCtx('kunde', 'success', kText + fzHint + ' — bitte prüfen.');
     }
   } catch(err) {
     // Tesseract-Worker-Fehler haben teils keine .message — nutzbare Meldung sicherstellen
