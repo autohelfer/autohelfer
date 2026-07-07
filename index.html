@@ -15088,7 +15088,8 @@ function ocrPreprocess(imgUrl) {
 function ocrParseText(text) {
   var result = { kennzeichen:'', stammnummer:'', vin:'', marke:'', modell:'', typ:'',
     erstzulassung:'', leistung:'', treibstoff:'', versicherung:'',
-    halter_vorname:'', halter_nachname:'', halter_strasse:'', halter_plz:'', halter_ort:'' };
+    halter_vorname:'', halter_nachname:'', halter_strasse:'', halter_plz:'', halter_ort:'',
+    halter_geburtsdatum:'' };
 
   var lines = text.split(/\n/).map(function(l){ return l.trim(); }).filter(Boolean);
   var all = text.replace(/\n/g,' ');
@@ -15224,6 +15225,19 @@ function ocrParseText(text) {
     }
   }
   if (plzIdx >= 1) {
+    // Geburtsdatum: steht im Ausweis direkt UNTER der Adresse — erstes
+    // Datum bis 6 Zeilen nach der PLZ-Zeile mit plausiblem Geburtsjahr
+    // (1920 bis heute-16); Fahrzeugdaten (EZ, Pruefdatum) fallen raus.
+    var gebMaxJahr = new Date().getFullYear() - 16;
+    for (var gi = plzIdx + 1; gi <= plzIdx + 6 && gi < lines.length; gi++) {
+      var gm = lines[gi].match(/(\d{2})\.(\d{2})\.(\d{4})/);
+      if (!gm) continue;
+      var gJahr = parseInt(gm[3], 10), gTag = parseInt(gm[1], 10), gMon = parseInt(gm[2], 10);
+      if (gJahr < 1920 || gJahr > gebMaxJahr) continue;
+      if (gTag < 1 || gTag > 31 || gMon < 1 || gMon > 12) continue;
+      result.halter_geburtsdatum = gm[3] + '-' + gm[2] + '-' + gm[1];
+      break;
+    }
     // Strasse: bis 3 Zeilen oberhalb — Strassen-Wort mit grossem Anfangs-
     // buchstaben, optional Hausnummer. Nur das saubere Fragment
     // uebernehmen, nie die ganze (verschmutzte) Zeile.
@@ -15413,8 +15427,9 @@ async function handleOcrFile(file, ctx) {
       if (parsed.halter_strasse)  setVal('k-strasse',  parsed.halter_strasse);
       if (parsed.halter_plz)      setVal('k-plz',      parsed.halter_plz);
       if (parsed.halter_ort)      setVal('k-ort',      parsed.halter_ort);
+      if (parsed.halter_geburtsdatum) setVal('k-geburtsdatum', parsed.halter_geburtsdatum);
       window._ocrFahrzeugData = parsed;
-      var kAnz = ['halter_vorname','halter_nachname','halter_strasse','halter_plz','halter_ort']
+      var kAnz = ['halter_vorname','halter_nachname','halter_strasse','halter_plz','halter_ort','halter_geburtsdatum']
         .filter(function(k) { return parsed[k]; }).length;
       var fzHint = (parsed.kennzeichen || parsed.marke)
         ? ' • Fahrzeug: ' + [parsed.kennzeichen, parsed.marke, parsed.modell].filter(Boolean).join(' ') : '';
