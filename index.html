@@ -5781,12 +5781,15 @@
     </div>
     <input type="hidden" id="k-art" value="privat" />
 
+    <!-- Live-Dublettenpruefung: erscheint beim Tippen, blockiert nichts -->
+    <div id="k-dublette" style="display:none;margin-bottom:14px;padding:10px 12px;border:1px solid #e8a020;background:rgba(232,160,32,.08);border-radius:8px;font-size:13px;line-height:1.5"></div>
+
     <!-- Privatkunde: Vor-/Nachname -->
     <div id="k-section-privat">
       <div class="form-section-label">Personendaten</div>
       <div class="form-row">
-        <div class="form-group"><label>Vorname *</label><input class="form-input" id="k-vorname" placeholder="Max" maxlength="80" /></div>
-        <div class="form-group"><label>Nachname *</label><input class="form-input" id="k-nachname" placeholder="Mustermann" maxlength="80" /></div>
+        <div class="form-group"><label>Vorname *</label><input class="form-input" id="k-vorname" placeholder="Max" maxlength="80" oninput="kundeDubletteCheck()" /></div>
+        <div class="form-group"><label>Nachname *</label><input class="form-input" id="k-nachname" placeholder="Mustermann" maxlength="80" oninput="kundeDubletteCheck()" /></div>
       </div>
       <div class="form-group" style="max-width:200px">
         <label>Geburtsdatum <span style="font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0">(optional)</span></label>
@@ -5797,7 +5800,7 @@
     <!-- Firmenkunde: Firmenname + Ansprechperson (1 Feld) -->
     <div id="k-section-firma" style="display:none">
       <div class="form-section-label">Firmendaten</div>
-      <div class="form-group"><label>Firmenname *</label><input class="form-input" id="k-firma" placeholder="Muster GmbH" maxlength="120" /></div>
+      <div class="form-group"><label>Firmenname *</label><input class="form-input" id="k-firma" placeholder="Muster GmbH" maxlength="120" oninput="kundeDubletteCheck()" /></div>
       <div class="form-row">
         <div class="form-group"><label>Ansprechperson</label><input class="form-input" id="k-asp-name" placeholder="Max Mustermann" maxlength="120" /></div>
         <div class="form-group">
@@ -5823,14 +5826,14 @@
       <label>Telefon</label>
       <div class="phone-wrap">
         <input class="phone-prefix" id="k-tel-prefix" placeholder="+41" maxlength="6" />
-        <input class="phone-number" id="k-telefon" placeholder="061 123 45 67" maxlength="20" type="tel" />
+        <input class="phone-number" id="k-telefon" placeholder="061 123 45 67" maxlength="20" type="tel" oninput="kundeDubletteCheck()" />
       </div>
     </div>
     <div class="form-group">
       <label>Mobile</label>
       <div class="phone-wrap">
         <input class="phone-prefix" id="k-mob-prefix" placeholder="+41" maxlength="6" />
-        <input class="phone-number" id="k-mobile" placeholder="079 123 45 67" maxlength="20" type="tel" />
+        <input class="phone-number" id="k-mobile" placeholder="079 123 45 67" maxlength="20" type="tel" oninput="kundeDubletteCheck()" />
       </div>
     </div>
 
@@ -9604,6 +9607,7 @@ const K_FIELDS=['vorname','nachname','firma','strasse','plz','ort','telefon','mo
 
 function prepKundeModal(editId){
   el('modal-kunde-title').textContent=editId!=null?'Kunde bearbeiten':'Neuer Kunde';
+  var kDub=el('k-dublette'); if(kDub)kDub.style.display='none';
   document.querySelectorAll('#modal-kunde .form-input,#modal-kunde .form-textarea').forEach(e=>{
     e.classList.remove('error');
     const nx=e.nextElementSibling; if(nx&&nx.classList.contains('field-error'))nx.remove();
@@ -9628,6 +9632,48 @@ function prepKundeModal(editId){
   else { setVal('k-asp-tel',''); }
   // Rechnungs-Email
   setVal('k-email-rechnung', k&&k.emailRechnung ? k.emailRechnung : '');
+}
+
+// ── Live-Dublettenpruefung im Kunden-Modal ──
+// Prueft beim Tippen (debounced) gegen den Bestand: gleicher Name,
+// aehnliche Firma oder gleiche Telefonnummer. Zeigt einen Hinweis mit
+// Link auf den bestehenden Kunden — blockiert die Erfassung nicht.
+var _kDubTimer = null;
+function kundeDubletteCheck() {
+  clearTimeout(_kDubTimer);
+  _kDubTimer = setTimeout(kundeDubletteCheckJetzt, 350);
+}
+function kundeDubletteCheckJetzt() {
+  var box = el('k-dublette');
+  if (!box) return;
+  if (_editId.kunde != null) { box.style.display = 'none'; return; }
+  function normTel(s) { return (s || '').replace(/\D/g, '').replace(/^0+/, '').slice(-9); }
+  var vn = val('k-vorname').toLowerCase();
+  var nn = val('k-nachname').toLowerCase();
+  var fi = val('k-firma').toLowerCase();
+  var tel = normTel(val('k-telefon')), mob = normTel(val('k-mobile'));
+  var treffer = db.kunden.filter(function(k) {
+    var kn = (k.nachname || '').toLowerCase(), kv = (k.vorname || '').toLowerCase();
+    var kf = (k.firma || '').toLowerCase();
+    if (nn.length >= 2 && kn === nn) {
+      if (!vn || !kv || kv === vn || kv.indexOf(vn) === 0 || vn.indexOf(kv) === 0) return true;
+    }
+    if (fi.length >= 3 && kf && (kf.indexOf(fi) !== -1 || fi.indexOf(kf) !== -1)) return true;
+    var kt = normTel(k.telefon), km = normTel(k.mobile);
+    if (tel.length >= 7 && (kt === tel || km === tel)) return true;
+    if (mob.length >= 7 && (kt === mob || km === mob)) return true;
+    return false;
+  }).slice(0, 3);
+  if (!treffer.length) { box.style.display = 'none'; return; }
+  box.innerHTML = '<strong style="color:#e8a020">Kunde bereits erfasst?</strong><br>' +
+    treffer.map(function(k) {
+      var name = k.firma || ((k.vorname || '') + ' ' + (k.nachname || '')).trim();
+      var zusatz = [k.ort, k.mobile || k.telefon].filter(Boolean).join(' • ');
+      return esc(name) + (zusatz ? ' <span style="color:var(--text-muted)">(' + esc(zusatz) + ')</span>' : '') +
+        ' <a href="javascript:void(0)" onclick="closeModal(\'kunde\');showKundeDetail(' + k.id + ')" ' +
+        'style="color:#e8a020;font-weight:600">Öffnen</a>';
+    }).join('<br>');
+  box.style.display = 'block';
 }
 
 async function saveKunde(){
@@ -15202,7 +15248,14 @@ function ocrParseText(text) {
           .replace(/^[^A-Za-zÀ-ÿ]+|[^A-Za-zà-ÿÀ-Ý'’.-]+$/g, '')
           .replace(/^[a-z]{1,2}(?=[A-ZÀ-Ý])/, '')
           .replace(/\.$/, '');
-        if (/^[A-ZÀ-Ý][a-zà-ÿ'’-]{2,}$/.test(t) && !labelTokRx.test(t)) {
+        var mixed = /^[A-ZÀ-Ý][a-zà-ÿ'’-]{2,}$/.test(t) && !labelTokRx.test(t);
+        // Nachname kann in GROSSBUCHSTABEN gedruckt sein ('AMSLER') —
+        // als Lauf-START zulassen, sofern keine Automarke/Fahrzeugwort
+        // (die rechte Ausweisspalte ist ebenfalls GROSS: 'CUPRA LEON').
+        var caps = cur.length === 0 && /^[A-ZÀ-Ý]{3,15}$/.test(t) &&
+          !markenListe.some(function(m){ return m[0] === t; }) &&
+          !/WAGEN|LIMOUSINE|KOMBI|DIESEL|BENZIN|HALTER|CHANGE|COC|LEON/.test(t);
+        if (mixed || caps) {
           cur.push(t);
         } else {
           if (cur.length > best.length) best = cur;
@@ -15212,6 +15265,8 @@ function ocrParseText(text) {
       if (cur.length > best.length) best = cur;
       return best;
     }
+    // 'AMSLER' -> 'Amsler' fuer die Uebernahme ins Kundenfeld
+    function nameTitel(t) { return /^[A-ZÀ-Ý]{3,}$/.test(t) ? t.charAt(0) + t.slice(1).toLowerCase() : t; }
     var anchor = (strasseIdx >= 0 ? strasseIdx : plzIdx);
     var runs = [];
     for (var ni = anchor - 1, n = 0; n < 5 && ni >= 0; n++, ni--) {
@@ -15224,14 +15279,14 @@ function ocrParseText(text) {
       // Lauf von 2-4 Tokens = 'Nachname Vorname(n)' in EINER Zeile;
       // laengster Lauf gewinnt, bei Gleichstand der naechste an der Adresse.
       mehrTok.sort(function(a,b){ return b.run.length - a.run.length || b.idx - a.idx; });
-      result.halter_nachname = mehrTok[0].run[0];
+      result.halter_nachname = nameTitel(mehrTok[0].run[0]);
       result.halter_vorname  = mehrTok[0].run.slice(1).join(' ');
     } else {
       // zwei benachbarte Einzel-Token-Zeilen: oben Nachname, unten Vorname
       runs.sort(function(a,b){ return a.idx - b.idx; });
       for (var ri = 0; ri + 1 < runs.length; ri++) {
         if (runs[ri + 1].idx - runs[ri].idx === 1) {
-          result.halter_nachname = runs[ri].run[0];
+          result.halter_nachname = nameTitel(runs[ri].run[0]);
           result.halter_vorname  = runs[ri + 1].run[0];
           break;
         }
@@ -15367,6 +15422,8 @@ async function handleOcrFile(file, ctx) {
         ? 'Kundendaten erkannt'
         : 'Keine Halterdaten lesbar (Ausweis gerade und formatfüllend fotografieren)';
       ocrSetStatusCtx('kunde', 'success', kText + fzHint + ' — bitte prüfen.');
+      // setVal feuert kein input-Event — Dublettenpruefung explizit anstossen
+      if (kAnz > 0 && typeof kundeDubletteCheck === 'function') kundeDubletteCheck();
     }
   } catch(err) {
     // Tesseract-Worker-Fehler haben teils keine .message — nutzbare Meldung sicherstellen
