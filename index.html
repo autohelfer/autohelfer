@@ -8729,7 +8729,9 @@ function openModal(type, editId=null, mechMode=false, preselectedDatum=null){
   _mechMode = (type === 'auftrag') ? mechMode : false;
 
   if(type==='kunde')    prepKundeModal(editId);
-  if(type==='fahrzeug') prepFahrzeugModal(editId, null);
+  // Beim Fahrzeug-Modal dient der dritte Parameter als Kunden-Vorauswahl
+  // (numerische Kunden-ID); fuer Auftraege bleibt er der Mechaniker-Modus.
+  if(type==='fahrzeug') prepFahrzeugModal(editId, (typeof mechMode === 'number') ? mechMode : null);
   if(type==='auftrag')  prepAuftragModalMech(editId, mechMode, preselectedDatum);
   if(type==='rechnung') prepRechnungModal();
 
@@ -9757,32 +9759,15 @@ async function saveKunde(){
   saveDb(); closeModal('kunde'); renderKunden(); renderDashboard();
   if(_currentKundeId!=null)renderKundeDetailHeader();
 
-  // ── Nach OCR-Scan: Fahrzeug-Modal automatisch öffnen und vorausfüllen ──
+  // ── Nach OCR-Scan: Fahrzeug-Modal automatisch öffnen ──
+  // Uebernahme der Scan-Daten macht prepFahrzeugModal (liest
+  // window._ocrFahrzeugData einmalig); dritter openModal-Parameter
+  // ist beim Fahrzeug-Modal die Kunden-Vorauswahl.
   if (_editId.kunde == null && window._ocrFahrzeugData) {
-    var ocrFz = window._ocrFahrzeugData;
-    window._ocrFahrzeugData = null; // einmalig verwenden
-    // Neuen Kunden finden (zuletzt hinzugefügt)
     var neuerKunde = db.kunden[db.kunden.length - 1];
     if (neuerKunde) {
       setTimeout(function() {
-        openModal('fahrzeug', null, false, null);
-        // Felder prefüllen nachdem Modal geöffnet
-        setTimeout(function() {
-          var fzMap = { kennzeichen:'f-kennzeichen', vin:'f-vin', marke:'f-marke',
-            modell:'f-modell', typ:'f-typ', erstzulassung:'f-erstzulassung',
-            stammnummer:'f-stammnummer', leistung:'f-leistung',
-            treibstoff:'f-treibstoff', versicherung:'f-versicherung' };
-          Object.entries(fzMap).forEach(function(kv){
-            if (ocrFz[kv[0]]) setVal(kv[1], ocrFz[kv[0]]);
-          });
-          // Kunde verknüpfen
-          kundeComboboxSet(neuerKunde.id);
-          // Status-Meldung im Fahrzeug-Modal
-          ocrSetStatusCtx('fahrzeug', 'success', 'Fahrzeugdaten aus Scan \u00fcbernommen \u2014 bitte pr\u00fcfen.');
-          // OCR-Sektion ausblenden (schon gescannt)
-          var ocrSec = el('ocr-section');
-          if (ocrSec) ocrSec.style.display = 'none';
-        }, 80);
+        openModal('fahrzeug', null, neuerKunde.id);
       }, 200);
     }
   }
@@ -10583,7 +10568,28 @@ function prepFahrzeugModal(editId, preselectedKundeId=null){
   const fzKundeId = isEdit ? f.kundeId : preselectedKundeId;
   const fzKunde = fzKundeId ? db.kunden.find(x => x.id === fzKundeId) : null;
   fahrerSektionUpdate(fzKunde);
-  if(!isEdit) ocrReset();
+  if(!isEdit){
+    // OCR-Bereich frisch: Status verbergen, Dateiauswahl leeren
+    // (frueher ocrReset() — die Funktion existiert seit dem OCR-Umbau nicht mehr)
+    var ocrStat = el('ocr-status'); if (ocrStat) ocrStat.style.display = 'none';
+    var ocrInp = el('ocr-file-input'); if (ocrInp) ocrInp.value = '';
+    // Liegt ein gescannter Fahrzeugausweis vom Kunden-Scan bereit:
+    // Daten uebernehmen und dem Nutzer zum Pruefen anzeigen
+    if (window._ocrFahrzeugData) {
+      var ofz = window._ocrFahrzeugData;
+      window._ocrFahrzeugData = null; // einmalig verwenden
+      var ofzMap = { kennzeichen:'f-kennzeichen', vin:'f-vin', typengenehmigung:'f-typengenehmigung',
+        marke:'f-marke', modell:'f-modell', typ:'f-typ',
+        stammnummer:'f-stammnummer', leistung:'f-leistung', treibstoff:'f-treibstoff', versicherung:'f-versicherung' };
+      Object.keys(ofzMap).forEach(function(pk){ if (ofz[pk]) setVal(ofzMap[pk], ofz[pk]); });
+      if (ofz.erstzulassung) {
+        setVal('f-erstzulassung', ofz.erstzulassung.includes('-')
+          ? ofz.erstzulassung.split('-').reverse().join('.') : ofz.erstzulassung);
+      }
+      ocrSetStatusCtx('fahrzeug', 'success', 'Fahrzeugdaten aus Ausweis-Scan übernommen — bitte prüfen.');
+      el('ocr-section').style.display = 'none'; // schon gescannt
+    }
+  }
 
   // Kunden-Kontakt-Banner: zeigt Kundeninfo + Anruf-Button
   const fzBanner = el('fz-kunde-banner');
