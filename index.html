@@ -5723,6 +5723,8 @@
       <div class="mfs-title-sub"  id="mfs-title-sub">—</div>
     </div>
     <span class="mfs-status-badge badge" id="mfs-status-badge">Offen</span>
+    <button id="mfs-next-btn" onclick="mfsNaechster()" title="N&auml;chster Auftrag"
+      style="display:none;align-items:center;gap:6px;background:var(--accent);color:#141414;border:none;border-radius:8px;padding:10px 18px;font-weight:700;font-size:14px;cursor:pointer;min-height:44px;margin-left:8px;flex-shrink:0">Weiter &#8594;</button>
   </div>
   <!-- Body -->
   <div class="mfs-body" id="mfs-body">
@@ -6853,6 +6855,10 @@ function mfsOpen(auftragId) {
 
   mfsRender(auftragId);
 
+  // 'Weiter'-Button nur zeigen, wenn es einen naechsten Auftrag gibt
+  var mfsNext = document.getElementById('mfs-next-btn');
+  if (mfsNext) mfsNext.style.display = (mfsNextId() != null) ? 'inline-flex' : 'none';
+
   // Status auf in_arbeit wenn noch offen/geplant
   if (['offen','geplant'].includes(auftrag.status)) {
     auftrag.status = 'in_arbeit';
@@ -6867,6 +6873,29 @@ function mfsClose() {
   mfsSpeechStop();
   _mfsAuftragId = null;
   renderMechanik();
+}
+
+// ── 'Weiter': zum naechsten offenen Auftrag der aktuellen Liste ──
+// Gleiche Reihenfolge wie die Listenansicht (Filter + Sortierung).
+// Der Mechaniker arbeitet sich so ohne Umweg ueber die Uebersicht
+// von Auftrag zu Auftrag; am Ende der Liste zurueck zur Uebersicht.
+function mfsNextId() {
+  if (_mfsAuftragId == null) return null;
+  var liste = mechSortAuftraege(mechFilterAuftraege(MECHANIC_SESSION.activeTab));
+  var offene = liste.filter(function(a){
+    return a.id !== _mfsAuftragId && a.status !== 'erledigt' && a.status !== 'fakturiert';
+  });
+  if (!offene.length) return null;
+  var idx = liste.findIndex(function(a){ return a.id === _mfsAuftragId; });
+  for (var i = idx + 1; i < liste.length; i++) {
+    if (offene.indexOf(liste[i]) !== -1) return liste[i].id;
+  }
+  return offene[0].id;
+}
+function mfsNaechster() {
+  var nid = mfsNextId();
+  if (nid == null) { mfsClose(); return; }
+  mfsOpen(nid);
 }
 
 function mfsRender(auftragId) {
