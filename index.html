@@ -14349,6 +14349,7 @@ function renderDashboardHeute(){
     const fzMarke   = fz ? fz.marke+(fz.modell?' '+fz.modell:'') : '';
     const fzKz      = fz ? kz(fz.kennzeichen) : '';
     const isWarte   = !!a.wartekunde;
+    const isInArbeit = a.status === 'in_arbeit';
 
     const zeilen = (a.beschreibung||'').split(/[,;]+/).reduce((arr,p)=>{
       p.split('\n').forEach(s=>{ if(s.trim()) arr.push(s.trim()); });
@@ -14359,15 +14360,18 @@ function renderDashboardHeute(){
     ).join('') + (zeilen.length>3 ? `<div style="font-size:10px;color:var(--text-subtle)">+${zeilen.length-3} weitere</div>` : '');
 
     const chips2 = [];
+    // Mechaniker zuerst und deutlich — die Tagesuebersicht muss sofort
+    // zeigen, WER am Fahrzeug ist (taeglich meistgenutzte Information).
+    if(a.mechanikerName) chips2.push(`<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:var(--surface3);color:var(--text);border:1px solid var(--border);font-weight:600">${icn('name')} ${esc(a.mechanikerName.split(' ')[0])}</span>`);
     if(a.geplantH)    chips2.push(`<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:var(--surface3);color:var(--text-muted);border:1px solid var(--border)">${icn('hourglass')} ${a.geplantH}h</span>`);
     if(isWarte)       chips2.push(`<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(231,76,60,.12);color:#e74c3c;border:1px solid rgba(231,76,60,.3)">${icn('kunden')} wartet</span>`);
     if(a.ersatzwagen) chips2.push(`<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(41,128,185,.12);color:var(--blue);border:1px solid rgba(41,128,185,.3)"><svg class="icon-svg" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Ersatz</span>`);
     if(a.mfkZeit||a.mfkDatum) chips2.push(`<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(39,174,96,.12);color:var(--green);border:1px solid rgba(39,174,96,.3)">MFK ${a.mfkDatum?formatDateDE(a.mfkDatum)+' ':''} ${a.mfkZeit?esc(a.mfkZeit)+' Uhr':''}</span>`);
 
-    return `<div style="display:grid;grid-template-columns:60px 1fr auto;border-bottom:1px solid var(--border);min-height:60px;${isWarte?'border-left:3px solid #e74c3c;':''}">
+    return `<div style="display:grid;grid-template-columns:60px 1fr auto;border-bottom:1px solid var(--border);min-height:60px;${isWarte?'border-left:3px solid #e74c3c;':(isInArbeit?'border-left:3px solid var(--accent);background:rgba(232,160,32,.05);':'')}">
       <div style="padding:8px 8px 8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;line-height:1.6">
         ${a.ankunft?`<span${isWarte?' style="color:#e74c3c;font-weight:700"':''}>${esc(a.ankunft)}</span>`:''}
-        ${a.abholung?`<span style="color:var(--text-subtle)">${esc(a.abholung)}</span>`:''}
+        ${a.abholung?`<span style="color:var(--text);font-weight:700" title="muss bereit sein">${esc(a.abholung)}</span>`:''}
       </div>
       <div style="padding:8px 10px;min-width:0">
         <div style="font-weight:700;font-size:13px;margin-bottom:1px">${esc(kundeName)}</div>
