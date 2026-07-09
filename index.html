@@ -6146,25 +6146,18 @@
           </select>
         </div>
 
-        <!-- MFK -->
+        <!-- MFK: Datum mit Auto-Format + Wochentag, Zeit mit Viertelstunden-Liste
+             (gleicher Stil wie Ankunft/Abholung im Schnelltermin) -->
         <div class="form-group">
           <label>MFK Datum &amp; Zeit</label>
           <div style="display:flex;gap:6px">
-            <input class="form-input" id="a-mfkdatum" type="text" inputmode="numeric" placeholder="TT.MM.JJJJ" maxlength="10" style="flex:1" />
-            <select class="form-select" id="a-mfkzeit" style="flex:1;height:48px">
-              <option value="">— Uhrzeit —</option>
-              <option value="07:00">07:00</option><option value="07:30">07:30</option>
-              <option value="08:00">08:00</option><option value="08:30">08:30</option>
-              <option value="09:00">09:00</option><option value="09:30">09:30</option>
-              <option value="10:00">10:00</option><option value="10:30">10:30</option>
-              <option value="11:00">11:00</option><option value="11:30">11:30</option>
-              <option value="12:00">12:00</option><option value="12:30">12:30</option>
-              <option value="13:00">13:00</option><option value="13:30">13:30</option>
-              <option value="13:40">13:40</option><option value="14:00">14:00</option>
-              <option value="14:30">14:30</option><option value="15:00">15:00</option>
-              <option value="15:30">15:30</option><option value="16:00">16:00</option>
-              <option value="16:30">16:30</option><option value="17:00">17:00</option>
-            </select>
+            <div style="flex:1;position:relative">
+              <input class="form-input" id="a-mfkdatum" type="text" inputmode="numeric" placeholder="TT.MM.JJJJ" maxlength="10" style="width:100%;padding-right:42px" onblur="aMfkDatumBlur(this)" />
+              <span id="a-mfk-wt" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--accent);pointer-events:none"></span>
+            </div>
+            <div style="flex:1;position:relative">
+              <input class="form-input" id="a-mfkzeit" type="text" inputmode="numeric" placeholder="Uhrzeit" maxlength="5" style="width:100%" onfocus="stZeitFokus(this)" onblur="stZeitBlur(this)" />
+            </div>
           </div>
         </div>
 
@@ -11571,6 +11564,7 @@ function prepAuftragModal(editId, vorDatum=null){
     // mfkDatum: ISO → TT.MM.JJJJ für Anzeige
     var mfkDisplay = a.mfkDatum && a.mfkDatum.includes('-') ? a.mfkDatum.split('-').reverse().join('.') : (a.mfkDatum||'');
     setVal('a-mfkdatum', mfkDisplay); setVal('a-mfkzeit',a.mfkZeit||'');
+    aMfkWtUpdate(mfkDisplay);
     const erEl=el('a-ersatzwagen'); if(erEl) erEl.checked=!!a.ersatzwagen;
     const reEl=el('a-reifenhotel'); if(reEl) reEl.checked=!!a.reifenhotel;
     const wkEl=el('a-wartekunde');  if(wkEl) wkEl.checked=!!a.wartekunde;
@@ -11591,6 +11585,7 @@ function prepAuftragModal(editId, vorDatum=null){
     }
   } else {
     ['a-notizen','a-geplant','a-ankunft','a-abholung','a-mfkdatum','a-mfkzeit'].forEach(id=>setVal(id,''));
+    aMfkWtUpdate('');
     _aMaengel = []; renderAMaengel(); setTimeout(initMaengelListeners, 50);
     setVal('a-beschreibung','');
     resetInternFields();
@@ -13150,13 +13145,20 @@ function stRender() {
       }
       h += '</div>';
     }
-    h += '<div class="form-group"><label>Beschreibung</label>';
-    h += '<input id="st-beschreibung" class="form-input" placeholder="z.B. Ölwechsel, Pneu wechseln..." value="' + esc(_st.beschreibung) + '" /></div>';
+    // Beschreibung als Punkte-Liste: sobald die letzte Zeile Text hat,
+    // erscheint automatisch eine neue leere Zeile (2., 3., 4. Punkt ...)
+    h += '<div class="form-group"><label>Beschreibung</label><div id="st-beschr-wrap">';
+    var bZeilen = (_st.beschreibung || '').split('\n').filter(function(z){ return z.trim(); });
+    bZeilen.push('');
+    bZeilen.forEach(function(z, i){
+      h += '<input class="form-input st-beschr-zeile" style="margin-bottom:6px" placeholder="' + (i === 0 ? 'z.B. Ölwechsel' : 'weiterer Punkt…') + '" value="' + esc(z) + '" oninput="stBeschrZeileInput(this)" />';
+    });
+    h += '</div></div>';
     content.innerHTML = h;
 
     // Focus
     setTimeout(() => {
-      const bi = document.getElementById('st-beschreibung');
+      const bi = document.querySelector('#st-beschr-wrap .st-beschr-zeile');
       if (bi) bi.focus();
     }, 50);
 
@@ -13287,7 +13289,28 @@ function stRlBoxHTML() {
 function stSyncFelder() {
   _st.ankunft      = stZeitNorm(document.getElementById('st-ankunft')?.value || '');
   _st.abholung     = stZeitNorm(document.getElementById('st-abholung')?.value || '');
-  _st.beschreibung = document.getElementById('st-beschreibung')?.value || '';
+  var bZeilen = document.querySelectorAll('#st-beschr-wrap .st-beschr-zeile');
+  if (bZeilen.length) {
+    _st.beschreibung = Array.prototype.map.call(bZeilen, function(z){ return z.value.trim(); })
+      .filter(Boolean).join('\n');
+  }
+}
+
+// Beschreibungs-Zeile getippt: haengt automatisch eine neue leere Zeile
+// an, sobald die letzte Zeile Text enthaelt (kein Neuzeichnen — der
+// Fokus bleibt im Feld).
+function stBeschrZeileInput(inp) {
+  var wrap = document.getElementById('st-beschr-wrap');
+  if (!wrap) return;
+  var zeilen = wrap.querySelectorAll('.st-beschr-zeile');
+  if (inp === zeilen[zeilen.length - 1] && inp.value.trim()) {
+    var neu = document.createElement('input');
+    neu.className = 'form-input st-beschr-zeile';
+    neu.style.marginBottom = '6px';
+    neu.placeholder = 'weiterer Punkt…';
+    neu.setAttribute('oninput', 'stBeschrZeileInput(this)');
+    wrap.appendChild(neu);
+  }
 }
 
 // Abweichendes Abholdatum zuruecksetzen -> wieder 'gleicher Tag'
@@ -13296,6 +13319,48 @@ function stAbholDatumReset(e) {
   _st.abholDatum = _st.datum;
   stSyncFelder();
   stRender();
+}
+
+// MFK-Datum normalisieren: '15.7' / '1507' -> '15.07.2026' (dieses oder
+// naechstes Jahr, MFK liegt in der Zukunft); '15.7.26' -> '15.07.2026'.
+// Unplausibles bleibt sichtbar stehen.
+function aMfkDatumNorm(v) {
+  v = String(v || '').trim();
+  if (!v) return '';
+  var m;
+  if (/^\d+$/.test(v)) {
+    if (v.length === 4)      m = [0, v.slice(0,2), v.slice(2,4), ''];
+    else if (v.length === 6) m = [0, v.slice(0,2), v.slice(2,4), v.slice(4,6)];
+    else if (v.length === 8) m = [0, v.slice(0,2), v.slice(2,4), v.slice(4,8)];
+    else return v;
+  } else {
+    m = v.match(/^(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?$/);
+    if (!m) return v;
+  }
+  var tag = parseInt(m[1], 10), mon = parseInt(m[2], 10);
+  if (tag < 1 || tag > 31 || mon < 1 || mon > 12) return v;
+  var jahr;
+  if (m[3]) {
+    jahr = parseInt(m[3], 10);
+    if (String(m[3]).length === 2) jahr += 2000;
+  } else {
+    jahr = new Date().getFullYear();
+    var kandidat = new Date(jahr, mon - 1, tag, 12);
+    if (kandidat < new Date()) jahr++;   // ohne Jahr: naechster passender Termin
+  }
+  return String(tag).padStart(2,'0') + '.' + String(mon).padStart(2,'0') + '.' + jahr;
+}
+function aMfkWtUpdate(v) {
+  var wtEl = document.getElementById('a-mfk-wt');
+  if (!wtEl) return;
+  var m = String(v || '').match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  wtEl.textContent = m
+    ? ['SO','MO','DI','MI','DO','FR','SA'][new Date(m[3] + '-' + m[2] + '-' + m[1] + 'T12:00:00').getDay()]
+    : '';
+}
+function aMfkDatumBlur(inp) {
+  inp.value = aMfkDatumNorm(inp.value);
+  aMfkWtUpdate(inp.value);
 }
 
 // Datum kurz mit Wochentag: '2026-07-09' -> 'DO 09.07.2026'
@@ -13324,6 +13389,12 @@ function stZeitFokus(inp) {
   var i = inp;
   setTimeout(function(){ i.select(); }, 0);   // Inhalt markieren: Tippen ueberschreibt
   var box = document.getElementById(inp.id + '-liste');
+  // Liste bei Bedarf erzeugen (statische Formulare wie das Auftrag-Modal
+  // haben sie nicht im HTML; Elternelement muss position:relative sein)
+  if (!box) {
+    inp.insertAdjacentHTML('afterend', stZeitListeHTML(inp.id));
+    box = document.getElementById(inp.id + '-liste');
+  }
   if (!box) return;
   box.style.display = 'block';
   var ziel = stZeitNorm(inp.value) || '08:00';
