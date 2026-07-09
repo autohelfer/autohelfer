@@ -11858,7 +11858,8 @@ function rlKarteMini(r) {
     var zustand = r.zustand === 'nok'
       ? '<span style="color:#e74c3c;font-weight:600;font-size:10px">&#9888; Handlungsbedarf</span>'
       : '<span style="color:var(--green);font-size:10px">&#10003; OK</span>';
-    var groesse = r.breite && r.quer && r.rad ? r.breite+'/'+r.quer+' R'+r.rad : (r.reifenInfo || 'Reifen');
+    // rad ist teils mit ('R16'), teils ohne Prefix ('16') erfasst — nie doppelt 'RR16'
+    var groesse = r.breite && r.quer && r.rad ? r.breite+'/'+r.quer+' R'+String(r.rad).replace(/^R/i,'') : (r.reifenInfo || 'Reifen');
     var saisonBadge = r.saison === 'winter'
       ? '<span style="font-size:10px;background:rgba(41,128,185,.2);color:#3498db;border-radius:3px;padding:1px 7px;font-weight:700">\u2744 Winter</span>'
       : r.saison === 'sommer'
@@ -13059,10 +13060,15 @@ function stRender() {
       h += '</select></div>';
     }
 
-    // Reifenhotel: eingelagerte Sätze für diesen Kunden/Fahrzeug
-    var rlList = loadReifenlager();
+    // Reifenhotel: erst NACH Fahrzeugwahl anzeigen — und nur die Sätze
+    // DIESES Fahrzeugs (sonst ist bei mehreren Fahrzeugen unklar, wozu
+    // die Raeder gehoeren). Sätze des Kunden ohne Fahrzeug-Verknuepfung
+    // werden mitgezeigt, da sie sonst nirgends auftauchen.
+    var rlList = _st.fahrzeugId ? loadReifenlager() : [];
     var rlSaetze = rlList.filter(function(r) {
-      return r.status === 'eingelagert' && (r.kundeId === _st.kundeId || (_st.fahrzeugId && r.fahrzeugId === _st.fahrzeugId));
+      if (r.status !== 'eingelagert') return false;
+      if (r.fahrzeugId) return r.fahrzeugId === _st.fahrzeugId;
+      return r.kundeId === _st.kundeId;
     });
     if (rlSaetze.length > 0) {
       h += '<div style="background:rgba(232,160,32,0.07);border:1px solid rgba(232,160,32,0.3);border-radius:6px;padding:10px 12px;margin-bottom:4px">';
