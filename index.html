@@ -13098,7 +13098,10 @@ function stRender() {
     h += '<div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:16px">';
     h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Datum Ankunft *</label><button type="button" id="st-datum-btn" onclick="openCalPickerST(\'datum\')" class="a-datum-btn" style="width:100%">' + (_st.datum ? '<span>' + stDatumKurz(_st.datum) + '</span>' : '<span class="datum-placeholder">Datum w\u00e4hlen \u203a</span>') + '</button></div>';
     h += '<div style="height:48px;display:flex;align-items:center;color:var(--text-subtle);flex-shrink:0;font-size:16px">&#8594;</div>';
-    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Datum Abholung</label><button type="button" id="st-abholdatum-btn" onclick="openCalPickerST(\'abholDatum\')" class="a-datum-btn" style="width:100%">' + (_st.abholDatum && _st.abholDatum !== _st.datum ? '<span>' + stDatumKurz(_st.abholDatum) + '</span>' : '<span class="datum-placeholder">gleicher Tag</span>') + '</button></div>';
+    var stAbwTag = _st.abholDatum && _st.abholDatum !== _st.datum;
+    h += '<div class="form-group" style="flex:1;margin-bottom:0;position:relative"><label>Datum Abholung</label><button type="button" id="st-abholdatum-btn" onclick="openCalPickerST(\'abholDatum\')" class="a-datum-btn" style="width:100%' + (stAbwTag ? ';padding-right:38px' : '') + '">' + (stAbwTag ? '<span>' + stDatumKurz(_st.abholDatum) + '</span>' : '<span class="datum-placeholder">gleicher Tag</span>') + '</button>'
+      + (stAbwTag ? '<button type="button" onclick="stAbholDatumReset(event)" title="Zurück auf gleichen Tag" style="position:absolute;right:8px;bottom:10px;width:28px;height:28px;border-radius:50%;border:none;background:var(--surface3);color:var(--text-muted);cursor:pointer;font-size:15px;line-height:1">×</button>' : '')
+      + '</div>';
     h += '</div>';
     // Ankunft und Abholung sind EIN Zeitfenster (von -> bis): nebeneinander
     // mit Pfeil; bei Wartekunde zeigt das Abholfeld 'wartet vor Ort'.
@@ -13192,9 +13195,7 @@ function stToggle(field) {
   // vorher getippte Werte in den Zustand retten, sonst gehen sie verloren.
   if (field === 'ersatzwagen' && _st.step === 1) {
     if (!_st.ersatzwagen) _st.ersatzwagenFzId = null;
-    _st.ankunft      = stZeitNorm(document.getElementById('st-ankunft')?.value || '');
-    _st.abholung     = stZeitNorm(document.getElementById('st-abholung')?.value || '');
-    _st.beschreibung = document.getElementById('st-beschreibung')?.value || '';
+    stSyncFelder();
     stRender();
   }
 }
@@ -13280,6 +13281,21 @@ function stRlBoxHTML() {
   h += rlSaetze.map(rlKarteMini).join('');
   h += '</div>';
   return h;
+}
+
+// Getippte Schritt-2-Felder in den Zustand sichern (vor jedem Neuzeichnen)
+function stSyncFelder() {
+  _st.ankunft      = stZeitNorm(document.getElementById('st-ankunft')?.value || '');
+  _st.abholung     = stZeitNorm(document.getElementById('st-abholung')?.value || '');
+  _st.beschreibung = document.getElementById('st-beschreibung')?.value || '';
+}
+
+// Abweichendes Abholdatum zuruecksetzen -> wieder 'gleicher Tag'
+function stAbholDatumReset(e) {
+  if (e) e.stopPropagation();
+  _st.abholDatum = _st.datum;
+  stSyncFelder();
+  stRender();
 }
 
 // Datum kurz mit Wochentag: '2026-07-09' -> 'DO 09.07.2026'
@@ -13370,11 +13386,9 @@ function stStep(to) {
       const fz = db.fahrzeuge.find(f => f.id === _st.fahrzeugId);
       _st.fzLabel = fz ? kz(fz.kennzeichen) + ' ' + fz.marke : '';
     }
-    // Datum kommt vom Kalender-Picker (_st.datum bereits gesetzt)
-    // Ankunft/Abholung aus Textfeldern lesen (normalisiert: '8' -> '08:00')
-    _st.ankunft     = stZeitNorm(document.getElementById('st-ankunft')?.value || _st.ankunft || '');
-    _st.abholung    = stZeitNorm(document.getElementById('st-abholung')?.value || '');
-    _st.beschreibung = document.getElementById('st-beschreibung')?.value || '';
+    // Datum kommt vom Kalender-Picker (_st.datum bereits gesetzt);
+    // Zeit-/Textfelder normalisiert sichern ('8' -> '08:00')
+    stSyncFelder();
     // Keine Bestaetigungsseite: nach der Validierung direkt speichern —
     // sie zeigte nur das eben Eingetippte nochmals (ein Tipp gespart).
     if (to === 2) {
@@ -20862,6 +20876,9 @@ function openCalPickerST(ziel) {
   // Schnelltermin schliessen und Kalender öffnen zum Datumwählen.
   // ziel: 'datum' (Ankunft, Standard) oder 'abholDatum' (Abholung).
   window._calPickZiel = (ziel === 'abholDatum') ? 'abholDatum' : 'datum';
+  // Getippte Zeiten/Beschreibung sichern — nach der Datumswahl wird
+  // Schritt 2 neu gezeichnet und wuerde sie sonst verwerfen.
+  if (document.getElementById('st-ankunft')) stSyncFelder();
   var ov = el('schnelltermin-overlay');
   if (ov) ov.classList.remove('open');
 
