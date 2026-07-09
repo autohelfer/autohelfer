@@ -13050,7 +13050,7 @@ function stRender() {
     const fzList = db.fahrzeuge.filter(f => f.kundeId === _st.kundeId);
     if (fzList.length > 0) {
       h += '<div style="margin-bottom:12px"><label style="font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:5px">Fahrzeug</label>';
-      h += '<select id="st-fz" class="form-select">';
+      h += '<select id="st-fz" class="form-select" onchange="stFzChanged(this.value)">';
       h += '<option value="">— kein Fahrzeug —</option>';
       fzList.forEach(f => {
         const sel = f.id === _st.fahrzeugId ? ' selected' : '';
@@ -13060,24 +13060,10 @@ function stRender() {
       h += '</select></div>';
     }
 
-    // Reifenhotel: erst NACH Fahrzeugwahl anzeigen — und nur die Sätze
-    // DIESES Fahrzeugs (sonst ist bei mehreren Fahrzeugen unklar, wozu
-    // die Raeder gehoeren). Sätze des Kunden ohne Fahrzeug-Verknuepfung
-    // werden mitgezeigt, da sie sonst nirgends auftauchen.
-    var rlList = _st.fahrzeugId ? loadReifenlager() : [];
-    var rlSaetze = rlList.filter(function(r) {
-      if (r.status !== 'eingelagert') return false;
-      if (r.fahrzeugId) return r.fahrzeugId === _st.fahrzeugId;
-      return r.kundeId === _st.kundeId;
-    });
-    if (rlSaetze.length > 0) {
-      h += '<div style="background:rgba(232,160,32,0.07);border:1px solid rgba(232,160,32,0.3);border-radius:6px;padding:10px 12px;margin-bottom:4px">';
-      h += '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:6px">';
-      h += 'Reifenhotel — ' + rlSaetze.length + ' Satz' + (rlSaetze.length !== 1 ? 'ätze' : '') + ' eingelagert';
-      h += '</div>';
-      h += rlSaetze.map(rlKarteMini).join('');
-      h += '</div>';
-    }
+    // Reifenhotel-Hinweis (Inhalt siehe stRlBoxHTML) — eigener Container,
+    // damit die Fahrzeugwahl ihn sofort aktualisieren kann, ohne die
+    // uebrigen Eingabefelder neu zu zeichnen.
+    h += '<div id="st-rl-box">' + stRlBoxHTML() + '</div>';
 
     h += '<div class="form-row">';
     h += '<div class="form-group"><label>Datum *</label><button type="button" id="st-datum-btn" onclick="openCalPickerST()" class="a-datum-btn" style="width:100%">' + (_st.datum ? '<span>' + _st.datum.split('-').reverse().join('.') + '</span>' : '<span class="datum-placeholder">Datum w\u00e4hlen \u203a</span>') + '</button></div>';
@@ -13226,6 +13212,38 @@ function stFilterKunden() {
       list.querySelectorAll('.st-kunde-item').forEach(i => i.classList.toggle('selected', parseInt(i.dataset.kid)===kid));
     });
   });
+}
+
+// Reifenhotel-Hinweis im Schnelltermin: erst NACH Fahrzeugwahl — und nur
+// die Saetze DIESES Fahrzeugs (bei mehreren Fahrzeugen sonst unklar, wozu
+// die Raeder gehoeren). Saetze ohne Fahrzeug-Verknuepfung bleiben ueber
+// den Kunden sichtbar, da sie sonst nirgends auftauchen.
+function stRlBoxHTML() {
+  var rlList = _st.fahrzeugId ? loadReifenlager() : [];
+  var rlSaetze = rlList.filter(function(r) {
+    if (r.status !== 'eingelagert') return false;
+    if (r.fahrzeugId) return r.fahrzeugId === _st.fahrzeugId;
+    return r.kundeId === _st.kundeId;
+  });
+  if (!rlSaetze.length) return '';
+  var h = '<div style="background:rgba(232,160,32,0.07);border:1px solid rgba(232,160,32,0.3);border-radius:6px;padding:10px 12px;margin-bottom:4px">';
+  h += '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:6px">';
+  h += 'Reifenhotel — ' + rlSaetze.length + ' Satz' + (rlSaetze.length !== 1 ? 'ätze' : '') + ' eingelagert';
+  h += '</div>';
+  h += rlSaetze.map(rlKarteMini).join('');
+  h += '</div>';
+  return h;
+}
+
+// Fahrzeugwahl im Schnelltermin: Zustand sofort uebernehmen und nur die
+// Reifenhotel-Box aktualisieren (kein Neuzeichnen der Eingabefelder,
+// damit bereits Eingetipptes erhalten bleibt).
+function stFzChanged(v) {
+  _st.fahrzeugId = v ? parseInt(v) : null;
+  var fz = _st.fahrzeugId ? db.fahrzeuge.find(function(f){ return f.id === _st.fahrzeugId; }) : null;
+  _st.fzLabel = fz ? kz(fz.kennzeichen) + ' ' + fz.marke : '';
+  var box = document.getElementById('st-rl-box');
+  if (box) box.innerHTML = stRlBoxHTML();
 }
 
 function stStep(to) {
