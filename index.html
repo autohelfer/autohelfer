@@ -12997,7 +12997,7 @@ function stOpen(prefillDate) {
   // zu ueberschreiben.
   _st = { step: 0, kundeId: null, kundeName: '', fahrzeugId: null, fzLabel: '',
           datum: prefillDate || isoDate(0), ankunft: '', abholung: '', beschreibung: '',
-          wartekunde: false, ersatzwagen: false };
+          wartekunde: false, ersatzwagen: false, ersatzwagenFzId: null };
   const ov = document.getElementById('schnelltermin-overlay');
   if (ov) ov.classList.add('open');
   stRender();
@@ -13072,9 +13072,9 @@ function stRender() {
     // Ankunft und Abholung sind EIN Zeitfenster (von -> bis): nebeneinander
     // mit Pfeil; bei Wartekunde zeigt das Abholfeld 'wartet vor Ort'.
     h += '<div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:16px">';
-    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Ankunft</label><input type="text" inputmode="numeric" placeholder="08:00" maxlength="5" id="st-ankunft" class="form-input" style="height:48px" value="' + _st.ankunft + '" onfocus="var i=this;setTimeout(function(){i.select()},0)" onblur="this.value=stZeitNorm(this.value)" /></div>';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0;position:relative"><label>Ankunft</label><input type="text" inputmode="numeric" maxlength="5" id="st-ankunft" class="form-input" style="height:48px" value="' + _st.ankunft + '" onfocus="stZeitFokus(this)" onblur="stZeitBlur(this)" />' + stZeitListeHTML('st-ankunft') + '</div>';
     h += '<div style="height:48px;display:flex;align-items:center;color:var(--text-subtle);flex-shrink:0;font-size:16px">&#8594;</div>';
-    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Abholung</label><input type="text" inputmode="numeric" placeholder="' + (_st.wartekunde ? 'wartet vor Ort' : '17:00') + '" maxlength="5" id="st-abholung" class="form-input" style="height:48px;opacity:' + (_st.wartekunde ? '0.35' : '1') + '" ' + (_st.wartekunde ? 'disabled' : '') + ' value="' + (_st.wartekunde ? '' : _st.abholung) + '" onfocus="var i=this;setTimeout(function(){i.select()},0)" onblur="this.value=stZeitNorm(this.value)" /></div>';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0;position:relative"><label>Abholung</label><input type="text" inputmode="numeric" placeholder="' + (_st.wartekunde ? 'wartet vor Ort' : '') + '" maxlength="5" id="st-abholung" class="form-input" style="height:48px;opacity:' + (_st.wartekunde ? '0.35' : '1') + '" ' + (_st.wartekunde ? 'disabled' : '') + ' value="' + (_st.wartekunde ? '' : _st.abholung) + '" onfocus="stZeitFokus(this)" onblur="stZeitBlur(this)" />' + stZeitListeHTML('st-abholung') + '</div>';
     h += '</div>';
     h += '<div style="display:flex;gap:8px;margin-top:4px">';
     var wBorder = _st.wartekunde ? 'var(--accent)' : 'var(--border)';
@@ -13086,6 +13086,27 @@ function stRender() {
     h += '<button type="button" id="st-toggle-warte" onclick="stToggle(\'wartekunde\')" style="flex:1;padding:10px;border-radius:8px;border:1px solid ' + wBorder + ';background:' + wBg + ';color:' + wColor + ';font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Wartekunde</button>';
     h += '<button type="button" id="st-toggle-ersatz" onclick="stToggle(\'ersatzwagen\')" style="flex:1;padding:10px;border-radius:8px;border:1px solid ' + eBorder + ';background:' + eBg + ';color:' + eColor + ';font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0"><path d="M5 17H3v-4l2-5h12l2 5v4h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M9 17h6"/></svg> Ersatzwagen</button>';
     h += '</div>';
+
+    // Ersatzwagen aktiv: freien Wagen fuer das Datum direkt reservieren
+    // (die vollstaendige Uebergabe mit km/Fotos passiert spaeter in der
+    // Ersatzwagen-Verwaltung — hier wird nur der Wagen geblockt).
+    if (_st.ersatzwagen) {
+      var ewFrei = ewVerfuegbar(_st.datum || isoDate(0));
+      h += '<div style="background:rgba(232,160,32,0.07);border:1px solid rgba(232,160,32,0.3);border-radius:6px;padding:10px 12px;margin-top:10px">';
+      h += '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:6px">Ersatzwagen' + (_st.datum ? ' — frei am ' + formatDateDE(_st.datum) : '') + '</div>';
+      if (ewFrei.length) {
+        h += '<select id="st-ew-fz" class="form-select" onchange="_st.ersatzwagenFzId=parseInt(this.value)||null">';
+        h += '<option value="">— bei Übergabe zuteilen —</option>';
+        ewFrei.forEach(function(fz){
+          var ewSel = fz.id === _st.ersatzwagenFzId ? ' selected' : '';
+          h += '<option value="' + fz.id + '"' + ewSel + '>' + esc(kz(fz.kennzeichen || '')) + ' ' + esc(((fz.marke || '') + ' ' + (fz.modell || '')).trim()) + '</option>';
+        });
+        h += '</select>';
+      } else {
+        h += '<div style="font-size:12px;color:#e74c3c">Kein Ersatzwagen frei an diesem Datum.</div>';
+      }
+      h += '</div>';
+    }
     h += '<div class="form-group"><label>Beschreibung</label>';
     h += '<input id="st-beschreibung" class="form-input" placeholder="z.B. Ölwechsel, Pneu wechseln..." value="' + esc(_st.beschreibung) + '" /></div>';
     content.innerHTML = h;
@@ -13141,7 +13162,7 @@ function stToggle(field) {
     var isWarte = field === 'wartekunde' ? _st.wartekunde : _st.wartekunde;
     abholEl.disabled = isWarte;
     abholEl.style.opacity = isWarte ? '0.35' : '1';
-    abholEl.placeholder = isWarte ? 'wartet vor Ort' : '17:00';
+    abholEl.placeholder = isWarte ? 'wartet vor Ort' : '';
     if (isWarte) abholEl.value = '';
   }
   // Update buttons
@@ -13156,6 +13177,15 @@ function stToggle(field) {
     eBtn.style.borderColor  = _st.ersatzwagen ? 'var(--accent)' : 'var(--border)';
     eBtn.style.background   = _st.ersatzwagen ? 'rgba(232,160,32,.12)' : 'var(--surface2)';
     eBtn.style.color        = _st.ersatzwagen ? 'var(--accent)' : 'var(--text-muted)';
+  }
+  // Ersatzwagen-Auswahl ein-/ausblenden: Schritt neu zeichnen —
+  // vorher getippte Werte in den Zustand retten, sonst gehen sie verloren.
+  if (field === 'ersatzwagen' && _st.step === 1) {
+    if (!_st.ersatzwagen) _st.ersatzwagenFzId = null;
+    _st.ankunft      = stZeitNorm(document.getElementById('st-ankunft')?.value || '');
+    _st.abholung     = stZeitNorm(document.getElementById('st-abholung')?.value || '');
+    _st.beschreibung = document.getElementById('st-beschreibung')?.value || '';
+    stRender();
   }
 }
 
@@ -13242,6 +13272,44 @@ function stRlBoxHTML() {
   return h;
 }
 
+// Scrollbare Zeitliste im Viertelstunden-Takt (06:00-20:00): erscheint
+// beim Fokussieren unter dem Feld; Tippen mit Auto-Format bleibt
+// parallel moeglich. Auswahl per mousedown (feuert vor blur).
+var ST_ZEIT_SCHRITTE = (function(){
+  var a = [];
+  for (var h = 6; h <= 20; h++) for (var m = 0; m < 60; m += 15) a.push(String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0'));
+  return a;
+})();
+function stZeitListeHTML(feldId) {
+  return '<div id="' + feldId + '-liste" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:190px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:60;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.45)">'
+    + ST_ZEIT_SCHRITTE.map(function(z){
+        return '<div data-z="' + z + '" onmousedown="stZeitPick(\'' + feldId + '\',\'' + z + '\')" style="padding:10px 14px;font-size:15px;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;border-bottom:1px solid var(--border)">' + z + '</div>';
+      }).join('')
+    + '</div>';
+}
+function stZeitFokus(inp) {
+  var i = inp;
+  setTimeout(function(){ i.select(); }, 0);   // Inhalt markieren: Tippen ueberschreibt
+  var box = document.getElementById(inp.id + '-liste');
+  if (!box) return;
+  box.style.display = 'block';
+  var ziel = stZeitNorm(inp.value) || '08:00';
+  for (var k = 0; k < box.children.length; k++) {
+    if (box.children[k].dataset.z >= ziel) { box.scrollTop = Math.max(0, box.children[k].offsetTop - 58); break; }
+  }
+}
+function stZeitBlur(inp) {
+  inp.value = stZeitNorm(inp.value);
+  var box = document.getElementById(inp.id + '-liste');
+  if (box) setTimeout(function(){ box.style.display = 'none'; }, 150);
+}
+function stZeitPick(feldId, z) {
+  var inp = document.getElementById(feldId);
+  if (inp) inp.value = z;
+  var box = document.getElementById(feldId + '-liste');
+  if (box) box.style.display = 'none';
+}
+
 // Zeiteingabe normalisieren: '8' -> '08:00', '830' -> '08:30',
 // '1730' -> '17:30', '8:3'/'8.30' -> '08:30'. Unplausibles (Stunde > 23,
 // Minute > 59) bleibt unveraendert stehen, damit der Nutzer es sieht.
@@ -13300,7 +13368,10 @@ function stStep(to) {
 function stSave() {
   if (!_st.kundeId || !_st.datum) return;
   const now = new Date().toISOString();
-  const id  = (db.auftraege.length ? Math.max(...db.auftraege.map(a=>a.id)) : 0) + 1;
+  // nextId statt Math.max: haelt den zentralen ID-Zaehler synchron —
+  // sonst kollidiert der naechste ueber das Auftrags-Modal erfasste
+  // Auftrag mit diesem hier.
+  const id  = nextId('a');
 
   const auftrag = {
     id,
@@ -13325,6 +13396,19 @@ function stSave() {
 
   db.auftraege.push(auftrag);
   saveDb();
+
+  // Ersatzwagen-Reservation: blockiert den gewaehlten Wagen am Termintag;
+  // die vollstaendige Uebergabe (km, Fotos, Fuehrerschein) erfolgt
+  // spaeter in der Ersatzwagen-Verwaltung.
+  if (_st.ersatzwagen && _st.ersatzwagenFzId && !ewVergeben(_st.ersatzwagenFzId, _st.datum, _st.datum)) {
+    var ewd = loadErsatzwagen();
+    ewd._c = (ewd._c || 0) + 1;
+    ewd.ausgaben.push({ id: ewd._c, fahrzeugId: _st.ersatzwagenFzId, kundeId: _st.kundeId,
+      von: _st.datum, bis: _st.datum, auftragId: id,
+      notiz: 'Reservation aus Schnelltermin', zurueck: false });
+    saveErsatzwagen(ewd);
+  }
+
   stClose();
 
   // Dashboard (Kalender) öffnen und zur richtigen Woche springen
