@@ -13096,9 +13096,9 @@ function stRender() {
     // Ankunfts- und Abholdatum als Paar (Mehrtages-Auftraege). Vorgabe:
     // Abholung am gleichen Tag \u2014 der Normalfall kostet keinen Extra-Tipp.
     h += '<div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:16px">';
-    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Datum Ankunft *</label><button type="button" id="st-datum-btn" onclick="openCalPickerST(\'datum\')" class="a-datum-btn" style="width:100%">' + (_st.datum ? '<span>' + _st.datum.split('-').reverse().join('.') + '</span>' : '<span class="datum-placeholder">Datum w\u00e4hlen \u203a</span>') + '</button></div>';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Datum Ankunft *</label><button type="button" id="st-datum-btn" onclick="openCalPickerST(\'datum\')" class="a-datum-btn" style="width:100%">' + (_st.datum ? '<span>' + stDatumKurz(_st.datum) + '</span>' : '<span class="datum-placeholder">Datum w\u00e4hlen \u203a</span>') + '</button></div>';
     h += '<div style="height:48px;display:flex;align-items:center;color:var(--text-subtle);flex-shrink:0;font-size:16px">&#8594;</div>';
-    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Datum Abholung</label><button type="button" id="st-abholdatum-btn" onclick="openCalPickerST(\'abholDatum\')" class="a-datum-btn" style="width:100%">' + (_st.abholDatum && _st.abholDatum !== _st.datum ? '<span>' + _st.abholDatum.split('-').reverse().join('.') + '</span>' : '<span class="datum-placeholder">gleicher Tag</span>') + '</button></div>';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Datum Abholung</label><button type="button" id="st-abholdatum-btn" onclick="openCalPickerST(\'abholDatum\')" class="a-datum-btn" style="width:100%">' + (_st.abholDatum && _st.abholDatum !== _st.datum ? '<span>' + stDatumKurz(_st.abholDatum) + '</span>' : '<span class="datum-placeholder">gleicher Tag</span>') + '</button></div>';
     h += '</div>';
     // Ankunft und Abholung sind EIN Zeitfenster (von -> bis): nebeneinander
     // mit Pfeil; bei Wartekunde zeigt das Abholfeld 'wartet vor Ort'.
@@ -13280,6 +13280,13 @@ function stRlBoxHTML() {
   h += rlSaetze.map(rlKarteMini).join('');
   h += '</div>';
   return h;
+}
+
+// Datum kurz mit Wochentag: '2026-07-09' -> 'DO 09.07.2026'
+function stDatumKurz(iso) {
+  if (!iso) return '';
+  var wt = ['SO','MO','DI','MI','DO','FR','SA'][new Date(iso + 'T12:00:00').getDay()];
+  return wt + ' ' + iso.split('-').reverse().join('.');
 }
 
 // Scrollbare Zeitliste im Viertelstunden-Takt (06:00-20:00): erscheint
