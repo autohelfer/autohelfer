@@ -5730,7 +5730,6 @@
     <div class="st-dots">
       <div class="st-dot active" id="st-dot-0"></div>
       <div class="st-dot" id="st-dot-1"></div>
-      <div class="st-dot" id="st-dot-2"></div>
     </div>
     <div class="st-step-content" id="st-content"></div>
     <div class="st-btn-row" id="st-btn-row"></div>
@@ -13034,13 +13033,13 @@ function stClose() {
 }
 
 function stSetDots(step) {
-  [0,1,2].forEach(i => {
+  [0,1].forEach(i => {
     const dot = document.getElementById('st-dot-' + i);
     if (!dot) return;
     dot.className = 'st-dot' + (i < step ? ' done' : i === step ? ' active' : '');
   });
   const lbl = document.getElementById('st-step-label');
-  if (lbl) lbl.textContent = 'Schritt ' + (step+1) + ' von 3';
+  if (lbl) lbl.textContent = 'Schritt ' + (step+1) + ' von 2';
 }
 
 function stRender() {
@@ -13148,37 +13147,7 @@ function stRender() {
 
     btnRow.innerHTML =
       '<button class="st-btn-back" onclick="stStep(0)">← Zurück</button>' +
-      '<button class="st-btn-next" onclick="stStep(2)">Weiter →</button>';
-
-  } else if (_st.step === 2) {
-    // ── Schritt 3: Bestätigung ──
-    const datumDE = formatDateDE(_st.datum);
-    let h = '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px">';
-    h += '<div style="display:flex;flex-direction:column;gap:10px">';
-
-    const rows = [
-      ['Kunde', _st.kundeName],
-      _st.fzLabel ? ['Fahrzeug', _st.fzLabel] : null,
-      ['Datum', datumDE],
-      ['Ankunft', _st.ankunft + ' Uhr'],
-      _st.abholung ? ['Abholung', _st.abholung + ' Uhr'] : null,
-      _st.wartekunde ? ['', 'Wartekunde'] : null,
-      _st.ersatzwagen ? ['', 'Ersatzwagen'] : null,
-      _st.beschreibung ? ['Arbeit', _st.beschreibung] : null,
-    ].filter(Boolean);
-
-    rows.forEach(([k, v]) => {
-      h += '<div style="display:flex;gap:10px;font-size:13px">';
-      h += '<span style="color:var(--text-muted);width:90px;flex-shrink:0">' + k + '</span>';
-      h += '<span style="font-weight:600">' + esc(v) + '</span></div>';
-    });
-    h += '</div></div>';
-    h += '<div style="font-size:11px;color:var(--text-muted);margin-top:12px;text-align:center">Auftrag wird sofort erstellt und im Kalender sichtbar</div>';
-    content.innerHTML = h;
-
-    btnRow.innerHTML =
-      '<button class="st-btn-back" onclick="stStep(1)">← Zurück</button>' +
-      '<button class="st-btn-save" onclick="stSave()">✓ Termin speichern</button>';
+      '<button class="st-btn-save" onclick="stStep(2)">✓ Termin speichern</button>';
   }
 }
 
@@ -13387,8 +13356,11 @@ function stStep(to) {
     _st.ankunft     = stZeitNorm(document.getElementById('st-ankunft')?.value || _st.ankunft || '');
     _st.abholung    = stZeitNorm(document.getElementById('st-abholung')?.value || '');
     _st.beschreibung = document.getElementById('st-beschreibung')?.value || '';
-    if (to === 2 && !_st.datum) {
-      showToast('Bitte Datum eingeben.','warning');
+    // Keine Bestaetigungsseite: nach der Validierung direkt speichern —
+    // sie zeigte nur das eben Eingetippte nochmals (ein Tipp gespart).
+    if (to === 2) {
+      if (!_st.datum) { showToast('Bitte Datum eingeben.','warning'); return; }
+      stSave();
       return;
     }
   }
