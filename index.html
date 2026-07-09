@@ -13065,11 +13065,14 @@ function stRender() {
     // uebrigen Eingabefelder neu zu zeichnen.
     h += '<div id="st-rl-box">' + stRlBoxHTML() + '</div>';
 
-    h += '<div class="form-row">';
     h += '<div class="form-group"><label>Datum *</label><button type="button" id="st-datum-btn" onclick="openCalPickerST()" class="a-datum-btn" style="width:100%">' + (_st.datum ? '<span>' + _st.datum.split('-').reverse().join('.') + '</span>' : '<span class="datum-placeholder">Datum w\u00e4hlen \u203a</span>') + '</button></div>';
-    h += '<div class="form-group"><label>Ankunft</label><input type="text" inputmode="numeric" placeholder="08:00" maxlength="5" id="st-ankunft" class="form-input" style="height:48px" value="' + _st.ankunft + '" /></div>';
+    // Ankunft und Abholung sind EIN Zeitfenster (von -> bis): nebeneinander
+    // mit Pfeil; bei Wartekunde zeigt das Abholfeld 'wartet vor Ort'.
+    h += '<div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:16px">';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Ankunft</label><input type="text" inputmode="numeric" placeholder="08:00" maxlength="5" id="st-ankunft" class="form-input" style="height:48px" value="' + _st.ankunft + '" /></div>';
+    h += '<div style="height:48px;display:flex;align-items:center;color:var(--text-subtle);flex-shrink:0;font-size:16px">&#8594;</div>';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Abholung</label><input type="text" inputmode="numeric" placeholder="' + (_st.wartekunde ? 'wartet vor Ort' : '17:00') + '" maxlength="5" id="st-abholung" class="form-input" style="height:48px;opacity:' + (_st.wartekunde ? '0.35' : '1') + '" ' + (_st.wartekunde ? 'disabled' : '') + ' value="' + (_st.wartekunde ? '' : _st.abholung) + '" /></div>';
     h += '</div>';
-    h += '<div class="form-group"><label>Abholung</label><input type="text" inputmode="numeric" placeholder="17:00" maxlength="5" id="st-abholung" class="form-input" style="height:48px;opacity:' + (_st.wartekunde ? '0.35' : '1') + '" ' + (_st.wartekunde ? 'disabled' : '') + ' value="' + (_st.wartekunde ? '' : _st.abholung) + '" /></div>';
     h += '<div style="display:flex;gap:8px;margin-top:4px">';
     var wBorder = _st.wartekunde ? 'var(--accent)' : 'var(--border)';
     var wBg     = _st.wartekunde ? 'rgba(232,160,32,.12)' : 'var(--surface2)';
@@ -13135,6 +13138,7 @@ function stToggle(field) {
     var isWarte = field === 'wartekunde' ? _st.wartekunde : _st.wartekunde;
     abholEl.disabled = isWarte;
     abholEl.style.opacity = isWarte ? '0.35' : '1';
+    abholEl.placeholder = isWarte ? 'wartet vor Ort' : '17:00';
     if (isWarte) abholEl.value = '';
   }
   // Update buttons
