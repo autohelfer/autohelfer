@@ -13069,9 +13069,9 @@ function stRender() {
     // Ankunft und Abholung sind EIN Zeitfenster (von -> bis): nebeneinander
     // mit Pfeil; bei Wartekunde zeigt das Abholfeld 'wartet vor Ort'.
     h += '<div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:16px">';
-    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Ankunft</label><input type="text" inputmode="numeric" placeholder="08:00" maxlength="5" id="st-ankunft" class="form-input" style="height:48px" value="' + _st.ankunft + '" /></div>';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Ankunft</label><input type="text" inputmode="numeric" placeholder="08:00" maxlength="5" id="st-ankunft" class="form-input" style="height:48px" value="' + _st.ankunft + '" onblur="this.value=stZeitNorm(this.value)" /></div>';
     h += '<div style="height:48px;display:flex;align-items:center;color:var(--text-subtle);flex-shrink:0;font-size:16px">&#8594;</div>';
-    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Abholung</label><input type="text" inputmode="numeric" placeholder="' + (_st.wartekunde ? 'wartet vor Ort' : '17:00') + '" maxlength="5" id="st-abholung" class="form-input" style="height:48px;opacity:' + (_st.wartekunde ? '0.35' : '1') + '" ' + (_st.wartekunde ? 'disabled' : '') + ' value="' + (_st.wartekunde ? '' : _st.abholung) + '" /></div>';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Abholung</label><input type="text" inputmode="numeric" placeholder="' + (_st.wartekunde ? 'wartet vor Ort' : '17:00') + '" maxlength="5" id="st-abholung" class="form-input" style="height:48px;opacity:' + (_st.wartekunde ? '0.35' : '1') + '" ' + (_st.wartekunde ? 'disabled' : '') + ' value="' + (_st.wartekunde ? '' : _st.abholung) + '" onblur="this.value=stZeitNorm(this.value)" /></div>';
     h += '</div>';
     h += '<div style="display:flex;gap:8px;margin-top:4px">';
     var wBorder = _st.wartekunde ? 'var(--accent)' : 'var(--border)';
@@ -13239,6 +13239,27 @@ function stRlBoxHTML() {
   return h;
 }
 
+// Zeiteingabe normalisieren: '8' -> '08:00', '830' -> '08:30',
+// '1730' -> '17:30', '8:3'/'8.30' -> '08:30'. Unplausibles (Stunde > 23,
+// Minute > 59) bleibt unveraendert stehen, damit der Nutzer es sieht.
+function stZeitNorm(v) {
+  v = String(v || '').trim();
+  if (!v) return '';
+  var std, min;
+  if (/^\d{3,4}$/.test(v)) {
+    // reine Ziffern: '830' -> 8:30, '1730' -> 17:30
+    std = parseInt(v.slice(0, v.length - 2), 10);
+    min = parseInt(v.slice(-2), 10);
+  } else {
+    var m = v.match(/^(\d{1,2})(?:[:.\-h](\d{1,2})?)?$/);
+    if (!m) return v;
+    std = parseInt(m[1], 10);
+    min = m[2] ? parseInt(m[2].length === 1 ? m[2] + '0' : m[2], 10) : 0;
+  }
+  if (std > 23 || min > 59) return v;
+  return String(std).padStart(2, '0') + ':' + String(min).padStart(2, '0');
+}
+
 // Fahrzeugwahl im Schnelltermin: Zustand sofort uebernehmen und nur die
 // Reifenhotel-Box aktualisieren (kein Neuzeichnen der Eingabefelder,
 // damit bereits Eingetipptes erhalten bleibt).
@@ -13260,9 +13281,9 @@ function stStep(to) {
       _st.fzLabel = fz ? kz(fz.kennzeichen) + ' ' + fz.marke : '';
     }
     // Datum kommt vom Kalender-Picker (_st.datum bereits gesetzt)
-    // Ankunft/Abholung aus Textfeldern lesen
-    _st.ankunft     = document.getElementById('st-ankunft')?.value || _st.ankunft || '';
-    _st.abholung    = document.getElementById('st-abholung')?.value || '';
+    // Ankunft/Abholung aus Textfeldern lesen (normalisiert: '8' -> '08:00')
+    _st.ankunft     = stZeitNorm(document.getElementById('st-ankunft')?.value || _st.ankunft || '');
+    _st.abholung    = stZeitNorm(document.getElementById('st-abholung')?.value || '');
     _st.beschreibung = document.getElementById('st-beschreibung')?.value || '';
     if (to === 2 && !_st.datum) {
       showToast('Bitte Datum eingeben.','warning');
