@@ -13464,6 +13464,12 @@ function stStep(to) {
     // sie zeigte nur das eben Eingetippte nochmals (ein Tipp gespart).
     if (to === 2) {
       if (!_st.datum) { showToast('Bitte Datum eingeben.','warning'); return; }
+      if (!_st.beschreibung) {
+        showToast('Bitte Beschreibung erfassen — was soll gemacht werden?','warning');
+        var b1 = document.querySelector('#st-beschr-wrap .st-beschr-zeile');
+        if (b1) b1.focus();
+        return;
+      }
       stSave();
       return;
     }
