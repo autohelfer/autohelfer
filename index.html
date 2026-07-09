@@ -13020,7 +13020,8 @@ function stOpen(prefillDate) {
   // vorbefuellte Zeiten wirken wie schon erfasst und sind muehsam
   // zu ueberschreiben.
   _st = { step: 0, kundeId: null, kundeName: '', fahrzeugId: null, fzLabel: '',
-          datum: prefillDate || isoDate(0), ankunft: '', abholung: '', beschreibung: '',
+          datum: prefillDate || isoDate(0), abholDatum: prefillDate || isoDate(0),
+          ankunft: '', abholung: '', beschreibung: '',
           wartekunde: false, ersatzwagen: false, ersatzwagenFzId: null };
   const ov = document.getElementById('schnelltermin-overlay');
   if (ov) ov.classList.add('open');
@@ -13092,7 +13093,13 @@ function stRender() {
     // uebrigen Eingabefelder neu zu zeichnen.
     h += '<div id="st-rl-box">' + stRlBoxHTML() + '</div>';
 
-    h += '<div class="form-group"><label>Datum *</label><button type="button" id="st-datum-btn" onclick="openCalPickerST()" class="a-datum-btn" style="width:100%">' + (_st.datum ? '<span>' + _st.datum.split('-').reverse().join('.') + '</span>' : '<span class="datum-placeholder">Datum w\u00e4hlen \u203a</span>') + '</button></div>';
+    // Ankunfts- und Abholdatum als Paar (Mehrtages-Auftraege). Vorgabe:
+    // Abholung am gleichen Tag \u2014 der Normalfall kostet keinen Extra-Tipp.
+    h += '<div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:16px">';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Datum Ankunft *</label><button type="button" id="st-datum-btn" onclick="openCalPickerST(\'datum\')" class="a-datum-btn" style="width:100%">' + (_st.datum ? '<span>' + _st.datum.split('-').reverse().join('.') + '</span>' : '<span class="datum-placeholder">Datum w\u00e4hlen \u203a</span>') + '</button></div>';
+    h += '<div style="height:48px;display:flex;align-items:center;color:var(--text-subtle);flex-shrink:0;font-size:16px">&#8594;</div>';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Datum Abholung</label><button type="button" id="st-abholdatum-btn" onclick="openCalPickerST(\'abholDatum\')" class="a-datum-btn" style="width:100%">' + (_st.abholDatum && _st.abholDatum !== _st.datum ? '<span>' + _st.abholDatum.split('-').reverse().join('.') + '</span>' : '<span class="datum-placeholder">gleicher Tag</span>') + '</button></div>';
+    h += '</div>';
     // Ankunft und Abholung sind EIN Zeitfenster (von -> bis): nebeneinander
     // mit Pfeil; bei Wartekunde zeigt das Abholfeld 'wartet vor Ort'.
     h += '<div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:16px">';
@@ -13115,12 +13122,17 @@ function stRender() {
     // (die vollstaendige Uebergabe mit km/Fotos passiert spaeter in der
     // Ersatzwagen-Verwaltung — hier wird nur der Wagen geblockt).
     if (_st.ersatzwagen) {
-      var ewFrei = ewVerfuegbar(_st.datum || isoDate(0));
+      // frei ueber die GANZE Spanne Ankunft-Abholung (Mehrtages-Termine)
+      var ewVon = _st.datum || isoDate(0), ewBis = _st.abholDatum || ewVon;
+      var ewFrei = loadErsatzwagen().fahrzeuge.filter(function(fz){ return !ewVergeben(fz.id, ewVon, ewBis); });
+      var ewZeitraum = ewBis !== ewVon
+        ? ' — frei ' + formatDateDE(ewVon) + ' bis ' + formatDateDE(ewBis)
+        : (_st.datum ? ' — frei am ' + formatDateDE(ewVon) : '');
       h += '<div style="background:rgba(232,160,32,0.07);border:1px solid rgba(232,160,32,0.3);border-radius:6px;padding:10px 12px;margin-top:10px">';
-      h += '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:6px">Ersatzwagen' + (_st.datum ? ' — frei am ' + formatDateDE(_st.datum) : '') + '</div>';
+      h += '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:6px">Ersatzwagen' + ewZeitraum + '</div>';
       if (ewFrei.length) {
         h += '<select id="st-ew-fz" class="form-select" onchange="_st.ersatzwagenFzId=parseInt(this.value)||null">';
-        h += '<option value="">— bei Übergabe zuteilen —</option>';
+        h += '<option value="">— Wagen später festlegen —</option>';
         ewFrei.forEach(function(fz){
           var ewSel = fz.id === _st.ersatzwagenFzId ? ' selected' : '';
           // Ersatzwagen tragen 'bezeichnung' (Marke + Typ) und 'getriebe'
@@ -13381,6 +13393,7 @@ function stSave() {
     kundeId:      _st.kundeId,
     fahrzeugId:   _st.fahrzeugId || null,
     datum:        _st.datum,
+    abholDatum:   _st.abholDatum || _st.datum,
     ankunft:      _st.ankunft,
     abholung:     _st.abholung,
       wartekunde:   _st.wartekunde || false,
@@ -13403,11 +13416,12 @@ function stSave() {
   // Ersatzwagen-Reservation: blockiert den gewaehlten Wagen am Termintag;
   // die vollstaendige Uebergabe (km, Fotos, Fuehrerschein) erfolgt
   // spaeter in der Ersatzwagen-Verwaltung.
-  if (_st.ersatzwagen && _st.ersatzwagenFzId && !ewVergeben(_st.ersatzwagenFzId, _st.datum, _st.datum)) {
+  var ewResBis = _st.abholDatum || _st.datum;
+  if (_st.ersatzwagen && _st.ersatzwagenFzId && !ewVergeben(_st.ersatzwagenFzId, _st.datum, ewResBis)) {
     var ewd = loadErsatzwagen();
     ewd._c = (ewd._c || 0) + 1;
     ewd.ausgaben.push({ id: ewd._c, fahrzeugId: _st.ersatzwagenFzId, kundeId: _st.kundeId,
-      von: _st.datum, bis: _st.datum, auftragId: id,
+      von: _st.datum, bis: ewResBis, auftragId: id,
       notiz: 'Reservation aus Schnelltermin', zurueck: false });
     saveErsatzwagen(ewd);
   }
@@ -14540,6 +14554,7 @@ function renderDashboardHeute(){
       <div style="padding:8px 8px 8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;line-height:1.6">
         ${a.ankunft?`<span${isWarte?' style="color:#e74c3c;font-weight:700"':''}>${esc(a.ankunft)}</span>`:''}
         ${a.abholung?`<span style="color:var(--text);font-weight:700" title="muss bereit sein">${esc(a.abholung)}</span>`:''}
+        ${a.abholDatum && a.abholDatum > a.datum ? `<span style="font-size:9px;color:var(--accent);font-weight:700" title="Abholung an anderem Tag">bis ${a.abholDatum.split('-').reverse().slice(0,2).join('.')}.</span>` : ''}
       </div>
       <div style="padding:8px 10px;min-width:0">
         <div style="font-weight:700;font-size:13px;margin-bottom:1px">${esc(kundeName)}</div>
@@ -20836,8 +20851,10 @@ function highlightPickedDate(isoDate) {
 }
 
 
-function openCalPickerST() {
-  // Schnelltermin schliessen und Kalender öffnen zum Datumwählen
+function openCalPickerST(ziel) {
+  // Schnelltermin schliessen und Kalender öffnen zum Datumwählen.
+  // ziel: 'datum' (Ankunft, Standard) oder 'abholDatum' (Abholung).
+  window._calPickZiel = (ziel === 'abholDatum') ? 'abholDatum' : 'datum';
   var ov = el('schnelltermin-overlay');
   if (ov) ov.classList.remove('open');
 
@@ -20849,12 +20866,15 @@ function openCalPickerST() {
   var banner    = el('cal-pick-banner');
   var bannerSub = el('cal-pick-banner-sub');
   if (banner) banner.classList.add('active');
-  if (bannerSub) bannerSub.textContent = 'Tippe auf einen Tag im Kalender';
+  if (bannerSub) bannerSub.textContent = window._calPickZiel === 'abholDatum'
+    ? 'Tippe auf den Abhol-Tag im Kalender'
+    : 'Tippe auf einen Tag im Kalender';
 
   // Aktuelles Datum hervorheben falls gesetzt
-  if (_st.datum) {
-    highlightPickedDate(_st.datum);
-    calJumpToDate(_st.datum);
+  var aktuell = _st[window._calPickZiel] || _st.datum;
+  if (aktuell) {
+    highlightPickedDate(aktuell);
+    calJumpToDate(aktuell);
   }
 }
 
@@ -20868,7 +20888,16 @@ function calPickSelectDate(isoDate) {
 
   if (_calPickMode === 'schnelltermin') {
     // Schnelltermin: Datum speichern + wieder öffnen
-    _st.datum = isoDate;
+    var ziel = window._calPickZiel || 'datum';
+    _st[ziel] = isoDate;
+    // Konsistenz: Abholung nie vor Ankunft (auto-korrigieren statt Fehler)
+    if (ziel === 'datum' && (!_st.abholDatum || _st.abholDatum < _st.datum)) {
+      _st.abholDatum = _st.datum;
+    }
+    if (ziel === 'abholDatum' && _st.abholDatum < _st.datum) {
+      _st.abholDatum = _st.datum;
+      showToast('Abholung kann nicht vor der Ankunft liegen — auf gleichen Tag gesetzt.', 'warning');
+    }
     var stOv = el('schnelltermin-overlay');
     if (stOv) stOv.classList.add('open');
     stRender();
