@@ -12992,8 +12992,11 @@ let _st = {
 };
 
 function stOpen(prefillDate) {
+  // Zeiten bewusst LEER starten (Platzhalter zeigen das Format) —
+  // vorbefuellte Zeiten wirken wie schon erfasst und sind muehsam
+  // zu ueberschreiben.
   _st = { step: 0, kundeId: null, kundeName: '', fahrzeugId: null, fzLabel: '',
-          datum: prefillDate || isoDate(0), ankunft: '08:00', abholung: '17:00', beschreibung: '',
+          datum: prefillDate || isoDate(0), ankunft: '', abholung: '', beschreibung: '',
           wartekunde: false, ersatzwagen: false };
   const ov = document.getElementById('schnelltermin-overlay');
   if (ov) ov.classList.add('open');
@@ -13069,9 +13072,9 @@ function stRender() {
     // Ankunft und Abholung sind EIN Zeitfenster (von -> bis): nebeneinander
     // mit Pfeil; bei Wartekunde zeigt das Abholfeld 'wartet vor Ort'.
     h += '<div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:16px">';
-    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Ankunft</label><input type="text" inputmode="numeric" placeholder="08:00" maxlength="5" id="st-ankunft" class="form-input" style="height:48px" value="' + _st.ankunft + '" onblur="this.value=stZeitNorm(this.value)" /></div>';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Ankunft</label><input type="text" inputmode="numeric" placeholder="08:00" maxlength="5" id="st-ankunft" class="form-input" style="height:48px" value="' + _st.ankunft + '" onfocus="var i=this;setTimeout(function(){i.select()},0)" onblur="this.value=stZeitNorm(this.value)" /></div>';
     h += '<div style="height:48px;display:flex;align-items:center;color:var(--text-subtle);flex-shrink:0;font-size:16px">&#8594;</div>';
-    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Abholung</label><input type="text" inputmode="numeric" placeholder="' + (_st.wartekunde ? 'wartet vor Ort' : '17:00') + '" maxlength="5" id="st-abholung" class="form-input" style="height:48px;opacity:' + (_st.wartekunde ? '0.35' : '1') + '" ' + (_st.wartekunde ? 'disabled' : '') + ' value="' + (_st.wartekunde ? '' : _st.abholung) + '" onblur="this.value=stZeitNorm(this.value)" /></div>';
+    h += '<div class="form-group" style="flex:1;margin-bottom:0"><label>Abholung</label><input type="text" inputmode="numeric" placeholder="' + (_st.wartekunde ? 'wartet vor Ort' : '17:00') + '" maxlength="5" id="st-abholung" class="form-input" style="height:48px;opacity:' + (_st.wartekunde ? '0.35' : '1') + '" ' + (_st.wartekunde ? 'disabled' : '') + ' value="' + (_st.wartekunde ? '' : _st.abholung) + '" onfocus="var i=this;setTimeout(function(){i.select()},0)" onblur="this.value=stZeitNorm(this.value)" /></div>';
     h += '</div>';
     h += '<div style="display:flex;gap:8px;margin-top:4px">';
     var wBorder = _st.wartekunde ? 'var(--accent)' : 'var(--border)';
