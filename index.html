@@ -367,6 +367,31 @@
       font-family: inherit;
       color: #fff;
     }
+    /* Zeitliste (Schnelltermin): iOS-Picker-Optik — Glas-Panel,
+       44px-Zeilen, unsichtbare Scrollbar, sanftes Einrasten */
+    .st-zeit-liste {
+      display: none;
+      position: absolute; top: 100%; left: 0; right: 0;
+      max-height: 198px; overflow-y: auto; z-index: 60;
+      margin-top: 6px; padding: 4px;
+      background: rgba(38,38,40,.92);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      backdrop-filter: blur(20px) saturate(1.4);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.55);
+      scrollbar-width: none; -ms-overflow-style: none;
+      scroll-snap-type: y proximity;
+    }
+    .st-zeit-liste::-webkit-scrollbar { display: none; }
+    .st-zeit-item {
+      height: 44px; display: flex; align-items: center; justify-content: center;
+      font-size: 17px; font-weight: 500; color: var(--text);
+      font-family: 'IBM Plex Mono', monospace; cursor: pointer;
+      border-radius: 10px; scroll-snap-align: center;
+    }
+    .st-zeit-item:hover, .st-zeit-item:active { background: rgba(255,255,255,.08); }
+    .st-zeit-item.aktiv { color: var(--accent); font-weight: 700; background: rgba(232,160,32,.12); }
     /* Kundenauswahl */
     .st-kunde-list {
       max-height: 200px;
@@ -13099,7 +13124,11 @@ function stRender() {
         h += '<option value="">— bei Übergabe zuteilen —</option>';
         ewFrei.forEach(function(fz){
           var ewSel = fz.id === _st.ersatzwagenFzId ? ' selected' : '';
-          h += '<option value="' + fz.id + '"' + ewSel + '>' + esc(kz(fz.kennzeichen || '')) + ' ' + esc(((fz.marke || '') + ' ' + (fz.modell || '')).trim()) + '</option>';
+          // Ersatzwagen tragen 'bezeichnung' (Marke + Typ) und 'getriebe'
+          var ewTeile = [fz.bezeichnung || ((fz.marke || '') + ' ' + (fz.modell || '')).trim() || 'Ersatzwagen'];
+          if (fz.kennzeichen) ewTeile.push(kz(fz.kennzeichen));
+          if (fz.getriebe) ewTeile.push(fz.getriebe.charAt(0).toUpperCase() + fz.getriebe.slice(1).toLowerCase());
+          h += '<option value="' + fz.id + '"' + ewSel + '>' + esc(ewTeile.join(' · ')) + '</option>';
         });
         h += '</select>';
       } else {
@@ -13281,9 +13310,9 @@ var ST_ZEIT_SCHRITTE = (function(){
   return a;
 })();
 function stZeitListeHTML(feldId) {
-  return '<div id="' + feldId + '-liste" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:190px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:60;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.45)">'
+  return '<div id="' + feldId + '-liste" class="st-zeit-liste">'
     + ST_ZEIT_SCHRITTE.map(function(z){
-        return '<div data-z="' + z + '" onmousedown="stZeitPick(\'' + feldId + '\',\'' + z + '\')" style="padding:10px 14px;font-size:15px;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;border-bottom:1px solid var(--border)">' + z + '</div>';
+        return '<div class="st-zeit-item" data-z="' + z + '" onmousedown="stZeitPick(\'' + feldId + '\',\'' + z + '\')">' + z + '</div>';
       }).join('')
     + '</div>';
 }
@@ -13295,7 +13324,9 @@ function stZeitFokus(inp) {
   box.style.display = 'block';
   var ziel = stZeitNorm(inp.value) || '08:00';
   for (var k = 0; k < box.children.length; k++) {
-    if (box.children[k].dataset.z >= ziel) { box.scrollTop = Math.max(0, box.children[k].offsetTop - 58); break; }
+    var passt = box.children[k].dataset.z >= ziel;
+    box.children[k].classList.toggle('aktiv', box.children[k].dataset.z === ziel);
+    if (passt && box.scrollTop === 0) box.scrollTop = Math.max(0, box.children[k].offsetTop - 77);
   }
 }
 function stZeitBlur(inp) {
