@@ -4916,6 +4916,76 @@
     #aa-mic { background: var(--surface2); border: 1px solid var(--border); }
     #aa-mic.listening { background: rgba(231,76,60,0.15); border-color: #e74c3c; }
     #aa-send { background: var(--accent); color:#fff; }
+    /* Werkstatt jetzt: nur das Dashboard und die neuen Arbeitsaktionen. */
+    #page-dashboard .wl-wrap { --wl-muted:#a2a2a2;margin:0 0 24px; }
+    #page-dashboard .wl-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px; }
+    #page-dashboard .wl-title { margin:0;font-size:24px;font-weight:600;line-height:1.2; }
+    #page-dashboard .wl-sub { color:var(--text-muted);font-size:12px;margin-top:5px; }
+    #page-dashboard .wl-filters { display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px; }
+    #page-dashboard .wl-filter { min-height:44px;padding:8px 12px;border:0;border-radius:4px;background:transparent;color:var(--text-muted);font-size:12px; }
+    #page-dashboard .wl-filter[aria-pressed="true"] { background:var(--surface3);color:var(--text); }
+    #page-dashboard .wl-summary { display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--text-muted);margin-bottom:14px; }
+    #page-dashboard .wl-summary strong { color:var(--text);font-weight:600; }
+    #page-dashboard .wl-source { margin-left:auto;font-size:11px; }
+    #page-dashboard .wl-grid { display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start; }
+    #page-dashboard .wl-mechanic { min-width:0;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:8px; }
+    #page-dashboard .wl-person { display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border); }
+    #page-dashboard .wl-avatar { width:38px;height:38px;display:grid;place-items:center;flex-shrink:0;border:1px solid var(--border-light);border-radius:50%;background:var(--surface2);font-size:12px;font-weight:600; }
+    #page-dashboard .wl-name { font-size:16px;font-weight:600;overflow-wrap:anywhere; }
+    #page-dashboard .wl-state { color:var(--text-muted);font-size:12px;margin-top:3px; }
+    #page-dashboard .wl-running { color:var(--accent); }
+    #page-dashboard .wl-jobs { padding:14px; }
+    #page-dashboard .wl-job { background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px; }
+    #page-dashboard .wl-job:last-child { margin-bottom:0; }
+    #page-dashboard .wl-job-running { border-left:3px solid var(--accent); }
+    #page-dashboard .wl-job-paused { border-left:3px solid #888; }
+    #page-dashboard .wl-job-top { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;color:var(--text-muted);font-size:11px; }
+    #page-dashboard .wl-badge { border:1px solid var(--border-light);border-radius:4px;padding:2px 6px; }
+    #page-dashboard .wl-job-running .wl-badge { border-color:rgba(232,160,32,.4);color:var(--accent); }
+    #page-dashboard .wl-job-paused .wl-badge { border-style:dashed;color:var(--text); }
+    #page-dashboard .wl-vehicle { font-size:16px;font-weight:600;margin-top:10px;overflow-wrap:anywhere; }
+    #page-dashboard .wl-plate { font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-muted);margin-top:2px;overflow-wrap:anywhere; }
+    #page-dashboard .wl-work { margin-top:8px;font-size:13px;color:var(--text-muted);overflow-wrap:anywhere; }
+    #page-dashboard .wl-clock-label { font-size:11px;color:var(--text-muted);margin-top:15px; }
+    #page-dashboard .wl-clock { color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:30px;font-variant-numeric:tabular-nums;line-height:1.4; }
+    #page-dashboard .wl-budget { display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text-muted);margin-top:12px; }
+    #page-dashboard .wl-budget strong { color:var(--text);font-weight:500;font-variant-numeric:tabular-nums; }
+    #page-dashboard .wl-bar { height:3px;background:var(--surface3);margin-top:8px;overflow:hidden;border-radius:2px; }
+    #page-dashboard .wl-bar-fill { height:100%;background:var(--accent); }
+    #page-dashboard .wl-pause { border-top:1px solid var(--border-light);margin-top:12px;padding-top:10px;color:var(--text-muted);font-size:12px; }
+    #page-dashboard .wl-reason { margin-top:4px;color:var(--text); }
+    #page-dashboard .wl-bottom { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:12px; }
+    #page-dashboard .wl-deadline { color:var(--text-muted);font-size:12px; }
+    #page-dashboard .wl-deadline strong { color:var(--text);font-weight:600; }
+    #page-dashboard .wl-details { min-height:44px;padding:8px 12px;border:1px solid var(--border-light);border-radius:4px;background:transparent;color:var(--text);font-size:12px;margin-left:auto; }
+    #page-dashboard .wl-empty { padding:18px;color:var(--text-muted);font-size:13px;border:1px dashed var(--border-light);border-radius:6px; }
+    #page-dashboard .wl-note { font-size:11px;color:var(--text-muted);margin-top:10px; }
+    #page-dashboard .wl-sub, #page-dashboard .wl-filter, #page-dashboard .wl-summary,
+    #page-dashboard .wl-state, #page-dashboard .wl-job-top, #page-dashboard .wl-plate,
+    #page-dashboard .wl-work, #page-dashboard .wl-clock-label, #page-dashboard .wl-budget,
+    #page-dashboard .wl-pause, #page-dashboard .wl-deadline, #page-dashboard .wl-empty,
+    #page-dashboard .wl-note { color:var(--wl-muted); }
+    #page-dashboard .wl-state.wl-running { color:var(--accent); }
+    #page-dashboard #ah-sync-status { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 12px;margin:0 0 16px;border:1px solid var(--border-light);border-radius:6px;color:var(--text-muted);font-size:12px; }
+    #page-dashboard #ah-sync-status[hidden] { display:none; }
+    #page-dashboard #ah-sync-status button { min-height:44px;background:var(--surface2);color:var(--text);border:1px solid var(--border-light);border-radius:5px;padding:8px 12px;font:inherit; }
+    #ah-sync-setup { position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.85); }
+    #ah-sync-setup .ah-sync-dialog { width:520px;max-width:100%;max-height:90vh;overflow:auto;padding:24px;background:var(--surface);border:1px solid var(--border-light);border-radius:10px; }
+    #ah-sync-setup h2 { font-size:22px;margin:0 0 14px; }
+    #ah-sync-setup p { color:var(--text-muted);font-size:14px;margin:12px 0; }
+    #ah-sync-setup button { display:block;width:100%;min-height:44px;padding:10px 14px;margin-top:10px;border:1px solid var(--border-light);border-radius:5px;background:var(--surface2);color:var(--text);font:inherit; }
+    #ah-sync-setup button:first-of-type { background:var(--accent);border-color:var(--accent);color:#161616;font-weight:600; }
+    #page-mechaniker .mech-work-actions { display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border); }
+    #page-mechaniker .mech-work-action { min-height:44px;border:1px solid var(--border-light);border-radius:5px;padding:8px 12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:12px; }
+    #page-mechaniker .mech-work-primary { margin-left:auto;background:var(--accent);border-color:var(--accent);color:#161616;font-weight:600; }
+    #page-mechaniker .mech-work-pause { color:var(--text-muted);font-size:12px;margin-top:10px; }
+    #page-mechaniker .mech-work-paused::before { background:#888; }
+    #mech-fullscreen .mfs-zeit-state, #modal-auftrag .mech-pause-info { color:var(--text-muted);font-size:12px;margin:8px 0; }
+    #mech-fullscreen .mfs-pause-grund { display:block;width:100%;min-height:44px;background:var(--surface2);color:var(--text);border:1px solid var(--border-light);border-radius:5px;padding:8px;margin:8px 0;font:inherit; }
+    #page-dashboard .wl-filter:focus-visible, #page-dashboard .wl-details:focus-visible, #page-mechaniker .mech-work-action:focus-visible { outline:2px solid var(--accent);outline-offset:3px; }
+    @media(min-width:800px) { #page-dashboard .wl-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media(min-width:1220px) { #page-dashboard .wl-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
     /* ── DASHBOARD HEUTE ─── */
     .dash-heute-row {
       display: flex; align-items: center; gap: 12px;
@@ -5177,6 +5247,9 @@
         <div style="font-size:11px;color:var(--text-muted)"><svg class="icon-svg" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Demo-Daten (Pascal Runser, Sandra Meier, ...)</div>
         <button id="btn-load-demo" style="background:var(--surface3);color:var(--accent);border:1px solid rgba(232,160,32,0.3);border-radius:var(--radius-sm);padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">Laden</button>
       </div>
+      <!-- WERKSTATT JETZT: Details oeffnen ohne Stempelwechsel -->
+      <div id="ah-sync-status" hidden role="status" aria-live="polite"></div>
+      <section id="dash-werkstatt-wrap" class="wl-wrap" aria-label="Werkstatt jetzt"></section>
       <!-- TERMINKALENDER -->
       <!-- Pick-Mode Banner -->
       <div class="cal-pick-banner" id="cal-pick-banner">
@@ -6816,15 +6889,27 @@ if (!db.verbrauchsmaterial) { db.verbrauchsmaterial = []; }
 })();
 
 function saveDb(){
+  if (typeof ahSyncUsesCloud === 'function' && ahSyncUsesCloud()) return ahSyncSaveLocal();
   try {
+    // Auch Abschluss, Fakturierung und Papierkorb beenden die Stempelung.
+    const zeitpunkt = new Date().toISOString();
+    (db.auftraege || []).forEach(a => {
+      if (!mechIstArbeitsauftrag(a)) mechHalteZeitAn(a, zeitpunkt, 'Auftrag abgeschlossen');
+    });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    document.dispatchEvent(new Event('ah-zeitstand-gespeichert'));
+    return true;
   } catch(e) {
     // QuotaExceededError: localStorage voll (haeufig bei vielen Fotos als base64)
     console.error('[autohelfer] localStorage voll:', e);
     showToast('Speicher voll — bitte Fotos löschen oder Browser-Cache leeren.','error');
+    return false;
   }
 }
-function nextId(t){ db._c[t]=(db._c[t]||0)+1; return db._c[t]; }
+function nextId(t){
+  if (['k','f','a'].includes(t) && typeof ahSyncUsesCloud==='function' && ahSyncUsesCloud()) return ahSyncNextId(t);
+  db._c[t]=(db._c[t]||0)+1; return db._c[t];
+}
 
 // ============================================================
 // NAVIGATION
@@ -6876,11 +6961,7 @@ function mfsOpen(auftragId) {
   var mfsNext = document.getElementById('mfs-next-btn');
   if (mfsNext) mfsNext.style.display = (mfsNextId() != null) ? 'inline-flex' : 'none';
 
-  // Status auf in_arbeit wenn noch offen/geplant
-  if (['offen','geplant'].includes(auftrag.status)) {
-    auftrag.status = 'in_arbeit';
-    saveDb();
-  }
+  // Details oeffnen veraendert weder Arbeitsstatus noch Stempelung.
 }
 
 function mfsClose() {
@@ -6900,7 +6981,7 @@ function mfsNextId() {
   if (_mfsAuftragId == null) return null;
   var liste = mechSortAuftraege(mechFilterAuftraege(MECHANIC_SESSION.activeTab));
   var offene = liste.filter(function(a){
-    return a.id !== _mfsAuftragId && a.status !== 'erledigt' && a.status !== 'fakturiert';
+    return a.id !== _mfsAuftragId && mechIstArbeitsauftrag(a);
   });
   if (!offene.length) return null;
   var idx = liste.findIndex(function(a){ return a.id === _mfsAuftragId; });
@@ -6912,7 +6993,7 @@ function mfsNextId() {
 function mfsNaechster() {
   var nid = mfsNextId();
   if (nid == null) { mfsClose(); return; }
-  mfsOpen(nid);
+  mechArbeitsauswahl(nid);
 }
 
 function mfsRender(auftragId) {
@@ -6985,6 +7066,12 @@ function mfsRender(auftragId) {
   h += '<div class="mfs-timer-card' + (laufend ? ' running' : '') + '" id="mfs-timer-card" style="border:none;border-radius:0">';
   h += '<div class="mfs-timer-label">Erfasste Zeit</div>';
   h += '<div class="mfs-clock' + (laufend ? ' running' : '') + '" id="mfs-clock">' + mechFormatMs(gesamtMs) + '</div>';
+  if (mechIstPausiert(auftrag)) {
+    h += '<div class="mfs-zeit-state" id="mfs-pause-text">' + esc(mechPauseText(auftrag)) + '</div>';
+    h += '<label class="mfs-zeit-state" for="mfs-pause-grund">Pausengrund (optional)</label><select class="mfs-pause-grund" id="mfs-pause-grund" onchange="mechSetzePausengrund(' + auftragId + ',this.value)">';
+    const gruende = [...new Set([auftrag.zeitPause.grund,'Manuell pausiert','Warten auf Ersatzteil','Warten auf Kundenfreigabe','Fahrzeug gewechselt'])];
+    h += gruende.map(g => '<option value="' + esc(g) + '"' + (g === auftrag.zeitPause.grund ? ' selected' : '') + '>' + esc(g) + '</option>').join('') + '</select>';
+  }
 
   if (geplanteH > 0) {
     // Fortschrittsbalken (nur während Arbeit sinnvoll)
@@ -7020,9 +7107,9 @@ function mfsRender(auftragId) {
 
   }
 
-  h += laufend
-    ? '<button class="mfs-btn-stop" onclick="mfsTimerStop()">⏹&nbsp; STOPP</button>'
-    : '<button class="mfs-btn-start" onclick="mfsTimerStart()">▶&nbsp; START</button>';
+  if (mechIstArbeitsauftrag(auftrag)) h += laufend
+    ? '<button class="mfs-btn-stop" onclick="mfsTimerStop()">Ⅱ&nbsp; PAUSIEREN</button>'
+    : '<button class="mfs-btn-start" onclick="mfsTimerStart()">▶&nbsp; ' + (mechIstPausiert(auftrag) ? 'FORTSETZEN' : 'HIER ARBEITEN') + '</button>';
 
   // Session-Liste
   const sessions = auftrag.zeiterfassung;
@@ -7447,12 +7534,14 @@ function mfsRender(auftragId) {
 
   // Live-Timer
   if (_mfsTimer) clearInterval(_mfsTimer);
-  if (laufend) {
+  if (laufend || mechIstPausiert(auftrag)) {
     _mfsTimer = setInterval(() => {
       const a = db.auftraege.find(x => x.id === _mfsAuftragId);
       if (!a) { clearInterval(_mfsTimer); return; }
       const el2 = document.getElementById('mfs-clock');
       if (el2) el2.textContent = mechFormatMs(mechCalcGesamtzeit(a));
+      const pauseText = document.getElementById('mfs-pause-text');
+      if (pauseText) pauseText.textContent = mechPauseText(a);
     }, 1000);
   }
 }
@@ -8221,8 +8310,12 @@ function mfsAddZeit() {
 
   document.body.appendChild(ov);
 
-  function addMinutes(min) {
+  async function addMinutes(min) {
     if (!min || min <= 0) return;
+    if (typeof ahSyncUsesCloud==='function' && ahSyncUsesCloud()) {
+      if (await ahSyncTime('add_time',a.id,{p_minutes:Math.round(min),p_mechanic_name:mechArbeitsIdentitaet(a).mechanikerName})) ov.remove();
+      return;
+    }
     if (!a.zeiterfassung) a.zeiterfassung = [];
     // Als manuelle Session hinzufügen
     var now = new Date();
@@ -8311,30 +8404,12 @@ function mfsBstToggleModal(matId) {
   }
 }
 
-function mfsTimerStart() {
-  const a = db.auftraege.find(x => x.id === _mfsAuftragId);
-  if (!a) return;
-  if (!a.zeiterfassung) a.zeiterfassung = [];
-  // Keine doppelte Session
-  if (a.zeiterfassung.some(s => !s.stop)) return;
-  a.zeiterfassung.push({ start: new Date().toISOString(), stop: null });
-  if (a.status !== 'in_arbeit') a.status = 'in_arbeit';
-  a.updatedAt = new Date().toISOString();
-  saveDb();
-  mfsRender(_mfsAuftragId);
+async function mfsTimerStart() {
+  if (await mechStarteArbeit(_mfsAuftragId)) mfsRender(_mfsAuftragId);
 }
 
-function mfsTimerStop() {
-  const a = db.auftraege.find(x => x.id === _mfsAuftragId);
-  if (!a) return;
-  const laufende = (a.zeiterfassung || []).find(s => !s.stop);
-  if (laufende) {
-    laufende.stop = new Date().toISOString();
-    a.updatedAt = new Date().toISOString();
-    saveDb();
-  }
-  if (_mfsTimer) { clearInterval(_mfsTimer); _mfsTimer = null; }
-  mfsRender(_mfsAuftragId);
+async function mfsTimerStop() {
+  if (await mechPausiereArbeit(_mfsAuftragId)) mfsRender(_mfsAuftragId);
 }
 
 function mfsSetStatus(status) {
@@ -8868,10 +8943,17 @@ function prepAuftragModalMech(editId, mechMode, preselectedDatum) {
     </div>
     <div style="display:flex;gap:8px;margin-left:auto">
       ${laufend
-        ? `<button class="btn btn-timer-stop" id="btn-mech-modal-stop">&#9646;&#9646; Stop</button>`
-        : `<button class="btn btn-timer-start" id="btn-mech-modal-start">&#9654; Start</button>`
+        ? `<button class="btn btn-timer-stop" id="btn-mech-modal-stop">&#9646;&#9646; Pausieren</button>`
+        : (auftrag && mechIstArbeitsauftrag(auftrag) ? `<button class="btn btn-timer-start" id="btn-mech-modal-start">&#9654; ${mechIstPausiert(auftrag)?'Fortsetzen':'Hier arbeiten'}</button>` : '')
       }
     </div>`;
+
+  if (auftrag && mechIstPausiert(auftrag)) {
+    const pauseInfo = document.createElement('div');
+    pauseInfo.className = 'mech-pause-info';
+    pauseInfo.textContent = mechPauseText(auftrag);
+    zeitBar.appendChild(pauseInfo);
+  }
 
   // Vor dem ersten Kind einsetzen
   modalBody.insertBefore(zeitBar, modalBody.firstChild);
@@ -8892,14 +8974,14 @@ function prepAuftragModalMech(editId, mechMode, preselectedDatum) {
   const startBtn = zeitBar.querySelector('#btn-mech-modal-start');
   const stopBtn  = zeitBar.querySelector('#btn-mech-modal-stop');
   if (startBtn && auftrag) {
-    startBtn.addEventListener('click', () => {
-      mechTimerStart(auftrag.id);
+    startBtn.addEventListener('click', async () => {
+      await mechTimerStart(auftrag.id);
       prepAuftragModalMech(auftrag.id, true, null); // Banner neu rendern
     });
   }
   if (stopBtn && auftrag) {
-    stopBtn.addEventListener('click', () => {
-      mechTimerStop(auftrag.id);
+    stopBtn.addEventListener('click', async () => {
+      await mechTimerStop(auftrag.id);
       prepAuftragModalMech(auftrag.id, true, null);
     });
   }
@@ -14459,6 +14541,7 @@ function dashMahnGo(filter) {
 }
 
 function renderDashboard(){
+  renderDashboardWerkstatt();
   renderKalender();
   if(typeof renderMaengelKachel==="function") renderMaengelKachel();
   if(typeof renderReifenKachel==="function") renderReifenKachel();
@@ -14500,6 +14583,99 @@ function renderDashboard(){
   renderMahnwesenKachel();
   renderServiceKachel();
 }
+
+let _werkstattNurLaufend = false;
+let _werkstattUhr = null;
+
+function werkstattSetFilter(nurLaufend) {
+  _werkstattNurLaufend = nurLaufend;
+  renderDashboardWerkstatt();
+  const knopf = document.querySelector('#dash-werkstatt-wrap [aria-pressed="true"]');
+  if (knopf) knopf.focus({preventScroll:true});
+}
+
+function werkstattAuftragHTML(a) {
+  const fz = db.fahrzeuge.find(f => f.id === a.fahrzeugId);
+  const kunde = db.kunden.find(k => k.id === a.kundeId);
+  const name = kunde ? (kunde.firma || ((kunde.vorname || '') + ' ' + (kunde.nachname || '')).trim()) : '';
+  const laufend = mechHatLaufendeSession(a);
+  const pausiert = mechIstPausiert(a);
+  const zeit = mechCalcGesamtzeit(a);
+  const soll = Math.max(0, Number(a.geplantH) || 0);
+  const id = Number(a.id);
+  const session = (a.zeiterfassung || []).find(s => s.start && !s.stop);
+  const start = session ? new Date(session.start).getTime() : 0;
+  const bis = a.abholDatum && a.abholDatum !== a.datum ? formatDateDE(a.abholDatum) + ' ' : '';
+  return `<article class="wl-job${laufend?' wl-job-running':pausiert?' wl-job-paused':''}" data-wl-job="${id}">
+    <div class="wl-job-top"><span>${esc(auftragNr(a))}</span><span class="wl-badge">${laufend?'Uhr läuft':pausiert?'Ⅱ Pausiert':a.status==='in_arbeit'?'Keine Uhr läuft':'Noch nicht begonnen'}</span></div>
+    <div class="wl-vehicle">${esc(fz ? fz.marke + (fz.modell?' '+fz.modell:'') : a.internObjekt || 'Ohne Fahrzeug')}</div>
+    <div class="wl-plate">${esc((fz ? kz(fz.kennzeichen) : '') + (name?' · '+name:''))}</div>
+    <div class="wl-work">${esc(a.beschreibung || 'Auftrag')}</div>
+    ${laufend?`<div class="wl-clock-label">Aktuelle Stempelung</div><div class="wl-clock" data-wl-zeit="aktuell">${mechFormatMs(Math.max(0,(typeof ahSyncNow==='function'?ahSyncNow():Date.now())-start))}</div>`:''}
+    <div class="wl-budget"><span>${laufend?'Auftrag gesamt':'Bisher erfasst'} <strong data-wl-zeit="gesamt">${mechFormatMs(zeit)}</strong></span>${soll?`<span>Soll <strong>${soll} h</strong></span>`:''}</div>
+    ${soll?`<div class="wl-bar" role="img" aria-label="Erfasste Zeit im Verhältnis zur Sollzeit"><div class="wl-bar-fill" style="width:${Math.min(100,zeit/(soll*3600000)*100)}%"></div></div>`:''}
+    ${pausiert?`<div class="wl-pause"><span data-wl-zeit="pause">${esc(mechPauseText(a).split(' · ').slice(0,2).join(' · '))}</span><div class="wl-reason">${esc(a.zeitPause.grund || 'Unterbrochen')}</div></div>`:''}
+    <div class="wl-bottom">${a.abholung?`<span class="wl-deadline">Bereit bis <strong>${esc(bis+a.abholung)}</strong></span>`:''}<button type="button" class="wl-details" onclick="openModal('auftrag',${id})" aria-label="Details zu ${esc(fz ? fz.marke+' '+(fz.modell || '') : 'Auftrag')} öffnen">Details</button></div>
+  </article>`;
+}
+
+function renderDashboardWerkstatt() {
+  const wrap = el('dash-werkstatt-wrap');
+  if (!wrap) return;
+  if (_werkstattUhr) { clearInterval(_werkstattUhr); _werkstattUhr = null; }
+  const heute = isoDate(0);
+  const gruppen = [];
+  const gruppe = person => {
+    let g = gruppen.find(x => mechGleicherMechaniker(x.person, person) || (!x.person.mechanikerName && !person.mechanikerName));
+    if (!g) { g = {person,auftraege:[]}; gruppen.push(g); }
+    return g;
+  };
+  const mitarbeiter = loadMitarbeiter().filter(m => (!m.eintritt || m.eintritt <= heute) && (!m.austritt || m.austritt >= heute));
+  mitarbeiter.forEach(m => gruppe({mechanikerId:m.id,mechanikerName:(m.vorname+' '+m.nachname).trim()}));
+  if (!mitarbeiter.length) loadMechanikerListe().filter(n => n && n !== 'Mechaniker').forEach(n => gruppe(mechIdentitaet(n)));
+  db.auftraege.filter(mechIstArbeitsauftrag).forEach(a => {
+    const laufend = (a.zeiterfassung || []).find(s => s.start && !s.stop);
+    if (!laufend && !mechIstPausiert(a) && a.datum && a.datum > heute) return;
+    gruppe(laufend ? mechZeitEigentuemer(a,laufend) : mechIdentitaet(a.mechanikerName || a.internMech || (a.zeitPause && a.zeitPause.mechanikerName) || '')).auftraege.push(a);
+  });
+  const aktiv = gruppen.filter(g => g.auftraege.some(mechHatLaufendeSession));
+  const alleAuftraege = gruppen.flatMap(g => g.auftraege);
+  const pausiert = alleAuftraege.filter(mechIstPausiert).length;
+  const sichtbar = _werkstattNurLaufend ? aktiv : gruppen;
+  wrap.innerHTML = `<div class="wl-heading"><div><h2 class="wl-title">Werkstatt jetzt</h2><div class="wl-sub">Laufende Stempelungen und offene Aufträge pro Mechaniker</div></div><div class="wl-filters" role="group" aria-label="Werkstatt filtern"><button type="button" class="wl-filter" aria-pressed="${!_werkstattNurLaufend}" onclick="werkstattSetFilter(false)">Alle Mechaniker</button><button type="button" class="wl-filter" aria-pressed="${_werkstattNurLaufend}" onclick="werkstattSetFilter(true)">Nur laufende</button></div></div>
+    <div class="wl-summary"><span><strong>${gruppen.filter(g=>g.person.mechanikerName).length}</strong> Mechaniker</span><span><strong>${aktiv.length}</strong> mit laufender Stempelung</span><span><strong>${pausiert}</strong> Aufträge pausiert</span><span class="wl-source">${esc(typeof ahSyncStatusText==='function'?ahSyncStatusText():'Daten dieses Geräts')}</span></div>
+    <div class="wl-grid">${sichtbar.map(g => {
+      const laufend = g.auftraege.filter(mechHatLaufendeSession).length;
+      const anzahlPause = g.auftraege.filter(mechIstPausiert).length;
+      const name = g.person.mechanikerName || 'Nicht zugeteilt';
+      const kuerzel = name.split(/\s+/).map(w => w[0] || '').join('').slice(0,2);
+      const auftraege = g.auftraege.filter(a => !_werkstattNurLaufend || mechHatLaufendeSession(a)).sort((a,b) => Number(mechHatLaufendeSession(b))-Number(mechHatLaufendeSession(a)) || Number(mechIstPausiert(b))-Number(mechIstPausiert(a)) || (a.abholung || '99:99').localeCompare(b.abholung || '99:99'));
+      return `<section class="wl-mechanic" aria-label="${esc(name)}"><div class="wl-person"><div class="wl-avatar" aria-hidden="true">${esc(kuerzel)}</div><div><div class="wl-name">${esc(name)}</div><div class="wl-state${laufend?' wl-running':''}">${laufend===1?'Uhr läuft':laufend>1?'Bisherige Parallelstempelung: Fahrzeug zum Arbeiten wählen':'Keine Uhr läuft'}${anzahlPause?' · '+anzahlPause+' pausiert':''}</div></div></div><div class="wl-jobs">${auftraege.length?auftraege.map(werkstattAuftragHTML).join(''):'<div class="wl-empty">Keine offenen Aufträge zugeteilt</div>'}</div></section>`;
+    }).join('')}</div>
+    ${!sichtbar.length?`<div class="wl-empty">${_werkstattNurLaufend?'Aktuell läuft keine Stempelung.':'Noch keine Mechaniker oder Aufträge vorhanden.'}</div>`:''}
+    <div class="wl-note">Balken zeigen erfasste Zeit im Verhältnis zum Soll. Pausendauer zählt separat.</div>`;
+  if (el('page-dashboard').classList.contains('active')) {
+    _werkstattUhr = setInterval(() => {
+      if (!el('page-dashboard').classList.contains('active')) { clearInterval(_werkstattUhr); _werkstattUhr = null; return; }
+      wrap.querySelectorAll('[data-wl-job]').forEach(karte => {
+        const a = db.auftraege.find(x => Number(x.id) === Number(karte.dataset.wlJob));
+        if (!a) return;
+        const zeit = mechCalcGesamtzeit(a);
+        const gesamt = karte.querySelector('[data-wl-zeit="gesamt"]');
+        if (gesamt) gesamt.textContent = mechFormatMs(zeit);
+        const aktuell = karte.querySelector('[data-wl-zeit="aktuell"]');
+        const session = (a.zeiterfassung || []).find(s => s.start && !s.stop);
+        if (aktuell && session) aktuell.textContent = mechFormatMs(Math.max(0,(typeof ahSyncNow==='function'?ahSyncNow():Date.now())-new Date(session.start).getTime()));
+        const pause = karte.querySelector('[data-wl-zeit="pause"]');
+        if (pause) pause.textContent = mechPauseText(a).split(' · ').slice(0,2).join(' · ');
+        const balken = karte.querySelector('.wl-bar-fill');
+        if (balken && Number(a.geplantH)>0) balken.style.width = Math.min(100,zeit/(Number(a.geplantH)*3600000)*100)+'%';
+      });
+    },1000);
+  }
+}
+
+document.addEventListener('ah-zeitstand-gespeichert', renderDashboardWerkstatt);
 
 function renderDashboardOhneTermin(){
   const wrap = el('dash-ohne-termin-wrap');
@@ -15942,18 +16118,12 @@ function mechFilterAuftraege(tab) {
   const heute = isoDate(0);
   const morgen = isoDate(1);
 
-  // Mechaniker-Filter anwenden (meine / team / spezifischer Mechaniker)
-  // In Prototyp: kein echtes Login, daher "meine" = alle ohne explizite Zuordnung
-  // API-ready: mechFilter kann mit Backend-mechanikerId verglichen werden
+  // "Meine" folgt der ausgewaehlten bzw. angemeldeten Person.
   const f = MECHANIC_SESSION.mechFilter;
   if (f !== 'team') {
-    // Fuer Produktivbetrieb: a.mechanikerName === MECHANIC_SESSION.mechaniker.name
-    // Im Prototyp keine Mechaniker-Zuordnung pro Auftrag -> zeigt alle bei 'meine'
-    if (f !== 'meine') {
-      // Spezifischer Mechaniker-Name
-      alle = alle.filter(a => (a.mechanikerName || '') === f);
-    }
-    // fallback: alle zeigen
+    const name = f === 'meine' ? MECHANIC_SESSION.mechaniker.name : f;
+    const person = mechIdentitaet(name);
+    alle = alle.filter(a => mechGleicherMechaniker(mechZeitEigentuemer(a), person));
   }
 
   // Navigiertes Datum beruecksichtigen
@@ -16042,7 +16212,7 @@ function mechCardHTML(auftrag) {
   const kunde  = db.kunden.find(k  => k.id === auftrag.kundeId);
   const fz     = db.fahrzeuge.find(f => f.id === auftrag.fahrzeugId);
   const istAbgeschlossen = ['erledigt','fakturiert'].includes(auftrag.status);
-  const istInArbeit      = auftrag.status === 'in_arbeit';
+  const istInArbeit      = mechHatLaufendeSession(auftrag);
   const istFakturiert    = auftrag.status === 'fakturiert';
   const fzName = fz ? esc(fz.marke + (fz.modell ? ' ' + fz.modell : '')) : 'Kein Fahrzeug';
   const kennzeichen = fz ? `<span class="mech-card-plate">${esc(kz(fz.kennzeichen))}</span>` : '';
@@ -16089,7 +16259,7 @@ function mechCardHTML(auftrag) {
 
   // Tatsaechliche Zeit-Zeile
   const tatsStr = istInArbeit
-    ? `<span class="mech-card-tatsaechlich running"><span class="mech-spin"><svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> ${mechFormatMs(gesamtMs)}</span>`
+    ? `<span class="mech-card-tatsaechlich running"><span class="mech-spin"><svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> <span data-mech-zeit-id="${Number(auftrag.id)}">${mechFormatMs(gesamtMs)}</span></span>`
     : `<span class="mech-card-tatsaechlich"><svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${gesamtH > 0 ? gesamtH.toFixed(1) + ' h' : '–'}</span>`;
 
   // Sonderbadges aus Auftrag-Feldern
@@ -16121,7 +16291,7 @@ function mechCardHTML(auftrag) {
   const kostenBadge = auftrag.kosten > 0 ? `<span class="mech-badge-flag">CHF ${chf(auftrag.kosten)}</span>` : '';
 
   return `
-    <div class="mech-card" data-id="${auftrag.id}" data-status="${esc(auftrag.status)}"
+    <div class="mech-card${mechIstPausiert(auftrag)?' mech-work-paused':''}" data-id="${auftrag.id}" data-status="${esc(auftrag.status)}"
          data-fakturiert="${istFakturiert ? 1 : 0}"
          role="button" tabindex="0" aria-label="Auftrag ${auftrag.id}: ${esc(auftrag.beschreibung)}">
       <div class="mech-card-inner" style="position:relative">
@@ -16176,11 +16346,14 @@ function mechCardHTML(auftrag) {
 
         <!-- Status-Badges + Kosten -->
         <div class="mech-card-tags">
-          ${mechStatusBadge(auftrag.status)}
+          ${mechIstPausiert(auftrag) ? '<span class="mech-badge-neutral">Ⅱ Pausiert</span>' : auftrag.status==='in_arbeit'&&!istInArbeit ? '<span class="mech-badge-neutral">Keine Uhr läuft</span>' : mechStatusBadge(auftrag.status)}
           ${posBadge}
           ${kostenBadge}
           ${zeitBadge}
         </div>
+
+        ${mechIstPausiert(auftrag) ? `<div class="mech-work-pause">${esc(mechPauseText(auftrag))}</div>` : ''}
+        ${mechIstArbeitsauftrag(auftrag) ? `<div class="mech-work-actions"><button type="button" class="mech-work-action" data-work-action="details" data-work-id="${Number(auftrag.id)}">Details</button><button type="button" class="mech-work-action mech-work-primary" data-work-action="${istInArbeit?'pause':'work'}" data-work-id="${Number(auftrag.id)}">${istInArbeit?'Pausieren':mechIstPausiert(auftrag)?'Fortsetzen':'Hier arbeiten'}</button></div>` : ''}
 
         <!-- Sonderbadges: MFK, Ersatzwagen, Reifenhotel -->
         ${specialBadges ? `<div class="mech-special-badges">${specialBadges}</div>` : ''}
@@ -16317,6 +16490,7 @@ function renderMechanik() {
 
   const liste = el('mech-card-list');
   if (!liste) return;
+  if (MECH_LIST_TIMER) { clearInterval(MECH_LIST_TIMER); MECH_LIST_TIMER = null; }
 
   if (alle.length === 0) {
     liste.innerHTML = mechEmptyHTML(tab);
@@ -16331,6 +16505,14 @@ function renderMechanik() {
     return cardHtml;
   }).join('');
 
+  MECH_LIST_TIMER = setInterval(() => {
+    if (!el('page-mechaniker').classList.contains('active')) { clearInterval(MECH_LIST_TIMER); MECH_LIST_TIMER = null; return; }
+    liste.querySelectorAll('[data-mech-zeit-id]').forEach(anzeige => {
+      const a = db.auftraege.find(x => Number(x.id) === Number(anzeige.dataset.mechZeitId));
+      if (a) anzeige.textContent = mechFormatMs(mechCalcGesamtzeit(a));
+    });
+  },1000);
+
   // CSS für mech-card-done injizieren falls noch nicht da
   if (!document.getElementById('mech-card-done-style')) {
     var s = document.createElement('style');
@@ -16343,16 +16525,26 @@ function renderMechanik() {
   liste.querySelectorAll('.mech-card').forEach(card => {
     card.addEventListener('click', e => {
       // Menü-Button abfangen — nicht Drawer öffnen
-      if (e.target.closest('.mech-card-menu-btn')) return;
+      if (e.target.closest('button,a,input,select')) return;
       const id = parseInt(card.dataset.id);
       mechOpenDrawer(id);
     });
     // Keyboard-Unterstützung (Enter/Space)
     card.addEventListener('keydown', e => {
-      if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.mech-card-menu-btn')) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target === card) {
         e.preventDefault();
         mechOpenDrawer(parseInt(card.dataset.id));
       }
+    });
+  });
+
+  liste.querySelectorAll('[data-work-action]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = Number(btn.dataset.workId);
+      if (btn.dataset.workAction === 'work') mechArbeitsauswahl(id);
+      else if (btn.dataset.workAction === 'pause') mechPausiereArbeit(id);
+      else mechOpenDrawer(id);
     });
   });
 
@@ -16390,10 +16582,7 @@ function renderMechanik() {
       const an = btn.dataset.weitergabeAn;
       const auftrag = db.auftraege.find(a => a.id === auftragId);
       if (auftrag && an) {
-        auftrag.mechanikerName = an;
-        auftrag.updatedAt = new Date().toISOString();
-        saveDb();
-        renderMechanik();
+        mechUebergebeAuftrag(auftrag, an);
       }
     });
   });
@@ -16518,13 +16707,195 @@ function mechInitTabs() {
 
 // Timer-Intervall-Handle (global, nur einer gleichzeitig)
 let MECH_TIMER = null;
+let MECH_LIST_TIMER = null;
+
+// Eine aktive Stempelung je Mechaniker; Auftragsstatus und Zeitstatus
+// bleiben getrennt. Die Buchungen behalten ihren Mechaniker auch bei Uebergaben.
+function mechIstArbeitsauftrag(a) {
+  return !!a && !a.geloescht && ['offen','geplant','in_arbeit'].includes(a.status);
+}
+
+function mechIdentitaet(name) {
+  name = (name || '').trim();
+  let personal = [];
+  try {
+    const shared=typeof ahSyncPersonnel==='function'?ahSyncPersonnel():null;
+    personal=shared===null?JSON.parse(localStorage.getItem('ah_mitarbeiter')||'[]'):shared;
+  } catch (_e) {}
+  const ma = personal.find(m =>
+    (m.vorname + ' ' + m.nachname).trim().toLocaleLowerCase('de-CH') === name.toLocaleLowerCase('de-CH'));
+  return { mechanikerId: ma ? ma.id : null, mechanikerName: name };
+}
+
+function mechZeitEigentuemer(a, session) {
+  if (session && session.mechanikerName) return {
+    mechanikerId: session.mechanikerId == null ? null : session.mechanikerId,
+    mechanikerName: session.mechanikerName
+  };
+  return mechIdentitaet(a.mechanikerName || a.internMech || '');
+}
+
+function mechGleicherMechaniker(a, b) {
+  if (a.mechanikerId != null && b.mechanikerId != null) return String(a.mechanikerId) === String(b.mechanikerId);
+  return !!a.mechanikerName && a.mechanikerName.trim().toLocaleLowerCase('de-CH') === (b.mechanikerName || '').trim().toLocaleLowerCase('de-CH');
+}
+
+function mechArbeitsIdentitaet(a) {
+  const profil = typeof CURRENT_PROFILE !== 'undefined' ? CURRENT_PROFILE : null;
+  const profilName = profil ? ((profil.vorname || '') + ' ' + (profil.nachname || '')).trim() : '';
+  if (profil && profil.rolle === 'mechaniker' && profilName) return mechIdentitaet(profilName);
+  const eigenerName = (MECHANIC_SESSION.mechaniker.name || '').trim();
+  if (MECHANIC_SESSION.mechFilter !== 'team' && eigenerName && eigenerName !== 'Mechaniker') return mechIdentitaet(eigenerName);
+  return mechIdentitaet(a.mechanikerName || a.internMech || (eigenerName !== 'Mechaniker' ? eigenerName : ''));
+}
+
+function mechPraegeZeitEigentuemer(a) {
+  const eigentuemer = mechZeitEigentuemer(a);
+  if (!eigentuemer.mechanikerName) return;
+  (a.zeiterfassung || []).forEach(s => {
+    if (!s.mechanikerName) Object.assign(s, eigentuemer);
+  });
+}
+
+function mechHalteZeitAn(a, zeitpunkt, grund, person = null) {
+  const laufende = (a.zeiterfassung || []).filter(s => s.start && !s.stop && (!person || mechGleicherMechaniker(mechZeitEigentuemer(a,s), person)));
+  laufende.forEach(s => {
+    if (!s.mechanikerName) Object.assign(s, mechZeitEigentuemer(a));
+    s.stop = zeitpunkt;
+    s.stopGrund = grund;
+  });
+  if (laufende.length) {
+    a.updatedAt = zeitpunkt;
+    if (mechIstArbeitsauftrag(a) && !mechHatLaufendeSession(a)) {
+      a.zeitPause = Object.assign({ start: zeitpunkt, grund }, mechZeitEigentuemer(a, laufende[0]));
+    }
+  }
+  if (!mechIstArbeitsauftrag(a)) delete a.zeitPause;
+  return laufende.length > 0;
+}
+
+function mechIstPausiert(a) {
+  return mechIstArbeitsauftrag(a) && !mechHatLaufendeSession(a) && !!(a.zeitPause && a.zeitPause.start);
+}
+
+function mechPauseText(a) {
+  if (!mechIstPausiert(a)) return '';
+  const start = new Date(a.zeitPause.start);
+  const seit = (start.toDateString() !== new Date().toDateString() ? start.toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit'})+' ' : '') + start.toLocaleTimeString('de-CH', {hour:'2-digit',minute:'2-digit'});
+  const minuten = Math.max(0, Math.floor(((typeof ahSyncNow==='function'?ahSyncNow():Date.now()) - start.getTime()) / 60000));
+  const dauer = (minuten >= 60 ? Math.floor(minuten / 60) + ' h ' : '') + minuten % 60 + ' min';
+  return 'Pausiert seit ' + seit + ' Uhr · ' + dauer + ' · ' + a.zeitPause.grund;
+}
+
+function mechZeitTransaktion(aendern) {
+  // Nur Zeit-/Zuordnungsfelder sichern, keine Fotos oder Rechnungen kopieren.
+  const felder = ['zeiterfassung','zeitPause','status','mechanikerName','internMech','updatedAt'];
+  const vorher = new Map();
+  const merken = a => {
+    if (vorher.has(a)) return;
+    const werte = {};
+    felder.forEach(k => { if (Object.prototype.hasOwnProperty.call(a, k)) werte[k] = a[k] === undefined ? undefined : JSON.parse(JSON.stringify(a[k])); });
+    vorher.set(a, werte);
+  };
+  db.auftraege.filter(a => !mechIstArbeitsauftrag(a) && (mechHatLaufendeSession(a) || a.zeitPause)).forEach(merken);
+  aendern(merken);
+  if (!saveDb()) {
+    vorher.forEach((werte, a) => felder.forEach(k => {
+      if (Object.prototype.hasOwnProperty.call(werte, k)) a[k] = werte[k]; else delete a[k];
+    }));
+    return false;
+  }
+  if (el('page-mechaniker').classList.contains('active')) renderMechanik();
+  return true;
+}
+
+function mechStarteArbeit(id) {
+  const a = db.auftraege.find(x => x.id === id);
+  if (!mechIstArbeitsauftrag(a)) {
+    showToast('Nur offene Aufträge können gestartet werden.', 'warning');
+    return false;
+  }
+  const person = mechArbeitsIdentitaet(a);
+  if (typeof ahSyncUsesCloud==='function' && ahSyncUsesCloud()) return ahSyncTime('start',id,{p_mechanic_name:person.mechanikerName});
+  if (!person.mechanikerName) {
+    showToast('Bitte zuerst einen Mechaniker in der Tagesplanung wählen.', 'warning');
+    return false;
+  }
+  const laufende = (a.zeiterfassung || []).filter(s => s.start && !s.stop);
+  if (laufende.some(s => !mechGleicherMechaniker(mechZeitEigentuemer(a, s), person))) {
+    showToast('Der Auftrag läuft bei einem anderen Mechaniker. Bitte zuerst weitergeben.', 'warning');
+    return false;
+  }
+  const zeitpunkt = new Date().toISOString();
+  return mechZeitTransaktion(merken => {
+    db.auftraege.forEach(anderer => {
+      if (anderer.id === id || !(anderer.zeiterfassung || []).some(s => s.start && !s.stop && mechGleicherMechaniker(mechZeitEigentuemer(anderer, s), person))) return;
+      merken(anderer);
+      mechHalteZeitAn(anderer, zeitpunkt, 'Fahrzeug gewechselt', person);
+    });
+    merken(a);
+    mechPraegeZeitEigentuemer(a);
+    if (!a.zeiterfassung) a.zeiterfassung = [];
+    // Derselbe Auftrag bleibt auf seiner bestehenden Session gestempelt.
+    if (!laufende.length) {
+      const profil = typeof CURRENT_PROFILE !== 'undefined' ? CURRENT_PROFILE : null;
+      a.zeiterfassung.push(Object.assign({ start:zeitpunkt, stop:null, garageId:profil ? profil.garage_id || null : null }, person));
+    } else {
+      laufende.slice(1).forEach(s => { s.stop = zeitpunkt; s.stopGrund = 'Doppelte Stempelung beendet'; });
+    }
+    a.mechanikerName = person.mechanikerName;
+    if (a.auftragstyp === 'intern') a.internMech = person.mechanikerName;
+    delete a.zeitPause;
+    a.status = 'in_arbeit';
+    a.updatedAt = zeitpunkt;
+  });
+}
+
+function mechPausiereArbeit(id) {
+  const a = db.auftraege.find(x => x.id === id);
+  if (a && typeof ahSyncUsesCloud==='function' && ahSyncUsesCloud()) return ahSyncTime('pause',id,{p_mechanic_name:mechArbeitsIdentitaet(a).mechanikerName});
+  if (!a || !mechHatLaufendeSession(a)) return false;
+  return mechZeitTransaktion(merken => {
+    merken(a);
+    mechHalteZeitAn(a, new Date().toISOString(), 'Manuell pausiert');
+  });
+}
+
+function mechUebergebeAuftrag(a, name) {
+  if (typeof ahSyncUsesCloud==='function' && ahSyncUsesCloud()) return ahSyncTime('transfer',a.id,{p_mechanic_name:mechZeitEigentuemer(a).mechanikerName,p_reason:name});
+  return mechZeitTransaktion(merken => {
+    merken(a);
+    mechPraegeZeitEigentuemer(a);
+    const zeitpunkt = new Date().toISOString();
+    mechHalteZeitAn(a, zeitpunkt, 'Auftrag weitergegeben');
+    a.mechanikerName = name;
+    if (a.auftragstyp === 'intern') a.internMech = name;
+    a.updatedAt = zeitpunkt;
+  });
+}
+
+function mechSetzePausengrund(id, grund) {
+  const a = db.auftraege.find(x => x.id === id);
+  if (!a || !mechIstPausiert(a) || !['Manuell pausiert','Warten auf Ersatzteil','Warten auf Kundenfreigabe','Fahrzeug gewechselt','Auftrag weitergegeben'].includes(grund)) return;
+  if (typeof ahSyncUsesCloud==='function' && ahSyncUsesCloud()) return ahSyncTime('reason',id,{p_reason:grund,p_mechanic_name:mechArbeitsIdentitaet(a).mechanikerName});
+  mechZeitTransaktion(merken => {
+    merken(a);
+    a.zeitPause.grund = grund;
+    a.updatedAt = new Date().toISOString();
+  });
+  if (_mfsAuftragId === id) mfsRender(id);
+}
+
+async function mechArbeitsauswahl(id) {
+  if (await mechStarteArbeit(id)) mfsOpen(id);
+}
 
 // ---- Hilfsfunktion: Gesamtarbeitszeit berechnen ----
 // Summiert alle abgeschlossenen Sessions + laufende Session
 function mechCalcGesamtzeit(auftrag) {
   const sessions = auftrag.zeiterfassung || [];
   let ms = 0;
-  const now = Date.now();
+  const now = typeof ahSyncNow==='function'?ahSyncNow():Date.now();
   sessions.forEach(s => {
     const start = s.start ? new Date(s.start).getTime() : 0;
     const stop  = s.stop  ? new Date(s.stop).getTime()  : now; // laufend
@@ -16736,15 +17107,15 @@ function mechRenderDrawerContent(id) {
     <div class="mech-detail-panel${activeTab === 'zeit' ? ' active' : ''}" data-panel="zeit">
       <div class="mech-timer-display${laufend ? ' running' : ''}" id="mech-timer-display">
         <div class="mech-timer-clock" id="mech-timer-clock">${mechFormatMs(gesamtMs)}</div>
-        <div class="mech-timer-sublabel">Gesamtarbeitszeit</div>
+        <div class="mech-timer-sublabel">${mechIstPausiert(auftrag)?esc(mechPauseText(auftrag)):'Gesamtarbeitszeit'}</div>
       </div>
       <div class="mech-timer-btns">
         <button class="mech-timer-btn mech-timer-btn-start"
           id="mech-btn-start" ${laufend ? 'disabled' : ''}
-          onclick="mechTimerStart(${id})"><svg class="icon-svg" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Start</button>
+          onclick="mechTimerStart(${id})"><svg class="icon-svg" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> ${mechIstPausiert(auftrag)?'Fortsetzen':'Hier arbeiten'}</button>
         <button class="mech-timer-btn mech-timer-btn-stop"
           id="mech-btn-stop" ${!laufend ? 'disabled' : ''}
-          onclick="mechTimerStop(${id})"><svg class="icon-svg" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg> Stop</button>
+          onclick="mechTimerStop(${id})"><svg class="icon-svg" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg> Pausieren</button>
       </div>
       <div class="mech-detail-section-title">Einträge</div>
       <div class="mech-timer-sessions">${sessionRows}</div>
@@ -17628,37 +17999,22 @@ function mechSetStatusDrawer(id, newStatus) {
 // ============================================================
 // ---- Zeiterfassung ----
 
-function mechTimerStart(id) {
-  const auftrag = db.auftraege.find(a => a.id === id);
-  if (!auftrag || mechHatLaufendeSession(auftrag)) return;
-  if (!auftrag.zeiterfassung) auftrag.zeiterfassung = [];
-  auftrag.zeiterfassung.push({ start: new Date().toISOString(), stop: null });
-  // Status automatisch auf "in_arbeit" setzen
-  if (auftrag.status === 'offen' || auftrag.status === 'geplant') {
-    auftrag.status = 'in_arbeit';
-  }
-  auftrag.updatedAt = new Date().toISOString();
-  saveDb();
+async function mechTimerStart(id) {
+  if (!await mechStarteArbeit(id)) return;
   mechRenderDrawerContent(id);
   mechStartTimerUhr(id);
-  renderMechanik();
 }
 
-function mechTimerStop(id) {
-  const auftrag = db.auftraege.find(a => a.id === id);
-  if (!auftrag) return;
-  const laufende = (auftrag.zeiterfassung || []).find(s => s.start && !s.stop);
-  if (!laufende) return;
-  laufende.stop = new Date().toISOString();
-  auftrag.updatedAt = new Date().toISOString();
+async function mechTimerStop(id) {
+  if (!await mechPausiereArbeit(id)) return;
   if (MECH_TIMER) { clearInterval(MECH_TIMER); MECH_TIMER = null; }
-  saveDb();
   mechRenderDrawerContent(id);
 }
 
 function mechDelSession(id, index) {
   const auftrag = db.auftraege.find(a => a.id === id);
   if (!auftrag) return;
+  if (typeof ahSyncUsesCloud==='function' && ahSyncUsesCloud()) return ahSyncTime('void_time',id,{p_session_id:auftrag.zeiterfassung[index]?.id,p_mechanic_name:mechArbeitsIdentitaet(auftrag).mechanikerName});
   // Laufende Session löschen stoppt auch den Timer
   const session = (auftrag.zeiterfassung || [])[index];
   if (session && !session.stop && MECH_TIMER) { clearInterval(MECH_TIMER); MECH_TIMER = null; }
@@ -17943,6 +18299,7 @@ function mechDuplicate(id) {
     positionen:    (src.positionen || []).map(p => ({ ...p })),
     checkliste:    (src.checkliste || []).map(c => ({ ...c })),
     zeiterfassung: [],
+    zeitPause:     null,
     mechFotos:     [],
     mechNotizen:   '',
   };
@@ -18000,6 +18357,8 @@ mechInitFilterDropdown();
 
 // ---- Beim ersten Aufruf: ersten Mechaniker aus Liste automatisch setzen ----
 function mechCheckName() {
+  if (typeof CURRENT_PROFILE !== 'undefined' && CURRENT_PROFILE && CURRENT_PROFILE.rolle === 'mechaniker' &&
+      ((CURRENT_PROFILE.vorname || '') + (CURRENT_PROFILE.nachname || '')).trim()) return;
   const saved = localStorage.getItem('ah_mechaniker');
   if (saved) return; // Bereits gesetzt
   // Ersten Mechaniker aus der Liste nehmen
@@ -21171,14 +21530,19 @@ function renderKalender() {
 const MA_KEY = 'ah_mitarbeiter';
 
 function loadMitarbeiter() {
-  try { return JSON.parse(localStorage.getItem(MA_KEY) || '[]'); }
+  try {
+    const shared=typeof ahSyncPersonnel==='function'?ahSyncPersonnel():null;
+    return shared===null?JSON.parse(localStorage.getItem(MA_KEY)||'[]'):shared;
+  }
   catch(_e) { return []; }
 }
 function saveMitarbeiter(list) {
+  if (typeof ahSyncUsesCloud==='function' && ahSyncUsesCloud()) return ahSyncSaveLocal(list);
   try { localStorage.setItem(MA_KEY, JSON.stringify(list)); }
   catch(_e) {}
 }
 function nextMaId() {
+  if (typeof ahSyncUsesCloud==='function' && ahSyncUsesCloud()) return ahSyncNextId('m');
   const list = loadMitarbeiter();
   return list.length ? Math.max(...list.map(m => m.id)) + 1 : 1;
 }
@@ -23396,6 +23760,7 @@ document.querySelectorAll('.mobile-bottombar-item[data-page]').forEach(btn => {
 
 const DEMO_DATA = {"kunden":[{"id":1,"vorname":"Marco","nachname":"Keller","firma":"","strasse":"Hauptstrasse 14","plz":"4132","ort":"Muttenz","telefon":"+41 61 461 12 34","mobile":"+41 79 234 56 78","email":"marco.keller@gmail.com","bemerkungen":"Stammkunde seit 2019","createdAt":"2024-01-10T08:00:00Z","updatedAt":"2024-01-10T08:00:00Z"},{"id":2,"vorname":"Sandra","nachname":"Meier","firma":"","strasse":"Birkenweg 7","plz":"4133","ort":"Pratteln","telefon":"+41 61 821 44 55","mobile":"+41 76 345 67 89","email":"sandra.meier@bluewin.ch","bemerkungen":"Bevorzugt Abholung nach 17:00","createdAt":"2024-02-15T09:00:00Z","updatedAt":"2024-02-15T09:00:00Z"},{"id":3,"vorname":"Thomas","nachname":"Frei","firma":"Frei Transporte GmbH","strasse":"Industriestrasse 33","plz":"4127","ort":"Birsfelden","telefon":"+41 61 312 77 00","mobile":"+41 79 456 78 90","email":"t.frei@frei-transporte.ch","bemerkungen":"Flottenvertrag 3 Fahrzeuge","createdAt":"2024-03-01T10:00:00Z","updatedAt":"2024-03-01T10:00:00Z"},{"id":4,"vorname":"Daniela","nachname":"Brunner","firma":"","strasse":"Gartenstrasse 22","plz":"4054","ort":"Basel","telefon":"+41 61 302 88 99","mobile":"+41 76 567 89 01","email":"d.brunner@hispeed.ch","bemerkungen":"","createdAt":"2024-03-15T08:00:00Z","updatedAt":"2024-03-15T08:00:00Z"},{"id":5,"vorname":"Roberto","nachname":"Conti","firma":"Conti Bau AG","strasse":"Bauernweg 5","plz":"4144","ort":"Arlesheim","telefon":"+41 61 701 33 44","mobile":"+41 79 678 90 12","email":"r.conti@contibau.ch","bemerkungen":"Bezahlt nur per Rechnung (30 Tage netto)","createdAt":"2024-04-01T09:00:00Z","updatedAt":"2024-04-01T09:00:00Z"},{"id":6,"vorname":"Monika","nachname":"Steinmann","firma":"","strasse":"Rebgasse 18","plz":"4102","ort":"Binningen","telefon":"+41 61 421 55 66","mobile":"+41 76 789 01 23","email":"monika.steinmann@gmail.com","bemerkungen":"MFK faellig","createdAt":"2024-04-10T08:00:00Z","updatedAt":"2024-04-10T08:00:00Z"},{"id":7,"vorname":"Patrick","nachname":"Zahner","firma":"","strasse":"Austrasse 9","plz":"4153","ort":"Reinach BL","telefon":"+41 61 711 22 33","mobile":"+41 79 890 12 34","email":"p.zahner@yahoo.com","bemerkungen":"","createdAt":"2024-05-01T08:00:00Z","updatedAt":"2024-05-01T08:00:00Z"},{"id":8,"vorname":"Ursula","nachname":"Widmer","firma":"Widmer Catering AG","strasse":"Rheinstrasse 44","plz":"4310","ort":"Rheinfelden","telefon":"+41 61 836 11 22","mobile":"+41 76 901 23 45","email":"info@widmer-catering.ch","bemerkungen":"2 Lieferwagen im Reifenhotel","createdAt":"2024-05-20T09:00:00Z","updatedAt":"2024-05-20T09:00:00Z"},{"id":9,"vorname":"Kevin","nachname":"Bärtschi","firma":"","strasse":"Feldweg 3","plz":"4107","ort":"Ettingen","telefon":"+41 61 721 66 77","mobile":"+41 79 012 34 56","email":"k.baertschi@gmx.ch","bemerkungen":"Jung, zahlt bar","createdAt":"2024-06-01T08:00:00Z","updatedAt":"2024-06-01T08:00:00Z"},{"id":10,"vorname":"Nadia","nachname":"Rossetti","firma":"Rossetti Immobilien GmbH","strasse":"Lindenallee 12","plz":"4125","ort":"Riehen","telefon":"+41 61 641 88 00","mobile":"+41 76 123 45 67","email":"n.rossetti@rossetti-immo.ch","bemerkungen":"Firmenwagen, Rechnung auf Firma","createdAt":"2024-06-15T09:00:00Z","updatedAt":"2024-06-15T09:00:00Z"}],"fahrzeuge":[{"id":1,"kennzeichen":"BL123456","vin":"WVWZZZ1JZYW123456","typengenehmigung":"1AJ2 65","stammnummer":"123.456.789","marke":"VW","modell":"Golf 7","typ":"Comfortline","farbe":"Silber","erstzulassung":"2019-03-15","treibstoff":"benzin","getriebe":"manuell","km":"87500","kmDatum":"2026-04-29","motor":"1.4 TSI 125 PS","bemerkungen":"","kundeId":1,"createdAt":"2024-01-10T08:00:00Z","updatedAt":"2024-01-10T08:00:00Z"},{"id":2,"kennzeichen":"BL234567","vin":"WAUZZZ8K9AA234567","typengenehmigung":"1BK4 22","stammnummer":"234.567.890","marke":"Audi","modell":"A4 Avant","typ":"S-Line","farbe":"Schwarz","erstzulassung":"2017-06-08","treibstoff":"diesel","getriebe":"automat","km":"124000","kmDatum":"2026-04-29","motor":"2.0 TDI 150 PS","bemerkungen":"Zahnriemen gewechselt 2023","kundeId":1,"createdAt":"2024-01-10T08:10:00Z","updatedAt":"2024-01-10T08:10:00Z"},{"id":3,"kennzeichen":"BL345678","vin":"WBAFG61000L345678","typengenehmigung":"1CG8 53","stammnummer":"345.678.901","marke":"BMW","modell":"X5","typ":"xDrive20d","farbe":"Weiss","erstzulassung":"2020-09-22","treibstoff":"diesel","getriebe":"automat","km":"63200","kmDatum":"2026-04-29","motor":"2.0d 190 PS","bemerkungen":"Ersatzwagen bei Service","kundeId":2,"createdAt":"2024-02-15T09:00:00Z","updatedAt":"2024-02-15T09:00:00Z"},{"id":4,"kennzeichen":"BL456789","vin":"VF3YCTMFC12947331","typengenehmigung":"2AH3 11","stammnummer":"456.789.012","marke":"Peugeot","modell":"Boxer","typ":"335-130FL Nr. 1","farbe":"Weiss","erstzulassung":"2015-02-10","treibstoff":"diesel","getriebe":"manuell","km":"196072","kmDatum":"2026-04-29","motor":"2.2 HDI 130 PS","bemerkungen":"Hauptfahrzeug Frei Transporte","kundeId":3,"createdAt":"2024-03-01T10:00:00Z","updatedAt":"2024-03-01T10:00:00Z"},{"id":5,"kennzeichen":"BL567890","vin":"VF3YCTMFC12847220","typengenehmigung":"2AH3 11","stammnummer":"456.789.013","marke":"Peugeot","modell":"Boxer","typ":"335-130FL Nr. 2","farbe":"Weiss","erstzulassung":"2016-04-05","treibstoff":"diesel","getriebe":"manuell","km":"178400","kmDatum":"2026-04-29","motor":"2.2 HDI 130 PS","bemerkungen":"","kundeId":3,"createdAt":"2024-03-01T10:05:00Z","updatedAt":"2024-03-01T10:05:00Z"},{"id":6,"kennzeichen":"BL678901","vin":"TMBZZZ3VZ12678901","typengenehmigung":"1MJ2 65","stammnummer":"567.890.123","marke":"Skoda","modell":"Octavia","typ":"Ambition","farbe":"Graphit","erstzulassung":"2018-11-20","treibstoff":"benzin","getriebe":"manuell","km":"98300","kmDatum":"2026-04-29","motor":"1.5 TSI 150 PS","bemerkungen":"","kundeId":4,"createdAt":"2024-03-15T08:00:00Z","updatedAt":"2024-03-15T08:00:00Z"},{"id":7,"kennzeichen":"BL789012","vin":"WDB9066321S789012","typengenehmigung":"1CF8 68","stammnummer":"678.901.234","marke":"Mercedes","modell":"Sprinter","typ":"316 CDI","farbe":"Weiss","erstzulassung":"2021-01-14","treibstoff":"diesel","getriebe":"automat","km":"54700","kmDatum":"2026-04-29","motor":"2.1 CDI 163 PS","bemerkungen":"Reifenhotel Winter","kundeId":5,"createdAt":"2024-04-01T09:00:00Z","updatedAt":"2024-04-01T09:00:00Z"},{"id":8,"kennzeichen":"BL890123","vin":"JTDKN3DU0D3890123","typengenehmigung":"3AB5 44","stammnummer":"789.012.345","marke":"Toyota","modell":"Yaris","typ":"Sol","farbe":"Rot","erstzulassung":"2013-07-03","treibstoff":"hybrid","getriebe":"automat","km":"141200","kmDatum":"2026-04-29","motor":"1.5 Hybrid 100 PS","bemerkungen":"MFK Aug 2026","kundeId":6,"createdAt":"2024-04-10T08:00:00Z","updatedAt":"2024-04-10T08:00:00Z"},{"id":9,"kennzeichen":"BL901234","vin":"WAUZZZ4G0GN901234","typengenehmigung":"1BF6 29","stammnummer":"890.123.456","marke":"Audi","modell":"A3","typ":"Sport","farbe":"Blau","erstzulassung":"2016-09-18","treibstoff":"benzin","getriebe":"manuell","km":"112600","kmDatum":"2026-04-29","motor":"2.0 TFSI 190 PS","bemerkungen":"","kundeId":7,"createdAt":"2024-05-01T08:00:00Z","updatedAt":"2024-05-01T08:00:00Z"},{"id":10,"kennzeichen":"BL012345","vin":"WDF90700312012345","typengenehmigung":"1CH7 14","stammnummer":"901.234.567","marke":"Mercedes","modell":"Vito","typ":"116 CDI","farbe":"Silber","erstzulassung":"2019-05-27","treibstoff":"diesel","getriebe":"automat","km":"88900","kmDatum":"2026-04-29","motor":"2.1 CDI 163 PS","bemerkungen":"Reifenhotel belegt","kundeId":8,"createdAt":"2024-05-20T09:00:00Z","updatedAt":"2024-05-20T09:00:00Z"},{"id":11,"kennzeichen":"BL111222","vin":"WDF90700312011111","typengenehmigung":"1CH7 14","stammnummer":"901.234.568","marke":"Mercedes","modell":"Vito","typ":"114 CDI","farbe":"Silber","erstzulassung":"2019-08-12","treibstoff":"diesel","getriebe":"automat","km":"76300","kmDatum":"2026-04-29","motor":"2.1 CDI 136 PS","bemerkungen":"Reifenhotel belegt","kundeId":8,"createdAt":"2024-05-20T09:05:00Z","updatedAt":"2024-05-20T09:05:00Z"},{"id":12,"kennzeichen":"BL333444","vin":"WVWZZZ6RZHY333444","typengenehmigung":"1AK1 95","stammnummer":"012.345.678","marke":"VW","modell":"Polo","typ":"Highline","farbe":"Orange","erstzulassung":"2017-04-30","treibstoff":"benzin","getriebe":"manuell","km":"67800","kmDatum":"2026-04-29","motor":"1.0 TSI 95 PS","bemerkungen":"","kundeId":9,"createdAt":"2024-06-01T08:00:00Z","updatedAt":"2024-06-01T08:00:00Z"},{"id":13,"kennzeichen":"BL555666","vin":"W1KZF6BB2MA555666","typengenehmigung":"1CL9 77","stammnummer":"135.791.357","marke":"Mercedes","modell":"GLC 220d","typ":"AMG Line","farbe":"Schwarz","erstzulassung":"2021-03-08","treibstoff":"diesel","getriebe":"automat","km":"41300","kmDatum":"2026-04-29","motor":"2.0 CDI 194 PS","bemerkungen":"Firmenwagen","kundeId":10,"createdAt":"2024-06-15T09:00:00Z","updatedAt":"2024-06-15T09:00:00Z"}],"auftraege":[{"id":1,"kundeId":1,"fahrzeugId":1,"beschreibung":"Grosser Service inkl. Räder montieren","notizen":"Winterräder auf Sommerräder, Ölfilter, Luftfilter, Innenraumfilter wechseln","datum":"2026-04-10","status":"in_arbeit","geplantH":2.5,"ankunft":"08:15","abholung":"13:00","mfkZeit":"","mechanikerName":"Pascal Runser","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Grosser Service","menge":2,"preis":175,"zwischensumme":350}],"kosten":440,"zeiterfassung":[{"start":"2026-04-10T08:20:00.000Z","stop":"2026-04-10T10:45:00.000Z"},{"start":"2026-04-10T11:15:00.000Z"}],"checkliste":[{"id":1001,"text":"Ölstand prüfen","erledigt":true},{"id":1002,"text":"Reifendruck prüfen","erledigt":true},{"id":1003,"text":"Bremsen visuell prüfen","erledigt":false}],"mechFotos":[],"mechNotizen":"Bremsbeläge vorne ca. 40% — Kunde informiert","createdAt":"2026-04-10T07:00:00Z","updatedAt":"2026-04-10T11:15:00Z","material":[{"typ":"material","beschreibung":"Motoröl 5W-30 5L","menge":1,"preis":48,"zwischensumme":48},{"typ":"material","beschreibung":"Ölfilter VW","menge":1,"preis":18,"zwischensumme":18},{"typ":"material","beschreibung":"Luftfilter","menge":1,"preis":24,"zwischensumme":24}]},{"id":2,"kundeId":2,"fahrzeugId":3,"beschreibung":"MFK Bereitstellung inkl. Vorführung","notizen":"MFK 13:40 Uhr, Ersatzwagen BMW 320d ausgegeben","datum":"2026-04-10","status":"fakturiert","geplantH":3.0,"ankunft":"09:00","abholung":"15:00","mfkZeit":"13:40","mechanikerName":"Pascal Runser","ersatzwagen":true,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"MFK Bereitstellung / Vorführung","menge":1.5,"preis":175,"zwischensumme":262.5}],"kosten":307.5,"zeiterfassung":[{"start":"2026-04-10T09:05:00.000Z","stop":"2026-04-10T11:20:00.000Z"},{"start":"2026-04-10T12:00:00.000Z","stop":"2026-04-10T13:35:00.000Z"}],"checkliste":[{"id":2001,"text":"Lichttest komplett","erledigt":true},{"id":2002,"text":"Bremsen testen","erledigt":true},{"id":2003,"text":"Abgasmessung","erledigt":true},{"id":2004,"text":"Scheibenwaschanlage auffüllen","erledigt":true}],"mechFotos":[],"mechNotizen":"Alles bestanden, MFK bis 2027","createdAt":"2026-04-10T07:00:00Z","updatedAt":"2026-04-10T14:30:00Z","material":[{"typ":"material","beschreibung":"Abgastest / Gebühren","menge":1,"preis":45,"zwischensumme":45}]},{"id":3,"kundeId":3,"fahrzeugId":4,"beschreibung":"Reifen montieren (Sommerreifen)","notizen":"Kunde wartet vor Ort","datum":"2026-04-10","status":"offen","geplantH":1.0,"ankunft":"10:05","abholung":"","mfkZeit":"","mechanikerName":"Ruben Da Costa Ventura","ersatzwagen":false,"reifenhotel":true,"wartekunde":true,"positionen":[{"typ":"arbeit","beschreibung":"Räder montieren + auswuchten (4×)","menge":1,"preis":80,"zwischensumme":80}],"kosten":80,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-10T07:30:00Z","updatedAt":"2026-04-10T10:00:00Z","material":[]},{"id":4,"kundeId":3,"fahrzeugId":5,"beschreibung":"Schloss Hecktüre instandgestellt","notizen":"Schloss klemmt seit Wochen","datum":"2026-04-10","status":"erledigt","geplantH":1.5,"ankunft":"07:30","abholung":"11:00","mfkZeit":"","mechanikerName":"Ruben Da Costa Ventura","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Schloss Hecktüre instandgestellt","menge":2.5,"preis":175,"zwischensumme":437.5}],"kosten":452.5,"zeiterfassung":[{"start":"2026-04-10T07:35:00.000Z","stop":"2026-04-10T10:25:00.000Z"}],"checkliste":[{"id":4001,"text":"Funktion Schloss testen","erledigt":true},{"id":4002,"text":"Zentralverriegelung prüfen","erledigt":true}],"mechFotos":[],"mechNotizen":"Mechanismus war stark korrodiert, Austausch nötig — länger als geplant","createdAt":"2026-04-10T07:00:00Z","updatedAt":"2026-04-10T10:30:00Z","material":[{"typ":"material","beschreibung":"Klein- und Verbrauchsmaterial","menge":1,"preis":15,"zwischensumme":15}],"geloescht":true,"geloeschtAm":"2026-04-11T09:15:00Z","geloeschtVon":"Benutzer"},{"id":5,"kundeId":4,"fahrzeugId":6,"beschreibung":"Kleiner Service + Klimaservice","notizen":"","datum":"2026-04-10","status":"geplant","geplantH":2.0,"ankunft":"13:30","abholung":"17:00","mfkZeit":"","mechanikerName":"Cristian Conidi","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Kleiner Service","menge":1,"preis":175,"zwischensumme":175},{"typ":"arbeit","beschreibung":"Klimaservice (Kältemittel befüllen)","menge":0.5,"preis":175,"zwischensumme":87.5}],"kosten":330.5,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-10T07:00:00Z","updatedAt":"2026-04-10T07:00:00Z","material":[{"typ":"material","beschreibung":"Kältemittel R134a","menge":1,"preis":68,"zwischensumme":68}]},{"id":6,"kundeId":5,"fahrzeugId":7,"beschreibung":"Räder montieren (Sommerreifen) + Reifenhotel einlagern","notizen":"Winterräder ins Regal B-12","datum":"2026-04-10","status":"in_arbeit","geplantH":1.5,"ankunft":"11:00","abholung":"12:30","mfkZeit":"","mechanikerName":"Cristian Conidi","ersatzwagen":false,"reifenhotel":true,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Räder montieren + auswuchten (4×)","menge":1,"preis":80,"zwischensumme":80},{"typ":"arbeit","beschreibung":"Reifenhotel Einlagerung","menge":0.25,"preis":40,"zwischensumme":10}],"kosten":108,"zeiterfassung":[{"start":"2026-04-10T11:05:00.000Z"}],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-10T07:00:00Z","updatedAt":"2026-04-10T11:05:00Z","material":[{"typ":"material","beschreibung":"Ventile ersetzen","menge":4,"preis":4.5,"zwischensumme":18}]},{"id":7,"kundeId":6,"fahrzeugId":8,"beschreibung":"Bremsbeläge vorne + hinten ersetzen","notizen":"MFK in 4 Monaten — Zustand kritisch","datum":"2026-04-10","status":"offen","geplantH":2.5,"ankunft":"14:00","abholung":"17:00","mfkZeit":"","mechanikerName":"Pascal Runser","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Bremsbeläge vorne ersetzen","menge":1,"preis":175,"zwischensumme":175},{"typ":"arbeit","beschreibung":"Bremsbeläge hinten ersetzen","menge":0.75,"preis":175,"zwischensumme":131.25}],"kosten":463.25,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-10T07:00:00Z","updatedAt":"2026-04-10T07:00:00Z","material":[{"typ":"material","beschreibung":"Bremsbeläge vorne (Satz)","menge":1,"preis":85,"zwischensumme":85},{"typ":"material","beschreibung":"Bremsbeläge hinten (Satz)","menge":1,"preis":72,"zwischensumme":72}]},{"id":8,"kundeId":7,"fahrzeugId":9,"beschreibung":"Diagnose Motorleuchte / Fehlerspeicher auslesen","notizen":"Leuchte seit gestern an","datum":"2026-04-10","status":"erledigt","geplantH":1.0,"ankunft":"08:30","abholung":"10:00","mfkZeit":"","mechanikerName":"Ruben Da Costa Ventura","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Diagnose / Fehlerspeicher auslesen","menge":0.5,"preis":175,"zwischensumme":87.5}],"kosten":87.5,"zeiterfassung":[{"start":"2026-04-10T08:35:00.000Z","stop":"2026-04-10T09:20:00.000Z"}],"checkliste":[{"id":8001,"text":"Fehlercodes notieren","erledigt":true},{"id":8002,"text":"Kostenvoranschlag erstellen","erledigt":false}],"mechFotos":[],"mechNotizen":"Code P0420 — Katalysator Effizienz. Offerte für Austausch erstellen.","createdAt":"2026-04-10T07:00:00Z","updatedAt":"2026-04-10T09:25:00Z","material":[]},{"id":9,"kundeId":8,"fahrzeugId":10,"beschreibung":"Kleiner Service + Räder montieren","notizen":"Sommerreifen aus Reifenhotel Regal C-04","datum":"2026-04-10","status":"erledigt","geplantH":2.0,"ankunft":"07:00","abholung":"09:30","mfkZeit":"","mechanikerName":"Cristian Conidi","ersatzwagen":false,"reifenhotel":true,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Kleiner Service","menge":1,"preis":175,"zwischensumme":175},{"typ":"arbeit","beschreibung":"Räder montieren (4×)","menge":0.75,"preis":80,"zwischensumme":60}],"kosten":290,"zeiterfassung":[{"start":"2026-04-10T07:05:00.000Z","stop":"2026-04-10T09:10:00.000Z"}],"checkliste":[{"id":9001,"text":"Ölstand OK","erledigt":true},{"id":9002,"text":"Reifendruck gesetzt","erledigt":true}],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-10T07:00:00Z","updatedAt":"2026-04-10T09:15:00Z","material":[{"typ":"material","beschreibung":"Motoröl 5W-30 6L","menge":1,"preis":55,"zwischensumme":55}]},{"id":10,"kundeId":9,"fahrzeugId":12,"beschreibung":"Beleuchtung vorne rechts ersetzen","notizen":"Abblendlicht und Tagfahrlicht defekt","datum":"2026-04-10","status":"erledigt","geplantH":0.5,"ankunft":"09:30","abholung":"10:30","mfkZeit":"","mechanikerName":"Pascal Runser","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Beleuchtung vorne rechts — Abblendlicht ersetzt","menge":0.25,"preis":175,"zwischensumme":43.75}],"kosten":61.75,"zeiterfassung":[{"start":"2026-04-10T09:35:00.000Z","stop":"2026-04-10T09:55:00.000Z"}],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-10T07:00:00Z","updatedAt":"2026-04-10T10:00:00Z","material":[{"typ":"material","beschreibung":"Scheinwerferlampe H7","menge":1,"preis":18,"zwischensumme":18}],"geloescht":true,"geloeschtAm":"2026-04-10T18:05:00Z","geloeschtVon":"Benutzer"},{"id":11,"kundeId":10,"fahrzeugId":13,"beschreibung":"Grosser Service inkl. Inspektion","notizen":"Ersatzwagen GLA 200 ausgegeben","datum":"2026-04-10","status":"geplant","geplantH":3.5,"ankunft":"08:00","abholung":"16:30","mfkZeit":"","mechanikerName":"Ruben Da Costa Ventura","ersatzwagen":true,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Grosser Service / Inspektion","menge":2.5,"preis":175,"zwischensumme":437.5}],"kosten":593.5,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-10T07:00:00Z","updatedAt":"2026-04-10T07:00:00Z","material":[{"typ":"material","beschreibung":"Motoröl 5W-40 Longlife 6L","menge":1,"preis":72,"zwischensumme":72},{"typ":"material","beschreibung":"Ölfilter MB","menge":1,"preis":28,"zwischensumme":28},{"typ":"material","beschreibung":"Luftfilter MB","menge":1,"preis":34,"zwischensumme":34},{"typ":"material","beschreibung":"Pollenfilter MB","menge":1,"preis":22,"zwischensumme":22}]},{"id":12,"kundeId":null,"fahrzeugId":null,"beschreibung":"TO-DO: Abfallcontainer auf Strasse stellen (Entsorgung morgen früh)","notizen":"Vorabend bis 20:00","datum":"2026-04-10","status":"offen","geplantH":0.17,"ankunft":"Ganztags","abholung":"","mfkZeit":"","mechanikerName":"Cristian Conidi","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[],"kosten":0,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-10T07:00:00Z","updatedAt":"2026-04-10T07:00:00Z","material":[],"geloescht":true,"geloeschtAm":"2026-04-10T19:45:00Z","geloeschtVon":"Benutzer"},{"id":13,"kundeId":7,"fahrzeugId":9,"beschreibung":"Sommerreifen montieren","notizen":"Reifen im Reifenhotel, Regal A-03","datum":"","status":"offen","geplantH":1.0,"ankunft":"","abholung":"","mfkZeit":"","mechanikerName":"","ersatzwagen":false,"reifenhotel":true,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Räder montieren + auswuchten (4×)","menge":1,"preis":80,"zwischensumme":80}],"material":[],"kosten":80,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-08T14:30:00Z","updatedAt":"2026-04-08T14:30:00Z"},{"id":14,"kundeId":9,"fahrzeugId":12,"beschreibung":"Offerte Zahnriemenwechsel","notizen":"Kunde meldet sich für Terminvereinbarung","datum":"","status":"offerte","geplantH":3.0,"ankunft":"","abholung":"","mfkZeit":"","mechanikerName":"","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Zahnriemen + Wasserpumpe wechseln","menge":3,"preis":175,"zwischensumme":525}],"material":[{"typ":"material","beschreibung":"Zahnriemensatz VW","menge":1,"preis":145,"zwischensumme":145},{"typ":"material","beschreibung":"Wasserpumpe","menge":1,"preis":88,"zwischensumme":88}],"kosten":758,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-05T09:15:00Z","updatedAt":"2026-04-05T09:15:00Z"},{"id":15,"kundeId":6,"fahrzeugId":8,"beschreibung":"Winterreifen einlagern","notizen":"","datum":"","status":"offen","geplantH":0.5,"ankunft":"","abholung":"","mfkZeit":"","mechanikerName":"","ersatzwagen":false,"reifenhotel":true,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Reifenhotel Einlagerung","menge":1,"preis":40,"zwischensumme":40}],"material":[],"kosten":40,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-10T10:00:00Z","updatedAt":"2026-04-10T10:00:00Z"},{"id":16,"kundeId":1,"fahrzeugId":2,"beschreibung":"Zahnriemen + Wasserpumpe wechseln","notizen":"","datum":"2026-04-14","status":"geplant","geplantH":6.0,"ankunft":"07:00","abholung":"12:00","mechanikerName":"Pascal Runser","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Zahnriemen + Wasserpumpe","menge":4,"preis":175,"zwischensumme":700}],"material":[{"typ":"material","beschreibung":"Zahnriemensatz Audi","menge":1,"preis":165,"zwischensumme":165},{"typ":"material","beschreibung":"Wasserpumpe","menge":1,"preis":92,"zwischensumme":92}],"diverses":[],"kosten":957,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-13T08:00:00Z","updatedAt":"2026-04-13T08:00:00Z"},{"id":17,"kundeId":3,"fahrzeugId":4,"beschreibung":"Grosser Service Boxer","notizen":"Flottenvertrag","datum":"2026-04-14","status":"geplant","geplantH":3.5,"ankunft":"07:30","abholung":"13:00","mechanikerName":"Ruben Da Costa Ventura","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Grosser Service","menge":3.5,"preis":175,"zwischensumme":612.5}],"material":[{"typ":"material","beschreibung":"Motoröl 5W-30 7L","menge":1,"preis":62,"zwischensumme":62},{"typ":"material","beschreibung":"Ölfilter Peugeot","menge":1,"preis":22,"zwischensumme":22}],"diverses":[],"kosten":696.5,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-13T08:00:00Z","updatedAt":"2026-04-13T08:00:00Z"},{"id":18,"kundeId":5,"fahrzeugId":7,"beschreibung":"Bremsen vorne + hinten erneuern","notizen":"Sprinter Flottenfahrzeug","datum":"2026-04-14","status":"geplant","geplantH":5.0,"ankunft":"07:00","abholung":"13:30","mechanikerName":"Ammar Demir","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Bremsen vorne + hinten","menge":3.5,"preis":175,"zwischensumme":612.5}],"material":[{"typ":"material","beschreibung":"Bremsbeläge vorne","menge":1,"preis":95,"zwischensumme":95},{"typ":"material","beschreibung":"Bremsbeläge hinten","menge":1,"preis":85,"zwischensumme":85},{"typ":"material","beschreibung":"Bremsscheiben vorne","menge":2,"preis":78,"zwischensumme":156}],"diverses":[],"kosten":948.5,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-13T08:00:00Z","updatedAt":"2026-04-13T08:00:00Z"},{"id":19,"kundeId":8,"fahrzeugId":11,"beschreibung":"Service + Räder montieren Vito 2","notizen":"Reifenhotel Regal C-05","datum":"2026-04-14","status":"geplant","geplantH":2.5,"ankunft":"08:00","abholung":"11:30","mechanikerName":"Cristian Conidi","ersatzwagen":false,"reifenhotel":true,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Kleiner Service","menge":1,"preis":175,"zwischensumme":175},{"typ":"arbeit","beschreibung":"Räder montieren (4×)","menge":1,"preis":80,"zwischensumme":80}],"material":[{"typ":"material","beschreibung":"Motoröl 5W-30 6L","menge":1,"preis":55,"zwischensumme":55}],"diverses":[],"kosten":310,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-13T08:00:00Z","updatedAt":"2026-04-13T08:00:00Z"},{"id":20,"kundeId":6,"fahrzeugId":8,"beschreibung":"Stossdämpfer hinten ersetzen","notizen":"","datum":"2026-04-14","status":"geplant","geplantH":4.0,"ankunft":"13:00","abholung":"17:00","mechanikerName":"Pascal Runser","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Stossdämpfer hinten (2×)","menge":3,"preis":175,"zwischensumme":525}],"material":[{"typ":"material","beschreibung":"Stossdämpfer hinten (Paar)","menge":1,"preis":185,"zwischensumme":185}],"diverses":[],"kosten":710,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-13T08:00:00Z","updatedAt":"2026-04-13T08:00:00Z"},{"id":21,"kundeId":4,"fahrzeugId":6,"beschreibung":"Klimaanlage Service + Nachfüllen","notizen":"","datum":"2026-04-14","status":"geplant","geplantH":2.0,"ankunft":"13:30","abholung":"16:00","mechanikerName":"Ruben Da Costa Ventura","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Klimaservice","menge":1.5,"preis":175,"zwischensumme":262.5}],"material":[{"typ":"material","beschreibung":"Kältemittel R134a","menge":1,"preis":68,"zwischensumme":68}],"diverses":[],"kosten":330.5,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-13T08:00:00Z","updatedAt":"2026-04-13T08:00:00Z"},{"id":22,"kundeId":7,"fahrzeugId":9,"beschreibung":"Sommerreifen montieren","notizen":"Reifen aus Reifenhotel A-03","datum":"2026-04-14","status":"geplant","geplantH":1.0,"ankunft":"14:00","abholung":"15:30","mechanikerName":"Ammar Demir","ersatzwagen":false,"reifenhotel":true,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Räder montieren + auswuchten","menge":1,"preis":80,"zwischensumme":80}],"material":[],"diverses":[],"kosten":80,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-13T08:00:00Z","updatedAt":"2026-04-13T08:00:00Z"},{"id":23,"kundeId":2,"fahrzeugId":3,"beschreibung":"Inspektion + Ölwechsel BMW X5","notizen":"Wartekunde","datum":"2026-04-14","status":"geplant","geplantH":2.5,"ankunft":"09:00","abholung":"12:00","mechanikerName":"Cristian Conidi","ersatzwagen":false,"reifenhotel":false,"wartekunde":true,"positionen":[{"typ":"arbeit","beschreibung":"Inspektion + Ölwechsel","menge":2.5,"preis":175,"zwischensumme":437.5}],"material":[{"typ":"material","beschreibung":"Motoröl 5W-30 7L","menge":1,"preis":62,"zwischensumme":62}],"diverses":[],"kosten":499.5,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-13T08:00:00Z","updatedAt":"2026-04-13T08:00:00Z"},{"id":24,"kundeId":9,"fahrzeugId":12,"beschreibung":"Zahnriemenwechsel VW Polo","notizen":"Offerte genehmigt","datum":"2026-04-16","status":"geplant","geplantH":5.0,"ankunft":"07:00","abholung":"13:00","mechanikerName":"Pascal Runser","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Zahnriemen + Wasserpumpe","menge":4,"preis":175,"zwischensumme":700}],"material":[{"typ":"material","beschreibung":"Zahnriemensatz VW","menge":1,"preis":145,"zwischensumme":145},{"typ":"material","beschreibung":"Wasserpumpe","menge":1,"preis":88,"zwischensumme":88}],"diverses":[],"kosten":933,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-14T09:00:00Z","updatedAt":"2026-04-14T09:00:00Z"},{"id":25,"kundeId":10,"fahrzeugId":13,"beschreibung":"Räder montieren Sommerreifen GLC","notizen":"","datum":"2026-04-16","status":"geplant","geplantH":1.5,"ankunft":"08:00","abholung":"10:00","mechanikerName":"Ruben Da Costa Ventura","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Räder montieren (4×)","menge":1,"preis":80,"zwischensumme":80}],"material":[],"diverses":[],"kosten":80,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-14T09:00:00Z","updatedAt":"2026-04-14T09:00:00Z"},{"id":26,"kundeId":1,"fahrzeugId":1,"beschreibung":"Abgastest + kleine Inspektion Golf","notizen":"Wartekunde","datum":"2026-04-16","status":"geplant","geplantH":3.0,"ankunft":"10:00","abholung":"13:00","mechanikerName":"Ammar Demir","ersatzwagen":false,"reifenhotel":false,"wartekunde":true,"positionen":[{"typ":"arbeit","beschreibung":"Kleine Inspektion","menge":2,"preis":175,"zwischensumme":350}],"material":[{"typ":"material","beschreibung":"Luftfilter VW","menge":1,"preis":24,"zwischensumme":24}],"diverses":[],"kosten":374,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-14T09:00:00Z","updatedAt":"2026-04-14T09:00:00Z"},{"id":27,"kundeId":3,"fahrzeugId":5,"beschreibung":"Stossdämpfer vorne Boxer 2","notizen":"","datum":"2026-04-16","status":"geplant","geplantH":3.5,"ankunft":"13:00","abholung":"16:30","mechanikerName":"Ruben Da Costa Ventura","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Stossdämpfer vorne (2×)","menge":2.5,"preis":175,"zwischensumme":437.5}],"material":[{"typ":"material","beschreibung":"Stossdämpfer vorne (Paar)","menge":1,"preis":175,"zwischensumme":175}],"diverses":[],"kosten":612.5,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-14T09:00:00Z","updatedAt":"2026-04-14T09:00:00Z"},{"id":28,"kundeId":4,"fahrzeugId":6,"beschreibung":"Bremsflüssigkeit wechseln Octavia","notizen":"","datum":"2026-04-16","status":"geplant","geplantH":1.0,"ankunft":"14:00","abholung":"15:30","mechanikerName":"Cristian Conidi","ersatzwagen":false,"reifenhotel":false,"wartekunde":false,"positionen":[{"typ":"arbeit","beschreibung":"Bremsflüssigkeit wechseln","menge":1,"preis":85,"zwischensumme":85}],"material":[{"typ":"material","beschreibung":"Bremsflüssigkeit DOT 4 1L","menge":1,"preis":25,"zwischensumme":25}],"diverses":[],"kosten":110,"zeiterfassung":[],"checkliste":[],"mechFotos":[],"mechNotizen":"","createdAt":"2026-04-14T09:00:00Z","updatedAt":"2026-04-14T09:00:00Z"}],"rechnungen":[],"_c":{"k":10,"f":13,"a":28,"r":0}};
 function loadDemoData() {
+  if (typeof ahSyncUsesCloud==='function' && ahSyncUsesCloud()) {showToast('Demo-Daten können im gemeinsamen Bestand nicht geladen werden.','warning');return;}
   try {
     db.kunden = DEMO_DATA.kunden.concat([
       {"id":11,"vorname":"Hans","nachname":"Gerber","firma":"","strasse":"Dorfstrasse 8","plz":"4106","ort":"Therwil","telefon":"+41 61 721 11 22","mobile":"+41 79 111 22 33","email":"h.gerber@bluewin.ch","bemerkungen":"Weggezogen nach Bern","status":"inaktiv","createdAt":"2022-03-01T08:00:00Z","updatedAt":"2025-01-15T10:00:00Z"},
@@ -25633,6 +25998,411 @@ renderMitarbeiter();
     </div>
   </div>
 
+<!-- Gemeinsamer Werkstattbestand: keine administrativen Zugangsdaten im Browser. -->
+<script id="ah-workshop-sync">
+const AH_SYNC = {
+  phase:'local',garage:null,actor:null,epoch:0,server:null,revision:-1,saved:null,
+  outbox:[],blocks:{},pump:null,fetching:null,channel:null,poll:null,retry:null,
+  conflict:false,error:'',clockOffset:0,timeBusy:false,importData:null,reserving:null,
+  people:[],persist:Promise.resolve(),storageError:false
+};
+const AH_SYNC_KINDS = ['kunden','fahrzeuge','auftraege','mitarbeiter'];
+const ahSyncCopy = value => JSON.parse(JSON.stringify(value));
+function ahSyncUuid() { return crypto.randomUUID(); }
+function ahSyncUsesCloud() { return AH_SYNC.phase !== 'local' || (typeof CURRENT_USER !== 'undefined' && !!CURRENT_USER); }
+function ahSyncNow() { return Date.now() + (AH_SYNC.phase === 'ready' ? AH_SYNC.clockOffset : 0); }
+function ahSyncCacheKey() { return 'ah_cloud_v1:'+AH_SYNC.garage; }
+function ahSyncTabId() {
+  let id=sessionStorage.getItem('ah_sync_tab');
+  if (!id) { id=ahSyncUuid(); sessionStorage.setItem('ah_sync_tab',id); }
+  return id;
+}
+function ahSyncOutboxKey() { return 'ah_cloud_outbox_v1:'+AH_SYNC.garage+':'+AH_SYNC.actor; }
+function ahSyncPersonnel() { return AH_SYNC.phase==='ready'?ahSyncCopy(AH_SYNC.people):null; }
+let ahSyncStoragePromise=null;
+function ahSyncStorage() {
+  if (!ahSyncStoragePromise) ahSyncStoragePromise=new Promise((resolve,reject)=>{
+    const request=indexedDB.open('autohelfer-workshop-v1',1);
+    request.onupgradeneeded=()=>request.result.createObjectStore('state');
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(new Error('AH_STORAGE_UNAVAILABLE'));
+    request.onblocked=()=>reject(new Error('AH_STORAGE_UNAVAILABLE'));
+  }).catch(error=>{ahSyncStoragePromise=null;throw error;});
+  return ahSyncStoragePromise;
+}
+async function ahSyncRead(key) {
+  const database=await ahSyncStorage();
+  return new Promise((resolve,reject)=>{
+    const transaction=database.transaction('state','readonly');
+    const request=transaction.objectStore('state').get(key);
+    transaction.oncomplete=()=>resolve(request.result);
+    transaction.onabort=()=>reject(new Error('AH_STORAGE_UNAVAILABLE'));
+  });
+}
+async function ahSyncWrite(key,update) {
+  const database=await ahSyncStorage();
+  return new Promise((resolve,reject)=>{
+    const transaction=database.transaction('state','readwrite'),store=transaction.objectStore('state');
+    let value;
+    const request=store.get(key);
+    request.onsuccess=()=>{value=update(request.result);store.put(value,key);};
+    transaction.oncomplete=()=>resolve(value);
+    transaction.onabort=()=>reject(new Error('AH_STORAGE_UNAVAILABLE'));
+  });
+}
+function ahSyncPersist(job) {
+  const epoch=AH_SYNC.epoch;
+  AH_SYNC.persist=AH_SYNC.persist.catch(()=>{}).then(job).then(value=>{
+    if(epoch===AH_SYNC.epoch)AH_SYNC.storageError=false;return value;
+  }).catch(error=>{
+    if(epoch===AH_SYNC.epoch){AH_SYNC.storageError=true;ahSyncRenderStatus();}
+    throw error;
+  });
+  void AH_SYNC.persist.catch(()=>{});
+  return AH_SYNC.persist;
+}
+function ahSyncMergeRequests(a,b) { return [...new Map([...a,...b].map(request=>[request.id,request])).values()]; }
+function ahSyncCacheApp() {
+  const key=ahSyncCacheKey(),cache={app:ahSyncCopy(db),people:ahSyncCopy(AH_SYNC.people)};
+  return ahSyncPersist(()=>ahSyncWrite(key,()=>cache));
+}
+function ahSyncStable(value) {
+  if (Array.isArray(value)) return value.map(ahSyncStable);
+  if (value && typeof value==='object') return Object.fromEntries(Object.keys(value).sort().filter(k=>value[k]!==undefined).map(k=>[k,ahSyncStable(value[k])]));
+  return value;
+}
+function ahSyncEqual(a,b) { return JSON.stringify(ahSyncStable(a)) === JSON.stringify(ahSyncStable(b)); }
+function ahSyncBusiness(record,kind) {
+  if (!record) return null;
+  const copy=ahSyncCopy(record);
+  delete copy.updatedAt;
+  if (kind==='auftraege') { delete copy.zeiterfassung; delete copy.zeitPause; }
+  return copy;
+}
+function ahSyncCapture(source=db,personnel=null) {
+  return {kunden:ahSyncCopy(source.kunden||[]),fahrzeuge:ahSyncCopy(source.fahrzeuge||[]),
+    auftraege:ahSyncCopy(source.auftraege||[]),mitarbeiter:ahSyncCopy(personnel===null?loadMitarbeiter():personnel),_c:ahSyncCopy(source._c||{})};
+}
+function ahSyncDiff(before,after) {
+  const operations=[];
+  for (const kind of AH_SYNC_KINDS) {
+    const old=new Map((before[kind]||[]).map(row=>[String(row.id),row]));
+    const current=new Map((after[kind]||[]).map(row=>[String(row.id),row]));
+    for (const key of new Set([...old.keys(),...current.keys()])) {
+      const a=ahSyncBusiness(old.get(key),kind),b=ahSyncBusiness(current.get(key),kind);
+      if (!ahSyncEqual(a,b)) operations.push({kind,id:Number(key),before:a,after:b});
+    }
+  }
+  return operations;
+}
+function ahSyncOverlay(snapshot,requests) {
+  const result=ahSyncCopy(snapshot);
+  for (const request of requests) for (const op of request.operations) {
+    const rows=result[op.kind];
+    const index=rows.findIndex(row=>String(row.id)===String(op.id));
+    const current=index>=0?rows[index]:null;
+    if (!op.after) {
+      // Laufende Arbeit bleibt bis zur bestaetigten Serverantwort sichtbar.
+      if (current && !(op.kind==='auftraege' && (current.zeiterfassung||[]).some(s=>!s.stop))) rows.splice(index,1);
+      continue;
+    }
+    let merged=current?ahSyncCopy(current):{};
+    for (const key of new Set([...Object.keys(op.before||{}),...Object.keys(op.after)])) {
+      if (ahSyncEqual((op.before||{})[key],op.after[key])) continue;
+      if (op.kind==='auftraege' && current && (key==='mechanikerName' || key==='status' && !['offen','geplant','in_arbeit'].includes(op.after[key]))) continue;
+      if (Object.prototype.hasOwnProperty.call(op.after,key)) merged[key]=ahSyncCopy(op.after[key]); else delete merged[key];
+    }
+    if (op.kind==='auftraege' && !current) merged.zeiterfassung=[];
+    if (index>=0) rows[index]=merged; else rows.push(merged);
+  }
+  return result;
+}
+function ahSyncReplaceRows(existing,incoming) {
+  const old=new Map(existing.map(row=>[String(row.id),row]));
+  return incoming.map(row=>{
+    const target=old.get(String(row.id));
+    if (!target) return ahSyncCopy(row);
+    Object.keys(target).forEach(key=>{if(!Object.prototype.hasOwnProperty.call(row,key))delete target[key];});
+    Object.assign(target,ahSyncCopy(row));
+    return target;
+  });
+}
+function ahSyncApply(snapshot) {
+  if (!snapshot) return;
+  if (snapshot.revision<AH_SYNC.revision) snapshot={revision:AH_SYNC.revision,data:AH_SYNC.server};
+  const key=snapshot.revision+':'+AH_SYNC.outbox.map(r=>r.id).join(',');
+  if (key===AH_SYNC.appliedKey) {ahSyncRenderStatus();return;}
+  AH_SYNC.appliedKey=key;
+  AH_SYNC.server=ahSyncCopy(snapshot.data);
+  AH_SYNC.revision=snapshot.revision;
+  const merged=ahSyncOverlay(snapshot.data,AH_SYNC.outbox);
+  const previousTime=_mfsAuftragId==null?'':JSON.stringify(db.auftraege.find(a=>a.id===_mfsAuftragId));
+  for (const kind of ['kunden','fahrzeuge','auftraege']) db[kind]=ahSyncReplaceRows(db[kind]||[],merged[kind]||[]);
+  db._c=Object.assign(db._c||{},merged._c||{});
+  AH_SYNC.people=ahSyncCopy(merged.mitarbeiter||[]);
+  void ahSyncCacheApp();
+  AH_SYNC.saved=ahSyncCapture(db,merged.mitarbeiter||[]);
+  renderDashboardWerkstatt();
+  const active=document.querySelector('.page.active');
+  if (active && active.id==='page-mechaniker') renderMechanik();
+  if (active && active.id==='page-auftraege') renderAuftraege();
+  if (active && active.id==='page-kunden') renderKunden();
+  if (active && active.id==='page-fahrzeuge') renderFahrzeuge();
+  if (_mfsAuftragId!=null && previousTime!==JSON.stringify(db.auftraege.find(a=>a.id===_mfsAuftragId))) {
+    const focused=document.activeElement;
+    if (!focused || !focused.closest('#mech-fullscreen input,#mech-fullscreen textarea,#mech-fullscreen select')) mfsRender(_mfsAuftragId);
+    else AH_SYNC.pendingMfsId=_mfsAuftragId;
+  }
+  ahSyncRenderStatus();
+}
+function ahSyncStatusText() {
+  if (!ahSyncUsesCloud()) return 'Daten dieses Geräts';
+  if (AH_SYNC.phase!=='ready') return 'Gemeinsamer Bestand wird verbunden';
+  if (AH_SYNC.conflict) return 'Änderungskonflikt – Prüfung nötig';
+  if (AH_SYNC.storageError) return 'Lokaler Zwischenspeicher nicht verfügbar';
+  if (AH_SYNC.error) return 'Verbindung unterbrochen';
+  return AH_SYNC.outbox.length?'Änderungen werden gespeichert':'Gemeinsamer Werkstattbestand';
+}
+function ahSyncRenderStatus() {
+  const banner=el('ah-sync-status');
+  if (!banner) return;
+  banner.hidden=!ahSyncUsesCloud();
+  const message=AH_SYNC.conflict?'Eine Änderung überschneidet sich mit einem anderen Gerät. Deine Änderungen bleiben gesichert.':AH_SYNC.storageError?'Der lokale Zwischenspeicher ist nicht verfügbar. Offene Änderungen sind noch nicht bestätigt.':AH_SYNC.error||ahSyncStatusText();
+  banner.innerHTML='<span>'+esc(message)+'</span>'+(AH_SYNC.conflict?'<button type="button" onclick="ahSyncResolveConflict()">Änderungen sichern und Serverstand laden</button>':AH_SYNC.error||AH_SYNC.storageError?'<button type="button" onclick="ahSyncRetry()">Erneut verbinden</button>':'');
+}
+async function ahSyncRpc(name,args={}) {
+  const epoch=AH_SYNC.epoch,started=Date.now();
+  const result=await _sb.rpc(name,args);
+  if (epoch!==AH_SYNC.epoch) throw new Error('AH_SESSION_CHANGED');
+  if (result.error) throw Object.assign(new Error(result.error.message||'Verbindung fehlgeschlagen'),{code:result.error.code});
+  if (result.data && result.data.serverTime) AH_SYNC.clockOffset=Date.parse(result.data.serverTime)-(started+Date.now())/2;
+  return result.data;
+}
+function ahSyncMessage(error) {
+  const text=String(error.message||error);
+  if (/AH_PROFILE_REQUIRED/.test(text)) return 'Deinem Benutzer fehlt die Zuordnung zur Garage. Bitte bei der Geschäftsführung melden.';
+  if (/AH_OWN_ORDER_REQUIRED|AH_ADMIN_REQUIRED|42501/.test(text)) return 'Diese Änderung ist für deinen Benutzer nicht freigegeben.';
+  if (/AH_OTHER_MECHANIC_ACTIVE/.test(text)) return 'Der Auftrag läuft bei einem anderen Mechaniker. Bitte zuerst weitergeben.';
+  if (/AH_ORDER_CLOSED/.test(text)) return 'Dieser Auftrag ist bereits abgeschlossen. Der aktuelle Stand wurde geladen.';
+  if (/AH_CONFLICT/.test(text)) return 'Der Auftrag wurde auf einem anderen Gerät geändert. Bitte den aktuellen Stand prüfen.';
+  if (/AH_MECHANIC_REQUIRED/.test(text)) return 'Bitte zuerst einen Mechaniker zuordnen.';
+  if (/AH_INVALID_SESSION|AH_DUPLICATE_IMPORT_ID/.test(text)) return 'Der lokale Bestand enthält uneindeutige IDs oder Zeitbuchungen. Er wurde nicht verändert.';
+  return 'Der gemeinsame Werkstattbestand ist momentan nicht erreichbar. Stempelungen bleiben unverändert.';
+}
+function ahSyncSaveLocal(personnel=null) {
+  if (AH_SYNC.phase!=='ready') { showToast('Der gemeinsame Bestand ist noch nicht bereit.','warning'); return false; }
+  const desired=ahSyncCapture(db,personnel);
+  const operations=ahSyncDiff(AH_SYNC.saved,desired);
+  const requests=[];
+  for (let i=0;i<operations.length;i+=200) requests.push({id:ahSyncUuid(),operations:operations.slice(i,i+200)});
+  const queue=[...AH_SYNC.outbox,...requests],queueKey=ahSyncOutboxKey();
+  AH_SYNC.outbox=queue;
+  const durable=ahSyncCopy(requests);
+  void ahSyncPersist(()=>ahSyncWrite(queueKey,previous=>ahSyncMergeRequests(previous||[],durable)));
+  ahSyncApply({revision:AH_SYNC.revision,data:AH_SYNC.server});
+  if (!operations.length) void ahSyncCacheApp();
+  document.dispatchEvent(new Event('ah-zeitstand-gespeichert'));
+  void ahSyncFlush().catch(()=>{});
+  return true;
+}
+async function ahSyncFlush() {
+  if (AH_SYNC.pump) return AH_SYNC.pump;
+  if (AH_SYNC.conflict) throw new Error('AH_CONFLICT');
+  const epoch=AH_SYNC.epoch;
+  AH_SYNC.pump=(async()=>{
+    while (true) {
+      const pending=AH_SYNC.persist;
+      await pending;
+      if(epoch!==AH_SYNC.epoch)return;
+      const queueKey=ahSyncOutboxKey(),queue=await ahSyncRead(queueKey)||[];
+      if(epoch!==AH_SYNC.epoch)return;
+      if(!queue.length){
+        if(pending!==AH_SYNC.persist)continue;
+        AH_SYNC.outbox=[];break;
+      }
+      AH_SYNC.outbox=ahSyncMergeRequests(queue,AH_SYNC.outbox);
+      const request=queue[0];
+      const snapshot=await ahSyncRpc('ah_workshop_patch',{p_request_id:request.id,p_operations:request.operations});
+      if (epoch!==AH_SYNC.epoch) return;
+      await ahSyncPersist(()=>ahSyncWrite(queueKey,previous=>(previous||[]).filter(item=>item.id!==request.id)));
+      if(epoch!==AH_SYNC.epoch)return;
+      AH_SYNC.outbox=AH_SYNC.outbox.filter(item=>item.id!==request.id);
+      AH_SYNC.error=''; ahSyncApply(snapshot);
+    }
+  })().catch(error=>{
+    if (epoch!==AH_SYNC.epoch) return;
+    AH_SYNC.conflict=/AH_CONFLICT|AH_ID_NOT_RESERVED/.test(error.message||'');
+    AH_SYNC.error=ahSyncMessage(error); ahSyncRenderStatus();
+    throw error;
+  }).finally(()=>{if(epoch===AH_SYNC.epoch)AH_SYNC.pump=null;});
+  return AH_SYNC.pump;
+}
+async function ahSyncRefresh() {
+  if (AH_SYNC.fetching) return AH_SYNC.fetching;
+  if (AH_SYNC.phase!=='ready') return;
+  const epoch=AH_SYNC.epoch;
+  AH_SYNC.fetching=(async()=>{
+    const snapshot=await ahSyncRpc('ah_workshop_snapshot');
+    if (epoch!==AH_SYNC.epoch) return;
+    if (snapshot) { if(!AH_SYNC.conflict)AH_SYNC.error=''; ahSyncApply(snapshot); }
+  })().catch(error=>{if(epoch===AH_SYNC.epoch){AH_SYNC.error=ahSyncMessage(error);ahSyncRenderStatus();}})
+    .finally(()=>{if(epoch===AH_SYNC.epoch)AH_SYNC.fetching=null;});
+  return AH_SYNC.fetching;
+}
+async function ahSyncReserve() {
+  if (AH_SYNC.reserving) return AH_SYNC.reserving;
+  const epoch=AH_SYNC.epoch;
+  AH_SYNC.reserving=ahSyncRpc('ah_workshop_reserve_ids',{p_request_id:ahSyncUuid(),p_size:16}).then(blocks=>{
+    // Jeder Tab erhaelt eigene Nummernbloecke. Nie in localStorage teilen.
+    for (const key of Object.keys(blocks)) {
+      if (!AH_SYNC.blocks[key] || AH_SYNC.blocks[key].next>AH_SYNC.blocks[key].end) AH_SYNC.blocks[key]=blocks[key];
+      else AH_SYNC.blocks[key].reserve=blocks[key];
+    }
+  }).finally(()=>{if(epoch===AH_SYNC.epoch)AH_SYNC.reserving=null;});
+  return AH_SYNC.reserving;
+}
+function ahSyncNextId(kind) {
+  let block=AH_SYNC.blocks[kind];
+  if (block && block.next>block.end && block.reserve) { AH_SYNC.blocks[kind]=block.reserve; block=block.reserve; }
+  if (AH_SYNC.phase!=='ready' || !block || block.next>block.end) {
+    showToast('Neue Nummern werden geladen. Bitte bei bestehender Verbindung nochmals speichern.','warning');
+    if(AH_SYNC.phase==='ready')void ahSyncReserve().catch(()=>{});
+    throw new Error('AH_IDS_NOT_READY');
+  }
+  const id=block.next++;
+  db._c[kind]=Math.max(db._c[kind]||0,id);
+  if (block.end-block.next<4 && !block.reserve) void ahSyncReserve().catch(()=>{});
+  return id;
+}
+function ahSyncShowSetup(message,canImport=false) {
+  let overlay=el('ah-sync-setup');
+  if (!overlay) { overlay=document.createElement('div');overlay.id='ah-sync-setup';document.body.appendChild(overlay); }
+  const data=AH_SYNC.importData;
+  const counts=data?`${data.kunden.length} Kunden · ${data.fahrzeuge.length} Fahrzeuge · ${data.auftraege.length} Aufträge`:'';
+  const garage=typeof CURRENT_GARAGE!=='undefined' && CURRENT_GARAGE?CURRENT_GARAGE.name:'deine Garage';
+  overlay.innerHTML='<div class="ah-sync-dialog" role="dialog" aria-modal="true" aria-labelledby="ah-sync-title"><h2 id="ah-sync-title">Gemeinsamer Werkstattbestand</h2><p>'+esc(message)+'</p>'+(canImport?'<p><strong>'+esc(garage)+'</strong><br>'+esc(counts)+'</p><p>Der Bestand dieses Browsers bleibt als ursprüngliche Sicherung erhalten. Bereits vorhandene gemeinsame Daten werden nicht überschrieben.</p><button type="button" onclick="ahSyncImport(false)">Daten dieses Geräts übernehmen</button><button type="button" onclick="ahSyncImport(true)">Mit leerem gemeinsamen Bestand starten</button>':'<button type="button" onclick="ahSyncRetry()">Erneut verbinden</button>')+'<button type="button" onclick="doLogout()">Abmelden</button></div>';
+}
+async function ahSyncImport(empty) {
+  if (AH_SYNC.phase==='importing') return;
+  AH_SYNC.phase='importing';
+  el('ah-sync-setup')?.querySelectorAll('button').forEach(b=>b.disabled=true);
+  try {
+    const data=empty?{kunden:[],fahrzeuge:[],auftraege:[],mitarbeiter:[],_c:{}}:AH_SYNC.importData;
+    const snapshot=await ahSyncRpc('ah_workshop_import',{p_data:data,p_request_id:ahSyncUuid()});
+    await ahSyncFinishConnection(snapshot,!empty);
+  } catch(error) {AH_SYNC.phase='needs_import';ahSyncShowSetup(ahSyncMessage(error),true);}
+}
+async function ahSyncFinishConnection(snapshot,keepLegacy=false) {
+  const cached=await ahSyncRead(ahSyncCacheKey());
+  db=keepLegacy?ahSyncCopy(AH_SYNC.legacyApp):cached?.app||ahSyncCopy(EMPTY_DB);
+  AH_SYNC.phase='ready';AH_SYNC.error='';
+  ahSyncApply(snapshot);
+  await ahSyncReserve();
+  const old=el('ah-sync-setup');if(old)old.remove();
+  const epoch=AH_SYNC.epoch;
+  AH_SYNC.channel=_sb.channel('workshop:'+AH_SYNC.garage+':'+ahSyncTabId())
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'ah_workshop_revisions',filter:'garage_id=eq.'+AH_SYNC.garage},()=>{void ahSyncRefresh();})
+    .subscribe(status=>{if(epoch===AH_SYNC.epoch && status==='SUBSCRIBED')void ahSyncRefresh();});
+  AH_SYNC.poll=setInterval(()=>{if(!document.hidden){void ahSyncRefresh();void ahSyncFlush().catch(()=>{});}},10000);
+  void ahSyncFlush().catch(()=>{});
+  renderDashboard();
+}
+async function ahSyncConnect() {
+  if (!CURRENT_USER) return;
+  const garage=CURRENT_PROFILE && CURRENT_PROFILE.garage_id;
+  if (AH_SYNC.phase==='ready' && AH_SYNC.garage===String(garage) && AH_SYNC.actor===CURRENT_USER.id) return;
+  ahSyncDisconnect();
+  AH_SYNC.phase='connecting';AH_SYNC.actor=CURRENT_USER.id;
+  if (!garage) {AH_SYNC.phase='error';ahSyncShowSetup('Dein Benutzer ist noch keiner Garage zugeordnet. Bitte bei der Geschäftsführung melden.');return;}
+  AH_SYNC.garage=String(garage);
+  let legacyPeople=[];
+  try {legacyPeople=JSON.parse(localStorage.getItem('ah_mitarbeiter')||'[]');}catch(_e){}
+  let legacyApp=ahSyncCopy(EMPTY_DB);
+  try {legacyApp=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||legacyApp;}catch(_e){}
+  AH_SYNC.legacyApp=legacyApp;
+  AH_SYNC.importData=ahSyncCapture(legacyApp,legacyPeople);
+  try {
+    AH_SYNC.outbox=await ahSyncRead(ahSyncOutboxKey())||[];
+    const snapshot=await ahSyncRpc('ah_workshop_snapshot');
+    if (snapshot) await ahSyncFinishConnection(snapshot);
+    else if (CURRENT_PROFILE.rolle==='admin') {
+      const count=AH_SYNC_KINDS.reduce((n,k)=>n+(AH_SYNC.importData[k]||[]).length,0);
+      AH_SYNC.phase='needs_import';
+      if (!count) await ahSyncImport(true); else ahSyncShowSetup('Prüfe einmalig, ob der Bestand dieses Browsers für diese Garage übernommen werden soll.',true);
+    } else {AH_SYNC.phase='needs_import';ahSyncShowSetup('Die Geschäftsführung muss den gemeinsamen Bestand zuerst einrichten.');}
+  } catch(error) {AH_SYNC.phase='error';AH_SYNC.error=ahSyncMessage(error);ahSyncShowSetup(AH_SYNC.error);}
+}
+function ahSyncDisconnect(clearData=false) {
+  AH_SYNC.epoch++;
+  if (AH_SYNC.channel && typeof _sb!=='undefined') void _sb.removeChannel(AH_SYNC.channel);
+  if (AH_SYNC.poll) clearInterval(AH_SYNC.poll);
+  Object.assign(AH_SYNC,{phase:'local',garage:null,actor:null,server:null,revision:-1,saved:null,outbox:[],blocks:{},pump:null,fetching:null,channel:null,poll:null,reserving:null,conflict:false,error:'',timeBusy:false,clockOffset:0,appliedKey:null,people:[],persist:Promise.resolve(),storageError:false});
+  if (clearData) {
+    db=ahSyncCopy(EMPTY_DB);
+    document.querySelector('#mech-fullscreen')?.classList.remove('open');
+    document.querySelectorAll('.modal-overlay.open').forEach(modal=>modal.classList.remove('open'));
+    if (_mfsTimer) {clearInterval(_mfsTimer);_mfsTimer=null;}
+    _mfsAuftragId=null;
+    renderDashboard();
+  }
+  el('ah-sync-setup')?.remove();ahSyncRenderStatus();
+}
+async function ahSyncRetry() {
+  if (AH_SYNC.phase!=='ready') {await ahSyncConnect();return;}
+  if (AH_SYNC.storageError) {
+    const key=ahSyncOutboxKey(),requests=ahSyncCopy(AH_SYNC.outbox);
+    await ahSyncPersist(()=>ahSyncWrite(key,previous=>ahSyncMergeRequests(previous||[],requests))).catch(()=>{});
+  }
+  await ahSyncRefresh();await ahSyncFlush().catch(()=>{});
+}
+async function ahSyncResolveConflict() {
+  if (!AH_SYNC.conflict) return;
+  const backup=new Blob([JSON.stringify({garage:AH_SYNC.garage,requests:AH_SYNC.outbox},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(backup),link=document.createElement('a');
+  link.href=url;link.download='autohelfer-offene-aenderungen-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const key=ahSyncOutboxKey(),requests=ahSyncCopy(AH_SYNC.outbox),ids=new Set(requests.map(request=>request.id));
+  AH_SYNC.conflictArchiveKey=key+':conflict:'+Date.now();
+  await ahSyncPersist(()=>ahSyncWrite(AH_SYNC.conflictArchiveKey,()=>requests));
+  AH_SYNC.outbox=await ahSyncPersist(()=>ahSyncWrite(key,previous=>(previous||[]).filter(request=>!ids.has(request.id))));
+  AH_SYNC.conflict=false;AH_SYNC.error='';
+  await ahSyncRefresh();
+}
+async function ahSyncTime(action,id,extra={}) {
+  const conflictAllowsPause=AH_SYNC.conflict && ['pause','reason','void_time'].includes(action);
+  if (AH_SYNC.phase!=='ready' || AH_SYNC.timeBusy || AH_SYNC.conflict && !conflictAllowsPause) {
+    showToast(AH_SYNC.conflict?'Bitte zuerst den Änderungskonflikt prüfen.':'Die gemeinsame Zeiterfassung ist noch nicht bereit.','warning');return false;
+  }
+  const epoch=AH_SYNC.epoch;
+  AH_SYNC.timeBusy=true;
+  const request={p_action:action,p_order_id:Number(id),p_request_id:ahSyncUuid(),...extra};
+  try {
+    if (!conflictAllowsPause) await ahSyncFlush();
+    const snapshot=await ahSyncRpc('ah_workshop_time',request);
+    AH_SYNC.error='';ahSyncApply(snapshot);return true;
+  } catch(error) {
+    if (epoch!==AH_SYNC.epoch) return false;
+    // Ein unsicher bestaetigter Stempelbefehl wird niemals spaeter blind wiederholt.
+    try {
+      const status=await ahSyncRpc('ah_workshop_command_status',{p_request_id:request.p_request_id});
+      if(status.snapshot)ahSyncApply(status.snapshot);
+      if(status.applied){AH_SYNC.error='';return true;}
+    } catch(_ignored) {}
+    AH_SYNC.error=ahSyncMessage(error);showToast(AH_SYNC.error,'warning');ahSyncRenderStatus();return false;
+  } finally {if(epoch===AH_SYNC.epoch)AH_SYNC.timeBusy=false;}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden && AH_SYNC.phase==='ready')void ahSyncRetry();});
+document.addEventListener('focusout',event=>{
+  if (!event.target.closest('#mech-fullscreen') || AH_SYNC.pendingMfsId==null) return;
+  setTimeout(()=>{
+    const focused=document.activeElement;
+    if (AH_SYNC.phase==='ready' && AH_SYNC.pendingMfsId===_mfsAuftragId && !focused?.closest('#mech-fullscreen input,#mech-fullscreen textarea,#mech-fullscreen select')) {
+      AH_SYNC.pendingMfsId=null;mfsRender(_mfsAuftragId);
+    }
+  },0);
+});
+window.addEventListener('online',()=>{if(AH_SYNC.phase==='ready')void ahSyncRetry();});
+</script>
+
 <!-- ============================================================
      SUPABASE AUTH
      ============================================================ -->
@@ -25646,6 +26416,13 @@ var _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 var CURRENT_USER    = null;
 var CURRENT_PROFILE = null;
 var CURRENT_GARAGE  = null;
+
+if (typeof _sb.auth.onAuthStateChange==='function') _sb.auth.onAuthStateChange(event=>{
+  if (event==='SIGNED_OUT') {
+    ahSyncDisconnect(true);CURRENT_USER=null;CURRENT_PROFILE=null;CURRENT_GARAGE=null;
+    document.getElementById('login-screen').style.display='flex';
+  }
+});
 
 // ── Login ────────────────────────────────────────────────────
 async function doLogin() {
@@ -25724,7 +26501,7 @@ async function loadUserProfile() {
       }
     }
 
-    startApp();
+    await startApp();
 
   } catch(err) {
     console.error('loadUserProfile Fehler:', err);
@@ -25732,12 +26509,13 @@ async function loadUserProfile() {
     if (!CURRENT_PROFILE) {
       CURRENT_PROFILE = { id: CURRENT_USER.id, rolle: 'admin', vorname: 'Admin', nachname: '' };
     }
-    startApp();
+    await startApp();
   }
 }
 
 // ── App starten nach Login ───────────────────────────────────
-function startApp() {
+async function startApp() {
+  if (CURRENT_USER) await ahSyncConnect();
   // Login-Screen ausblenden
   document.getElementById('login-screen').style.display = 'none';
 
@@ -25778,6 +26556,11 @@ function startApp() {
 
 // ── Mechaniker-Ansicht ───────────────────────────────────────
 function applyMechanikerView() {
+  const name = ((CURRENT_PROFILE.vorname || '') + ' ' + (CURRENT_PROFILE.nachname || '')).trim();
+  if (name) {
+    MECHANIC_SESSION.mechaniker = Object.assign({name,kuerzel:name.split(/\s+/).map(w=>w[0]).join('').slice(0,2)}, mechIdentitaet(name));
+    MECHANIC_SESSION.mechFilter = 'meine';
+  }
   // Nav-Items ausblenden die Mechaniker nicht sehen sollen
   var hidePages = ['rechnungen','debitoren','reifenlager','einstellungen','statistiken','lieferanten'];
   hidePages.forEach(function(page) {
@@ -25797,7 +26580,7 @@ function applyMechanikerView() {
   });
 
   // Direkt zur Mechaniker-Ansicht
-  if (typeof showPage === 'function') showPage('mechanik');
+  if (typeof showPage === 'function') showPage('mechaniker');
 }
 
 // ── Passwort ein-/ausblenden im Login (Auge) ─────────────────
@@ -25827,6 +26610,7 @@ function loginTogglePw() {
 
 // ── Logout ───────────────────────────────────────────────────
 async function doLogout() {
+  ahSyncDisconnect(true);
   await _sb.auth.signOut();
   CURRENT_USER    = null;
   CURRENT_PROFILE = null;

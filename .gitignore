@@ -14,6 +14,8 @@ $RECYCLE.BIN/
 
 # Node (falls spaeter genutzt)
 node_modules/
+__pycache__/
+test-results/
 
 # Echte Kundendaten fuer lokale OCR-Tests — NIE committen
 testdaten/

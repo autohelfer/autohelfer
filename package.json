@@ -1,0 +1,11 @@
+{
+  "name": "autohelfer-checks",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.cjs tests/*.test.mjs",
+    "test:browser": "python3 tests/workshop-browser.py"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.15"
+  }
+}
