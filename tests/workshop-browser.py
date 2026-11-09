@@ -145,6 +145,7 @@ try:
         results.append('Auch lokale Zusatzdaten und ein Bestand ueber dem localStorage-Limit bleiben nach Neuladen erhalten')
 
         foreign,_=open_page('other')
+        foreign.get_by_role('button',name='Mit leerem gemeinsamen Bestand starten',exact=True).click()
         foreign.wait_for_function("AH_SYNC.phase==='ready'")
         assert foreign.evaluate('db.auftraege.length')==0
         assert foreign.evaluate('db.kunden.length')==0

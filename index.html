@@ -26328,7 +26328,7 @@ async function ahSyncConnect() {
     else if (CURRENT_PROFILE.rolle==='admin') {
       const count=AH_SYNC_KINDS.reduce((n,k)=>n+(AH_SYNC.importData[k]||[]).length,0);
       AH_SYNC.phase='needs_import';
-      if (!count) await ahSyncImport(true); else ahSyncShowSetup('Prüfe einmalig, ob der Bestand dieses Browsers für diese Garage übernommen werden soll.',true);
+      ahSyncShowSetup(count?'Prüfe einmalig, ob der Bestand dieses Browsers für diese Garage übernommen werden soll.':'Auf diesem Gerät ist kein lokaler Bestand vorhanden. Für die Datenübernahme bitte zuerst auf dem bisher verwendeten Gerät anmelden. Ein leerer gemeinsamer Bestand wird nur auf ausdrückliche Auswahl eingerichtet.',true);
     } else {AH_SYNC.phase='needs_import';ahSyncShowSetup('Die Geschäftsführung muss den gemeinsamen Bestand zuerst einrichten.');}
   } catch(error) {AH_SYNC.phase='error';AH_SYNC.error=ahSyncMessage(error);ahSyncShowSetup(AH_SYNC.error);}
 }
